@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { BackendLoadingModal } from "@/components/BackendLoadingModal";
 import { apiUrl } from "@/lib/api";
 
 type BackendLaunchButtonProps = {
@@ -30,7 +31,7 @@ export function BackendLaunchButton({
     const controller = new AbortController();
     abortRef.current = controller;
     setState("loading");
-    setMessage("Waking up the backend...");
+    setMessage("");
 
     try {
       await waitForBackend(controller.signal);
@@ -64,34 +65,12 @@ export function BackendLaunchButton({
       </button>
 
       {state !== "idle" ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 px-4">
-          <div className="w-full max-w-md border-2 border-ink bg-paperLight p-5 text-ink shadow-hard">
-            <p className="font-mono text-xs uppercase text-rule">backend</p>
-            <h2 className="mt-2 font-mono text-2xl font-bold uppercase tracking-normal">
-              {state === "loading" ? "Loading" : "Could not start"}
-            </h2>
-            <p className="mt-4 text-sm leading-6">{message}</p>
-            <div className="mt-6 flex gap-3">
-              {state === "loading" ? (
-                <button
-                  type="button"
-                  onClick={cancelLaunch}
-                  className="border-2 border-ink bg-paper px-4 py-2 font-mono text-xs uppercase text-ink hover:bg-brass"
-                >
-                  Cancel
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setState("idle")}
-                  className="border-2 border-ink bg-soot px-4 py-2 font-mono text-xs uppercase text-paper hover:bg-brass hover:text-ink"
-                >
-                  Close
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+        <BackendLoadingModal
+          errorMessage={message}
+          onCancel={cancelLaunch}
+          onClose={() => setState("idle")}
+          state={state}
+        />
       ) : null}
     </>
   );
