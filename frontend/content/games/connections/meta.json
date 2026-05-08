@@ -1,0 +1,7 @@
+{
+  "title": "Connections",
+  "description": "Make and share custom word-grouping puzzles without persistent storage.",
+  "body": "Build a four-by-four Connections puzzle, share it as a link, or paste someone else's encoded link to play. The puzzle data lives inside the game URL itself.",
+  "image": "",
+  "playHref": "/play/games/connections"
+}

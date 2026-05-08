@@ -1,0 +1,470 @@
+.page {
+	min-height: 100vh;
+	margin: 0;
+	background-color: #f7e6c4;
+	color: #111;
+	font-family: Arial, Helvetica, sans-serif;
+	padding: 40px 20px;
+}
+
+.homeLink {
+	position: fixed;
+	top: 0.65rem;
+	left: 0.75rem;
+	z-index: 10;
+	color: currentColor;
+	font:
+		700 12px/1 "Courier New",
+		Courier,
+		monospace;
+	opacity: 0.42;
+	text-decoration: none;
+	text-transform: uppercase;
+}
+
+.homeLink:hover {
+	opacity: 0.8;
+	text-decoration: underline;
+}
+
+.panel,
+.createPanel,
+.playPanel {
+	margin: 0 auto;
+	text-align: center;
+}
+
+.panel {
+	width: 320px;
+	margin-top: 22vh;
+}
+
+.createPanel,
+.playPanel {
+	width: min(980px, 100%);
+}
+
+.panel h1,
+.screenHeader h1 {
+	margin: 0;
+	color: #6a0572;
+	font-size: 2.5rem;
+	line-height: 1.1;
+}
+
+.panel h1 {
+	margin-bottom: 80px;
+}
+
+.homeActions {
+	width: 320px;
+	background: #ffffff;
+	border-radius: 12px;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0;
+	padding: 30px;
+}
+
+.homeActions label {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.homeActions label span {
+	height: 0;
+	overflow: hidden;
+}
+
+.homeActions input {
+	width: 100%;
+	border: 2px solid #6a0572;
+	border-radius: 8px;
+	font-size: 1rem;
+	padding: 10px;
+	text-align: center;
+}
+
+.screenHeader {
+	align-items: center;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin: 80px 0 36px;
+}
+
+.screenHeader p {
+	margin: 0;
+	color: #555;
+	font-size: 1.15rem;
+	line-height: 1.5;
+}
+
+.screenHeader button {
+	width: auto;
+	min-width: 120px;
+	padding-inline: 24px;
+}
+
+.createPanel {
+	max-width: 1080px;
+}
+
+.settingsGrid,
+.categoryInputs,
+.createGrid,
+.playGrid,
+.solvedGroups {
+	width: 100%;
+}
+
+.settingsGrid {
+	background: #ffffff;
+	border-radius: 12px;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+	display: grid;
+	gap: 12px;
+	margin: 0 auto 24px;
+	padding: 26px;
+	width: min(760px, 100%);
+}
+
+.settingsGrid label,
+.categoryInputs label {
+	color: #111;
+	display: grid;
+	gap: 6px;
+	font-size: 0.92rem;
+}
+
+.settingsGrid input,
+.settingsGrid textarea,
+.settingsGrid select,
+.categoryInputs input {
+	border: 2px solid #6a0572;
+	border-radius: 8px;
+	color: #111;
+	font-size: 1rem;
+	padding: 10px;
+	text-align: center;
+}
+
+.settingsGrid textarea {
+	min-height: 74px;
+	resize: vertical;
+}
+
+.checkboxLabel {
+	align-items: center;
+	display: flex !important;
+	justify-content: center;
+}
+
+.checkboxLabel input {
+	width: 18px;
+	height: 18px;
+}
+
+.categoryInputs {
+	display: grid;
+	gap: 12px;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	margin: 0 auto 24px;
+	width: min(760px, 100%);
+}
+
+.yellow,
+.green,
+.blue,
+.purple {
+	border-radius: 8px;
+	padding: 12px;
+}
+
+.yellow {
+	background-color: rgb(249, 223, 109);
+	color: black;
+}
+
+.green {
+	background-color: rgb(160, 195, 90);
+}
+
+.blue {
+	background-color: rgb(176, 196, 239);
+}
+
+.purple {
+	background-color: rgb(187, 129, 197);
+}
+
+.createGrid {
+	display: grid;
+	gap: 15px;
+	grid-template-columns: repeat(4, minmax(120px, 1fr));
+	margin: 20px auto 0;
+}
+
+.createCell {
+	align-items: center;
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.createCell input {
+	width: 100%;
+	height: 100px;
+	border: 2px solid #6a0572;
+	border-radius: 8px;
+	color: #111;
+	font-size: clamp(0.82rem, 1.4vw, 1rem);
+	font-weight: 700;
+	padding: 10px;
+	text-align: center;
+}
+
+.colorToggle {
+	width: 24px;
+	height: 24px;
+	border: 1px solid black;
+	border-radius: 50%;
+	cursor: pointer;
+}
+
+.playGrid {
+	display: grid;
+	gap: 10px;
+	grid-template-columns: repeat(4, minmax(120px, 150px));
+	justify-content: center;
+	margin: 20px auto;
+}
+
+.playGrid button {
+	width: 100%;
+	height: 92px;
+	background-color: white;
+	border: 2px solid #6a0572;
+	border-radius: 8px;
+	color: #111;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: clamp(0.8rem, 1.5vw, 1.05rem);
+	font-weight: 700;
+	overflow-wrap: anywhere;
+	padding: 10px;
+	text-align: center;
+	text-transform: uppercase;
+	transition:
+		transform 0.3s ease,
+		box-shadow 0.3s ease;
+}
+
+.playGrid .selectedTile {
+	background: #5a594e;
+	box-shadow: 0 0 2px 2px #6a0572;
+	color: white;
+	transform: scale(1.05);
+}
+
+.shakeTile {
+	animation: shake 0.2s;
+}
+
+.primaryAction,
+.panel button,
+.screenHeader button,
+.buttonRow button {
+	width: 100%;
+	border: none;
+	border-radius: 8px;
+	color: white;
+	cursor: pointer;
+	font-size: 1rem;
+	margin: 10px 0;
+	padding: 12px;
+	transition: background 0.3s;
+}
+
+.primaryAction,
+.homeActions button:first-child {
+	background-color: #a29bfe;
+}
+
+.primaryAction:hover,
+.homeActions button:first-child:hover {
+	background-color: #6c5ce7;
+}
+
+.homeActions button:last-child,
+.buttonRow button,
+.screenHeader button {
+	background-color: #6a0572;
+}
+
+.homeActions button:last-child:hover,
+.buttonRow button:hover:not(:disabled),
+.screenHeader button:hover {
+	background-color: #4a0350;
+}
+
+.buttonRow button:disabled {
+	cursor: not-allowed;
+	opacity: 0.45;
+}
+
+.shareBox {
+	width: min(760px, 100%);
+	margin: 20px auto 0;
+	overflow-wrap: anywhere;
+	background: #ffffff;
+	border-radius: 12px;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+	padding: 18px;
+}
+
+.shareBox p {
+	margin: 0 0 10px;
+	color: #6a0572;
+	font-weight: 700;
+}
+
+.shareBox a {
+	color: #004cb8;
+	font-weight: 700;
+}
+
+.solvedGroups {
+	display: grid;
+	gap: 10px;
+	margin: 0 auto 10px;
+	width: min(630px, 100%);
+}
+
+.solvedGroup {
+	border-radius: 8px;
+	margin-bottom: 10px;
+	padding: 20px;
+	text-align: center;
+}
+
+.solvedGroup h2 {
+	margin: 0 0 8px;
+	font-size: 1.25rem;
+	text-transform: uppercase;
+}
+
+.solvedGroup p {
+	margin: 0;
+}
+
+.lives {
+	min-height: 24px;
+	margin: 8px 0 0;
+	color: #e74c3c;
+	font-size: 1.2rem;
+	font-weight: 700;
+	text-align: center;
+}
+
+.buttonRow {
+	display: flex;
+	justify-content: center;
+	gap: 10px;
+	margin: 20px auto 0;
+	width: min(630px, 100%);
+}
+
+.buttonRow button {
+	width: auto;
+	min-width: 120px;
+	padding: 10px 20px;
+}
+
+.message,
+.oneAwayMessage {
+	margin: 18px auto 0;
+	text-align: center;
+}
+
+.message {
+	color: #8b2119;
+	font-size: 1rem;
+	font-weight: 700;
+}
+
+.oneAwayMessage {
+	width: min(420px, 100%);
+	background: #fff;
+	border: 3px solid #6a0572;
+	border-radius: 8px;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+	color: #6a0572;
+	font-size: 1.45rem;
+	font-weight: 800;
+	padding: 14px 18px;
+}
+
+@keyframes shake {
+	0% {
+		transform: translate(0, 0) scale(1.05);
+	}
+	25% {
+		transform: translate(-8px, 0) scale(1.05);
+	}
+	50% {
+		transform: translate(8px, 0) scale(1.05);
+	}
+	75% {
+		transform: translate(-8px, 0) scale(1.05);
+	}
+	100% {
+		transform: translate(0, 0) scale(1.05);
+	}
+}
+
+@media (max-width: 720px) {
+	.page {
+		padding: 32px 12px;
+	}
+
+	.panel,
+	.homeActions {
+		width: min(320px, 100%);
+	}
+
+	.screenHeader {
+		margin-top: 48px;
+	}
+
+	.categoryInputs,
+	.settingsGrid {
+		grid-template-columns: 1fr;
+	}
+
+	.createGrid,
+	.playGrid {
+		gap: 8px;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+
+	.createCell input,
+	.playGrid button {
+		height: 74px;
+		padding: 6px;
+	}
+
+	.buttonRow {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.buttonRow button {
+		width: 100%;
+	}
+}

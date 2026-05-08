@@ -120,6 +120,44 @@ Current static games:
 - `flower-and-the-wind`
 - `lines-of-action`
 
+## Connections
+
+Connections is a client-side Next.js game, not a static public asset and not a backend-backed game.
+
+Frontend play routes:
+
+```txt
+frontend/app/play/games/connections/
+frontend/app/play/games/connections/play/[gameCode]/
+```
+
+Important files:
+
+- `frontend/app/play/games/connections/ConnectionsGame.tsx`: create/play UI and game state.
+- `frontend/app/play/games/connections/connectionsEncoding.ts`: URL-safe puzzle encoder/decoder.
+- `frontend/app/play/games/connections/connections.module.css`: game-local styling based on the original Flask version.
+- `frontend/content/games/connections/meta.json`: Games card entry.
+
+Connections sharing is storage-free. The generated game URL embeds the whole puzzle payload in the final path segment:
+
+```txt
+/play/games/connections/play/<encoded-code>
+```
+
+The start screen also accepts either the whole share URL or just the encoded code. Query links also work:
+
+```txt
+/play/games/connections?gamecode=<encoded-code>
+```
+
+The encoding keeps the original helper's allowed source character set:
+
+```txt
+ABCDEFGHIJKLMNOPQRSTUVWXYZ ,-'".
+```
+
+Puzzle text is normalized to that character set before encoding. Do not mark Connections with `"requiresBackend": true`; it does not call FastAPI. The backend loading modal should be reserved for games that actually need Render to wake up.
+
 ## Starnim
 
 Starnim is different from the static games because it needs Python logic for computer moves.
@@ -183,6 +221,7 @@ Backend-backed cards use:
 - `frontend/components/BackendLaunchButton.tsx`
 - `frontend/components/BackendLoadingModal.tsx`
 - `frontend/components/BackendLoadingModal.module.css`
+- `frontend/lib/backendHealth.ts`
 
 If an item has `"requiresBackend": true`, Play opens a loading modal and polls:
 
