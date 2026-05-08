@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Lines of Action</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap"
+			rel="stylesheet"
+		/>
+		<link rel="stylesheet" href="style.css" />
+	<style> .tautology-home-link{position:fixed;top:.65rem;left:.75rem;z-index:2147483647;font:700 12px/1 'Courier New',Courier,monospace;text-transform:uppercase;letter-spacing:0;color:currentColor;text-decoration:none;opacity:.42;background:transparent;border:0;padding:0;text-shadow:0 1px 2px rgba(255,255,255,.35);} .tautology-home-link:hover{opacity:.8;text-decoration:underline;} </style></head>
+	<body><a class="tautology-home-link" href="/" aria-label="Tautology home">P or not P</a>
+		<button onclick="window.location.href='index.html'" class="back-button">
+			Back to Menu
+		</button>
+		<h1 class="title">Lines of Action</h1>
+		<div id="board"></div>
+		<div id="turn-indicator">Black's turn</div>
+
+		<button
+			onclick="showHint()"
+			style="
+				position: fixed;
+				bottom: 2rem;
+				right: 2rem;
+				background-color: #fac327;
+				border: none;
+				padding: 0.5rem 1rem;
+				font-size: 1rem;
+				border-radius: 8px;
+				cursor: pointer;
+				font-family: 'Orbitron', sans-serif;
+				z-index: 30;
+			"
+		>
+			Hint
+		</button>
+		<div
+			id="hint-box"
+			style="
+				display: none;
+				position: fixed;
+				top: 40%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				background-color: white;
+				border: 2px solid #fac327;
+				padding: 1.5rem;
+				border-radius: 12px;
+				text-align: center;
+				z-index: 20;
+			"
+		>
+			<p
+				id="hint-message"
+				style="margin-bottom: 1rem; font-size: 1.1rem"
+			></p>
+			<button
+				id="show-move-btn"
+				style="
+					padding: 0.5rem 1rem;
+					background-color: #fac327;
+					border: none;
+					border-radius: 8px;
+					cursor: pointer;
+				"
+			>
+				Show Move
+			</button>
+		</div>
+
+		<script>
+			const urlParams = new URLSearchParams(window.location.search);
+			const mode = urlParams.get("mode") || "pass"; // default is pass-and-play
+			window.vsAI = mode === "ai"; // globally accessible in game.js
+		</script>
+
+		<script src="script.js"></script>
+	</body>
+</html>

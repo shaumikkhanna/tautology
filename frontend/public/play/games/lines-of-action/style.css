@@ -1,0 +1,104 @@
+body {
+	background-color: #fffcd4;
+	font-family: "Orbitron", sans-serif;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin: 0;
+	padding: 20px;
+}
+
+.title {
+	font-size: 2.5rem;
+	color: #fac327;
+	margin-bottom: 1.5rem;
+}
+
+#turn-indicator {
+	font-size: 1.2rem;
+	margin-top: 1rem;
+	color: #333;
+}
+
+#board {
+	display: grid;
+	grid-template-columns: repeat(8, 60px);
+	grid-template-rows: repeat(8, 60px);
+	gap: 2px;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	position: relative;
+	width: 484px; /* 60*8 + 2*7 for gaps */
+	height: 484px;
+}
+
+.cell {
+	width: 60px;
+	height: 60px;
+	background-color: #f0d9b5;
+	border: 1px solid #aaa;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+}
+
+.cell.black {
+	background-color: #b58863;
+}
+
+.piece {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+}
+
+.piece.black {
+	background-color: black;
+}
+
+.piece.white {
+	background-color: white;
+	border: 2px solid #333;
+}
+
+.highlight {
+	background-color: #d4f8ff !important; /* subtle blue highlight */
+}
+
+.moving-piece {
+	position: absolute;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	transition: top 0.4s ease-in-out, left 0.4s ease-in-out;
+	z-index: 10;
+	pointer-events: none;
+}
+
+.moving-piece.black {
+	background-color: black;
+}
+
+.moving-piece.white {
+	background-color: white;
+	border: 2px solid #333;
+}
+
+.back-button {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+	background-color: #fac327;
+	border: none;
+	padding: 0.5rem 1rem;
+	font-size: 1rem;
+	border-radius: 8px;
+	cursor: pointer;
+	font-family: "Orbitron", sans-serif;
+	margin-top: 0;
+}
+
+.highlight-hint {
+	background-color: #cde8ff !important;
+}

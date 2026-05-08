@@ -1,0 +1,367 @@
+#game-area {
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 20vw;
+}
+
+/* ---- Bowling Frame Layout ---- */
+
+#bowling-frame {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.frame-row {
+	display: flex;
+	justify-content: center;
+	margin: 8px 0;
+}
+
+.pin {
+	width: 60px;
+	height: 84px;
+	border-radius: 8px;
+	background-color: white;
+	box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+	margin: 0 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: bold;
+	font-size: 18px;
+	color: #1a1a1a;
+	cursor: pointer;
+	transition: transform 0.2s;
+}
+
+.pin:hover {
+	transform: scale(1.05);
+}
+
+/* ---- Bowling Ball Piles ---- */
+
+#bowling-cards {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.ball-row {
+	margin: 5px 0;
+}
+
+.ball-pile {
+	width: 60px;
+	height: 80px;
+	background-color: #fff;
+	border-radius: 8px;
+	box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.2);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: bold;
+	font-size: 20px;
+	color: #e63946;
+	margin: 5px auto;
+	cursor: pointer;
+	transition: transform 0.2s;
+}
+
+.ball-pile:hover {
+	transform: translateY(-3px);
+}
+
+/* ---- Scorecard Placeholder ---- */
+
+#scorecard {
+	font-style: italic;
+	color: #666;
+	margin-top: 40px;
+}
+
+.pin img,
+.ball-pile img {
+	width: 100%;
+	height: auto;
+	border-radius: 6px;
+	border: 2px solid #fff;
+}
+
+.selected {
+	outline: 3px solid #1d3557;
+	outline-offset: 6px; /* This is the key! Pushes the outline outward */
+	box-shadow: 0 0 10px rgba(29, 53, 87, 0.4);
+	border-radius: 6px;
+}
+
+.ball-pile.selected {
+	box-shadow: 0 0 0 3px #1d3557,
+		/* outer ring (bold highlight) */ 0 0 10px rgba(29, 53, 87, 0.5); /* soft glow */
+	transform: scale(1.1); /* slight pop */
+	z-index: 100; /* bring to front above other piles */
+	transition: all 0.2s ease;
+}
+
+.hidden {
+	visibility: hidden;
+}
+
+#frame-controls {
+	margin-top: 20px;
+}
+
+#scorecard {
+	width: 100%;
+	max-width: 800px;
+	margin: 30px auto;
+	border-collapse: collapse;
+	font-family: "Segoe UI", Tahoma, sans-serif;
+	background-color: #fff;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+#scorecard thead {
+	background-color: #ff5722;
+	color: white;
+}
+
+#scorecard th,
+#scorecard td {
+	padding: 12px 16px;
+	border-bottom: 1px solid #ddd;
+	text-align: center;
+	font-size: 15px;
+}
+
+#scorecard tbody tr:nth-child(even) {
+	background-color: #f9f9f9;
+}
+
+#scorecard tbody tr:hover {
+	background-color: #f1f1f1;
+}
+
+#scorecard th {
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+#scorecard td {
+	color: #333;
+}
+
+#scorecard td:last-child {
+	font-weight: bold;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	font-family: "Segoe UI", Tahoma, sans-serif;
+	background: linear-gradient(
+		to bottom,
+		#eac089,
+		#e4b87a
+	); /* bowling lane tones */
+	background-size: cover;
+	min-height: 100vh;
+	text-align: center;
+	color: #3b2e17;
+}
+
+h1,
+h2 {
+	font-family: "Playfair Display", serif;
+	font-size: 40px;
+	color: #b71c1c; /* dark red like bowling balls */
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+	margin-top: 20px;
+}
+
+h2 {
+	font-size: 20px;
+	color: #bf360c; /* slightly lighter red */
+}
+
+#frame-number {
+	font-family: "Playfair Display", serif;
+	font-size: 40px;
+	color: #b71c1c; /* dark red like bowling balls */
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+button {
+	background-color: #ff5722; /* bright orange */
+	color: white;
+	border: none;
+	border-radius: 8px;
+	padding: 10px 18px;
+	margin: 10px;
+	font-size: 15px;
+	font-weight: bold;
+	cursor: pointer;
+	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+	transition: background 0.2s ease, transform 0.1s ease;
+}
+
+button:hover {
+	background-color: #e64a19;
+	transform: translateY(-2px);
+}
+
+button:active {
+	transform: translateY(1px);
+}
+
+#frame-controls {
+	margin: 20px auto;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 10px;
+}
+
+.ball-pile {
+	position: relative;
+	width: 80px;
+	height: 120px;
+	display: inline-block;
+}
+
+.stacked-card {
+	position: absolute;
+	top: 0;
+	height: 100%;
+	width: auto;
+	border-radius: 6px;
+	pointer-events: none;
+	transition: transform 0.2s;
+}
+
+.ball-pile img {
+	position: absolute;
+	top: 0;
+	width: 100%;
+	height: auto;
+	border-radius: 6px;
+	pointer-events: none;
+}
+
+#info-button {
+	background: none;
+	border: none;
+	font-size: 22px;
+	border-radius: 50%;
+	color: #b71c1c;
+	cursor: pointer;
+	margin-left: 10px;
+	vertical-align: middle;
+	transition: transform 0.2s;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+#info-button:hover {
+	transform: scale(1.2);
+	color: #d84315;
+}
+
+.popup-overlay {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 999;
+	justify-content: center;
+	align-items: center;
+}
+
+.popup-overlay.active {
+	display: flex;
+}
+
+.popup-content ul {
+	padding-left: 20px;
+	margin: 15px 0;
+}
+
+.popup-content li {
+	margin-bottom: 10px;
+	line-height: 1.4;
+}
+
+.popup-content {
+	background: #fffef9;
+	padding: 30px 40px;
+	border-radius: 12px;
+	max-width: 720px;
+	text-align: left;
+	box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+	font-family: "Segoe UI", Tahoma, sans-serif;
+	color: #3b2e17;
+	line-height: 1.6;
+	overflow-y: auto;
+	max-height: 90vh;
+}
+
+.popup-content h2 {
+	margin-top: 0;
+	color: #b71c1c;
+	font-size: 26px;
+	border-bottom: 2px solid #e0b674;
+	padding-bottom: 10px;
+}
+
+.popup-content h3 {
+	margin-top: 24px;
+	color: #d84315;
+	font-size: 20px;
+}
+
+.popup-content p {
+	margin-top: 10px;
+	font-size: 15px;
+}
+
+.popup-content ul.rule-checks {
+	margin: 10px 0 0 20px;
+	padding-left: 0;
+}
+
+.popup-content ul.rule-checks li {
+	list-style: disc;
+	margin-bottom: 8px;
+	font-size: 15px;
+}
+
+.popup-content .example {
+	margin-left: 20px;
+	font-style: italic;
+	background: #fff3e0;
+	border-left: 4px solid #ff9800;
+	padding: 6px 12px;
+	margin-top: 6px;
+	border-radius: 4px;
+}
+
+#close-popup {
+	background-color: #ff5722;
+	color: white;
+	border: none;
+	border-radius: 6px;
+	padding: 8px 16px;
+	font-size: 14px;
+	font-weight: bold;
+	margin-top: 20px;
+	cursor: pointer;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<link rel="stylesheet" href="style.css" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap"
+			rel="stylesheet"
+		/>
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+		/>
+		<title>Bowling Solitaire</title>
+	<style> .tautology-home-link{position:fixed;top:.65rem;left:.75rem;z-index:2147483647;font:700 12px/1 'Courier New',Courier,monospace;text-transform:uppercase;letter-spacing:0;color:currentColor;text-decoration:none;opacity:.42;background:transparent;border:0;padding:0;text-shadow:0 1px 2px rgba(255,255,255,.35);} .tautology-home-link:hover{opacity:.8;text-decoration:underline;} </style></head>
+	<body><a class="tautology-home-link" href="/" aria-label="Tautology home">P or not P</a>
+		<h1>Bowling Solitaire</h1>
+
+		<div id="game-area">
+			<!-- Bowling Cards (Ball Options) on the left -->
+			<section id="bowling-cards">
+				<h2>Bowling Ball Options</h2>
+				<div class="ball-row" id="ball-row-1">
+					<div class="ball-pile" id="pile-1"></div>
+				</div>
+				<div class="ball-row" id="ball-row-2">
+					<div class="ball-pile" id="pile-2"></div>
+				</div>
+				<div class="ball-row" id="ball-row-3">
+					<div class="ball-pile" id="pile-3"></div>
+				</div>
+			</section>
+
+			<!-- Bowling Frame (Pins) on the right -->
+			<section id="bowling-frame">
+				<h2>Bowling Frame</h2>
+				<div class="frame-row" id="frame-row-4">
+					<div class="pin" id="pin-7"></div>
+					<div class="pin" id="pin-8"></div>
+					<div class="pin" id="pin-9"></div>
+					<div class="pin" id="pin-10"></div>
+				</div>
+				<div class="frame-row" id="frame-row-3">
+					<div class="pin" id="pin-4"></div>
+					<div class="pin" id="pin-5"></div>
+					<div class="pin" id="pin-6"></div>
+				</div>
+				<div class="frame-row" id="frame-row-2">
+					<div class="pin" id="pin-2"></div>
+					<div class="pin" id="pin-3"></div>
+				</div>
+				<div class="frame-row" id="frame-row-1">
+					<div class="pin" id="pin-1"></div>
+				</div>
+			</section>
+		</div>
+
+		<button id="submit-move">Submit Move</button>
+		<button id="info-button" title="Game Rules">
+			<i class="fas fa-circle-info"></i>
+		</button>
+
+		<div id="frame-controls">
+			<p>Frame: <span id="frame-number">1</span></p>
+			<button id="end-bowl">End Bowl</button>
+			<button id="end-frame">End Frame</button>
+		</div>
+
+		<h2>Scorecard</h2>
+		<table id="scorecard">
+			<thead>
+				<tr>
+					<th>Frame</th>
+					<th>Bowl 1</th>
+					<th>Bowl 2</th>
+					<th>Bowl 3</th>
+					<th>Type</th>
+					<th>Frame Score</th>
+					<th>Total</th>
+				</tr>
+			</thead>
+			<tbody></tbody>
+		</table>
+
+		<div id="rules-popup" class="popup-overlay">
+			<div class="popup-content">
+				<h2>🎳 Bowling Solitaire – How to Play</h2>
+
+				<h3>🎯 Objective</h3>
+				<p>
+					Knock down pins over 10 frames, using bowling ball cards
+					that match the pins' values. The goal is to score points
+					just like in real bowling: open frames, spares, and strikes.
+				</p>
+
+				<h3>📦 Setup</h3>
+				<p>
+					At the start of each frame, 10 pins (cards) are laid out in
+					a triangular formation. You also receive 3 bowling ball
+					piles: one with 5 cards, one with 3, and one with 2. The top
+					card of each pile is revealed.
+				</p>
+
+				<h3>🎲 Bowling a Frame</h3>
+				<p>
+					You may select up to <strong>3 pins</strong> to knock down
+					using a visible bowling ball card. A move is valid if:
+				</p>
+				<ul class="rule-checks">
+					<li>
+						The <strong>last digit</strong> of the pin values' sum
+						matches the bowling ball card.
+					</li>
+					<li>
+						All selected pins are
+						<strong>physically connected</strong> in the bowling
+						triangle.
+					</li>
+					<li>
+						At least one pin is
+						<strong>visible from the front</strong>.
+					</li>
+				</ul>
+
+				<h3>🛑 Ending a Bowl</h3>
+				<p>
+					You can choose to "End Bowl" once per frame. This discards
+					the top cards of all ball piles and reveals the next card
+					(if any). You can then continue with the remaining balls.
+				</p>
+
+				<h3>✅ Ending a Frame</h3>
+				<p>
+					A frame ends either when all pins are knocked down or you
+					click "End Frame". A frame can result in:
+				</p>
+				<ul class="rule-checks">
+					<li>
+						<strong>Strike:</strong> All pins down in the first bowl
+						(bonus from next 2 bowls).
+					</li>
+					<li>
+						<strong>Spare:</strong> All pins down in 2 bowls (bonus
+						from next bowl).
+					</li>
+					<li><strong>Open:</strong> Some pins remain (no bonus).</li>
+				</ul>
+
+				<h3>📈 Scoring</h3>
+				<p>
+					The game follows standard bowling scoring rules across 10
+					frames. Strikes and spares carry bonus scoring into future
+					frames. The 10th frame may allow extra bowls if a strike or
+					spare is scored.
+				</p>
+
+				<button id="close-popup">Close</button>
+			</div>
+		</div>
+	</body>
+	<script src="script.js"></script>
+</html>

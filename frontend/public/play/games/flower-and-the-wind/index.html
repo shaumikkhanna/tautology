@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Flower and the Wind</title>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			body {
+				font-family: "Quicksand", sans-serif;
+				background-color: #e4f6dd;
+				margin: 0;
+				padding: 2rem;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				min-height: 100vh;
+				color: #355e1b;
+			}
+
+			h1 {
+				font-size: 2.6rem;
+				margin-bottom: 2.2rem;
+				color: #4a772f;
+				font-weight: 600;
+			}
+
+			.button-container {
+				display: flex;
+				flex-direction: column;
+				gap: 1.2rem;
+				align-items: center;
+			}
+
+			.menu-button {
+				padding: 12px 24px;
+				font-size: 1.05rem;
+				background-color: #8cbc3e;
+				color: white;
+				border: none;
+				border-radius: 10px;
+				cursor: pointer;
+				box-shadow: 1px 2px 5px rgba(0, 0, 0, 0.1);
+				transition: background-color 0.2s ease, transform 0.2s ease;
+				font-weight: 500;
+				width: 240px;
+			}
+
+			.menu-button:hover {
+				background-color: #78a532;
+				transform: scale(1.03);
+			}
+
+			footer {
+				position: fixed;
+				left: 0;
+				bottom: 0;
+				width: 100%;
+				background: #e4f6dd;
+				margin: 0;
+				padding: 2rem 0;
+				font-size: 0.95rem;
+				color: #6a8f42;
+				font-weight: 400;
+				text-align: center;
+			}
+		</style>
+	<style> .tautology-home-link{position:fixed;top:.65rem;left:.75rem;z-index:2147483647;font:700 12px/1 'Courier New',Courier,monospace;text-transform:uppercase;letter-spacing:0;color:currentColor;text-decoration:none;opacity:.42;background:transparent;border:0;padding:0;text-shadow:0 1px 2px rgba(255,255,255,.35);} .tautology-home-link:hover{opacity:.8;text-decoration:underline;} </style></head>
+	<body><a class="tautology-home-link" href="/" aria-label="Tautology home">P or not P</a>
+		<h1>Flower and the Wind</h1>
+
+		<div class="button-container">
+			<button
+				class="menu-button"
+				onclick="location.href='game.html?mode=pass'"
+			>
+				Pass & Play
+			</button>
+			<button
+				class="menu-button"
+				onclick="location.href='game.html?mode=cpu-wind'"
+			>
+				vsCPU Wind
+			</button>
+			<button
+				class="menu-button"
+				onclick="location.href='game.html?mode=cpu-flower'"
+			>
+				vsCPU Flower
+			</button>
+		</div>
+
+		<footer>Let the wind carry you...</footer>
+	</body>
+</html>

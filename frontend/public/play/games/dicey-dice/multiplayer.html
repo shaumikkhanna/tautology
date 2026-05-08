@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" href="css/style-multi.css" />
+		<title>Dicey Dice - Single Player</title>
+	<style> .tautology-home-link{position:fixed;top:.65rem;left:.75rem;z-index:2147483647;font:700 12px/1 'Courier New',Courier,monospace;text-transform:uppercase;letter-spacing:0;color:currentColor;text-decoration:none;opacity:.42;background:transparent;border:0;padding:0;text-shadow:0 1px 2px rgba(255,255,255,.35);} .tautology-home-link:hover{opacity:.8;text-decoration:underline;} </style></head>
+	<body><a class="tautology-home-link" href="/" aria-label="Tautology home">P or not P</a>
+		<div class="main-layout">
+			<div class="sidebar left">
+				<h1>Dicey Dice</h1>
+				<div class="status">
+					<strong>Round:</strong> <span id="round">1</span>/10
+				</div>
+				<div id="player-stats"></div>
+
+				<button id="roll-btn" onclick="rollDice()">
+					Confirm Bets and 🎲 Roll Dice
+				</button>
+				<button id="reset-btn" onclick="resetRound()">
+					♻️ Reset Bets
+				</button>
+				<div class="dice-display">
+					<img
+						id="dice1"
+						src="images/dice-1.png"
+						alt="Dice 1"
+						class="dice-img"
+					/>
+					<img
+						id="dice2"
+						src="images/dice-1.png"
+						alt="Dice 2"
+						class="dice-img"
+					/>
+				</div>
+			</div>
+
+			<div>
+				<div class="player-buttons" id="player-buttons"></div>
+				<div class="board" id="board"></div>
+			</div>
+
+			<div class="sidebar right">
+				<h2>Log</h2>
+				<pre id="log"></pre>
+			</div>
+		</div>
+		<audio
+			id="dice-sound"
+			src="sounds/dice-roll.mp3"
+			preload="auto"
+		></audio>
+
+		<div id="popup" class="popup hidden">
+			<div class="popup-content">
+				<p id="popup-label">How much do you want to bet on:</p>
+				<input
+					type="number"
+					id="popup-input"
+					step="1000"
+					min="1000"
+					value="1000"
+				/>
+				<div class="popup-actions">
+					<button class="popup-btn" id="popup-confirm">✅ Bet</button>
+					<button class="popup-btn cancel" id="popup-cancel">
+						❌ Cancel
+					</button>
+				</div>
+			</div>
+		</div>
+		<script>
+			// Get player count from URL
+			const urlParams = new URLSearchParams(window.location.search);
+			window.numPlayers = parseInt(urlParams.get("players")) || 2;
+		</script>
+		<script src="js/script-multi.js"></script>
+	</body>
+</html>

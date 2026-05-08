@@ -1,0 +1,235 @@
+body {
+	font-family: "Quicksand", sans-serif;
+	text-align: center;
+	background-color: #e4f6dd;
+	margin: 0;
+	padding: 1rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+h1 {
+	margin-top: 1rem;
+	color: #4a772f;
+}
+
+#status {
+	font-size: 1.1rem;
+	color: #355e1b;
+	margin-bottom: 1rem;
+}
+
+#board-container {
+	position: relative;
+	display: inline-block;
+	width: fit-content;
+	height: fit-content;
+	overflow: hidden;
+	border-radius: 12px;
+}
+
+#board {
+	display: grid;
+	grid-template-columns: repeat(5, 80px); /* was 60px */
+	grid-template-rows: repeat(5, 80px);
+	gap: 8px;
+	background-color: #a5d730;
+	padding: 14px;
+	border-radius: 16px;
+}
+
+.cell {
+	width: 80px;
+	height: 80px;
+	background-color: #bde57a;
+	border: 2px solid #8cbc3e;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 2.2rem; /* bigger flower */
+	border-radius: 8px;
+}
+
+.flower {
+	font-size: 2.2rem;
+}
+
+.seedling {
+	color: #ffffffaa;
+	font-size: 1.3rem;
+}
+
+#game-layout {
+	display: flex;
+	flex-direction: row; /* default: side by side */
+	gap: 80px;
+	align-items: center;
+	justify-content: center;
+	margin-top: 20px;
+	flex-wrap: wrap; /* optional, for extra safety */
+}
+
+/* Responsive layout for small screens */
+@media (max-width: 700px) {
+	#game-layout {
+		flex-direction: column; /* stack vertically */
+		gap: 80px; /* smaller gap when stacked */
+	}
+}
+
+#directions {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.radial-compass {
+	position: relative;
+	width: 300px;
+	height: 300px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-top: -7.5rem;
+}
+
+.arrow {
+	position: absolute;
+	width: 8px; /* thicker */
+	height: 100px; /* long arrow shaft */
+	background-color: #8cbc3e;
+	cursor: pointer;
+	border-radius: 3px;
+	transition: transform 0.2s ease, background-color 0.2s ease,
+		box-shadow 0.2s ease;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+}
+
+.arrow:hover {
+	background-color: #6d9f2a;
+	transform: scale(1.25);
+	box-shadow: 0 0 8px rgba(77, 121, 35, 0.5);
+	transform: scale(1.1) rotate(var(--angle));
+}
+
+.arrow::after {
+	content: "";
+	position: absolute;
+	bottom: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 0;
+	height: 0;
+	border-left: 8px solid transparent;
+	border-right: 8px solid transparent;
+	border-bottom: 12px solid #8cbc3e;
+}
+
+.arrow:disabled {
+	pointer-events: none;
+	opacity: 0.4;
+}
+
+.arrow-label {
+	position: absolute;
+	top: -35px;
+	left: 50%;
+	transform: translateX(-50%);
+	font-size: 1.2rem;
+	font-weight: bold;
+	color: #4a772f;
+	pointer-events: none;
+}
+
+#wind-gust {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	z-index: 10;
+	overflow: visible;
+}
+
+.wind-gust-image {
+	position: absolute;
+	width: 120px;
+	height: 120px;
+	transform-origin: center center;
+	pointer-events: none;
+}
+
+.wind-gust-image .gust-inner {
+	width: 100%;
+	height: 100%;
+	background-image: url("wind.png");
+	background-size: contain;
+	background-repeat: no-repeat;
+	opacity: 0;
+	animation: gust-move 1.6s ease-out forwards;
+}
+
+@keyframes gust-move {
+	0% {
+		transform: translateX(0);
+		opacity: 0;
+	}
+	20% {
+		opacity: 1;
+	}
+	100% {
+		transform: translateX(var(--move-distance));
+		opacity: 0;
+	}
+}
+
+.clickable {
+	cursor: pointer;
+}
+
+.wind-gust-image {
+	position: absolute;
+	width: 60px;
+	height: 60px;
+	transform-origin: center center;
+	pointer-events: none;
+}
+
+@media (max-width: 700px) {
+	#board {
+		grid-template-columns: repeat(5, 14vw);
+		grid-template-rows: repeat(5, 14vw);
+		gap: 2vw;
+		padding: 4vw;
+	}
+
+	.cell {
+		width: 14vw;
+		height: 14vw;
+		font-size: 6vw;
+	}
+
+	.seed {
+		font-size: 4vw;
+	}
+}
+
+.play-again-button {
+	padding: 10px 20px;
+	font-size: 1rem;
+	background-color: #8cbc3e;
+	color: white;
+	border: none;
+	border-radius: 8px;
+	cursor: pointer;
+	margin-top: 20px;
+}
+.play-again-button:hover {
+	background-color: #78a532;
+}

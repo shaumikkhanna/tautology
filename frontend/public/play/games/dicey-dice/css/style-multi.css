@@ -1,0 +1,260 @@
+body {
+	font-family: sans-serif;
+	padding: 20px;
+	background-color: #fff6ee;
+	color: #333;
+	text-align: center;
+}
+h1,
+h2,
+h3 {
+	color: #d17a00;
+	margin: 0.5em 0;
+}
+.board {
+	margin: 20px auto;
+	flex: 1 1 500px;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 10px;
+	max-width: 600px;
+}
+.space {
+	padding: 12px;
+	text-align: center;
+	cursor: pointer;
+	border-radius: 10px;
+	transition: background-color 0.2s, transform 0.2s;
+	border: 2px solid #333;
+	color: #333;
+}
+.space:hover {
+	opacity: 0.9;
+}
+.selected {
+	border-color: #006400 !important;
+	background-color: #aadfbb !important;
+	box-shadow: 0 0 12px #7fd19e;
+}
+button {
+	padding: 10px 20px;
+	margin: 10px;
+	background-color: #ffecdb;
+	border: 2px solid #333;
+	border-radius: 8px;
+	font-size: 1rem;
+	cursor: pointer;
+}
+button:hover:enabled {
+	background-color: #ffe1c5;
+}
+button:disabled {
+	background-color: #ddd;
+	color: #777;
+	cursor: not-allowed;
+}
+.status {
+	margin: 10px 0;
+	font-size: 1.1rem;
+}
+pre {
+	text-align: left;
+	background: #f9f4f0;
+	padding: 10px;
+	border-radius: 8px;
+	margin: 0 auto;
+	max-width: 800px;
+	height: 220px;
+	overflow-y: auto;
+	white-space: pre-wrap;
+}
+.win {
+	color: green;
+	font-weight: bold;
+}
+.lose {
+	color: crimson;
+	font-weight: bold;
+}
+.bet-amount {
+	font-size: 0.85rem;
+	color: #333;
+	text-align: center;
+	margin: 2px 0;
+}
+.popup {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.4);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 10;
+}
+
+.popup.hidden {
+	display: none;
+}
+
+.popup-content {
+	background-color: #ffecdb;
+	border-radius: 16px;
+	padding: 28px 24px;
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+	text-align: center;
+	border: 2px solid #d17a00;
+	max-width: 400px; /* wider than before */
+	width: 90%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.popup-content p {
+	margin-bottom: 1.2rem;
+	font-size: 1.1rem;
+	color: #333;
+	text-align: center;
+}
+
+#popup-input {
+	width: 100%;
+	padding: 10px;
+	font-size: 1.1rem;
+	border: 2px solid #d17a00;
+	border-radius: 10px;
+	margin-bottom: 1rem;
+	background-color: #fff6ee;
+	text-align: center;
+}
+
+.popup-actions {
+	display: flex;
+	justify-content: space-around;
+	gap: 10px;
+}
+
+.popup-btn {
+	padding: 10px 16px;
+	font-size: 1rem;
+	border: none;
+	border-radius: 10px;
+	cursor: pointer;
+	background-color: #ffe1c5;
+	border: 2px solid #d17a00;
+	transition: background-color 0.2s;
+}
+
+.popup-btn:hover {
+	background-color: #ffdbac;
+}
+
+.popup-btn.cancel {
+	background-color: #f8d2d2;
+	border-color: #aa0000;
+}
+
+.popup-btn.cancel:hover {
+	background-color: #f5b9b9;
+}
+
+.main-layout {
+	display: flex;
+	gap: 12px; /* reduced from 20px */
+	align-items: flex-start;
+	justify-content: center;
+	padding: 1rem;
+	flex-wrap: wrap;
+}
+
+.sidebar {
+	flex: 0 0 220px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.sidebar button {
+	margin: 6px 0; /* top-bottom spacing */
+	width: 100%;
+	max-width: 180px;
+}
+
+.sidebar.left {
+	text-align: left;
+}
+
+.sidebar.right {
+	text-align: left;
+	flex: 0 0 360px; /* match or exceed log width */
+}
+
+pre#log {
+	background: #f9f4f0;
+	padding: 12px;
+	border-radius: 8px;
+	height: 460px; /* was 400px */
+	width: 360px; /* was 220px */
+	overflow-y: auto;
+	white-space: pre-wrap;
+	font-size: 0.92rem;
+}
+
+.player-buttons {
+	margin-bottom: 1rem;
+	display: flex;
+	justify-content: center;
+	gap: 10px;
+}
+
+.player-buttons button {
+	padding: 8px 14px;
+	font-size: 1rem;
+	border: 2px solid #333;
+	border-radius: 6px;
+	background-color: #ffe1c5;
+	cursor: pointer;
+}
+
+.player-buttons button.active-player {
+	background-color: #d17a00;
+	color: white;
+	font-weight: bold;
+}
+
+.player-buttons button.has-bet {
+	background-color: #62c462 !important;
+	color: white;
+	font-weight: bold;
+}
+
+#player-stats {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+	margin-top: 1rem;
+	font-size: 1rem;
+}
+
+.dice-display {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 1rem;
+	margin-top: 1rem;
+}
+
+.dice-img {
+	width: 80px;
+	height: 80px;
+	transition: transform 0.2s ease;
+}
+
+.invalid-input {
+	border: 2px solid red;
+}

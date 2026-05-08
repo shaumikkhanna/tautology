@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Farkle Frenzy</title>
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+		/>
+		<link rel="stylesheet" href="style.css" />
+	<style> .tautology-home-link{position:fixed;top:.65rem;left:.75rem;z-index:2147483647;font:700 12px/1 'Courier New',Courier,monospace;text-transform:uppercase;letter-spacing:0;color:currentColor;text-decoration:none;opacity:.42;background:transparent;border:0;padding:0;text-shadow:0 1px 2px rgba(255,255,255,.35);} .tautology-home-link:hover{opacity:.8;text-decoration:underline;} </style></head>
+
+	<body><a class="tautology-home-link" href="/" aria-label="Tautology home">P or not P</a>
+		<h1>Farkle Frenzy</h1>
+
+		<div id="game-info">
+			<span id="round-number">Round: 1</span> |
+			<span id="roll-number">Roll: 0 of 3</span> |
+			<span id="player-info">Player 1 of X</span>
+		</div>
+
+		<div id="all-player-scores" class="all-scores"></div>
+
+		<div id="scoreboard">
+			<div>
+				<span class="score-label">Turn Score:</span>
+				<span id="turn-score">0</span>
+			</div>
+			<div>
+				<span class="score-label">Total Score:</span>
+				<span id="total-score">0</span>
+			</div>
+		</div>
+
+		<div class="dice-container" id="dice-container"></div>
+
+		<div class="bottom-area">
+			<div class="buttons">
+				<button id="roll-btn">Roll</button>
+				<button id="lockin-btn">Lock In</button>
+				<button id="stop-btn">Stop & Bank</button>
+				<button id="new-turn-btn" disabled>Next Turn</button>
+				<button id="info-btn" class="info-button">
+					<i class="fas fa-circle-question"></i>
+				</button>
+			</div>
+
+			<div class="how-to-play-link" onclick="showHowToPlay()">
+				How to play?
+			</div>
+
+			<div id="how-to-play-popup" class="how-to-popup hidden">
+				<div class="popup-inner">
+					<button class="close-howto" onclick="hideHowToPlay()">
+						×
+					</button>
+					<h2>How to Play?</h2>
+
+					<h3>🎲 Objective</h3>
+					<p>
+						Farkle Frenzy is a push-your-luck dice game. Your goal
+						is to be the first player to reach
+						<strong>10,000 points</strong> by rolling combinations
+						that score. After a player crosses 10,000, all other
+						players get one last chance to beat that score.
+					</p>
+
+					<h3>🎯 On Your Turn</h3>
+					<p>
+						You start your turn by rolling six dice. After each
+						roll, you must
+						<strong>lock in at least one scoring die</strong> before
+						choosing to roll again or stop and bank your points.
+					</p>
+					<p>
+						You may roll up to <strong>three times</strong> in a
+						single turn, but each time you risk getting a
+						<em>Farkle</em>—a roll with no scoring dice—which causes
+						you to lose all points for that turn.
+					</p>
+
+					<h3>🔥 Hot Dice</h3>
+					<p>
+						If you manage to score with all six dice in a single
+						turn, you get <strong>Hot Dice</strong>. Your points are
+						banked automatically and you immediately get a new set
+						of six dice to continue your turn.
+					</p>
+
+					<h3>💥 Farkle</h3>
+					<p>
+						If none of your rolled dice score, you
+						<strong>Farkle</strong>. You lose all points accumulated
+						during that turn, and your turn ends immediately.
+					</p>
+
+					<h3>💾 Banking Points</h3>
+					<p>
+						At any point after locking in scoring dice, you may
+						choose to stop and
+						<strong>bank your points</strong> from the current turn.
+						These are then added to your total score.
+					</p>
+
+					<h3>🏆 Winning the Game</h3>
+					<p>
+						Once a player crosses <strong>10,000 points</strong>,
+						all others get a final turn. At the end of that round,
+						the player with the highest score wins!
+					</p>
+				</div>
+			</div>
+
+			<div id="status">Waiting for roll...</div>
+			<div id="locked-dice-container" class="locked-dice-container"></div>
+		</div>
+
+		<!-- 📜 Mobile Cheat Sheet Popup -->
+		<div id="cheat-popup" class="cheat-popup hidden">
+			<button id="close-popup" class="close-popup">&times;</button>
+			<div class="popup-content">
+				<h3>Cheat Sheet</h3>
+				<div class="popup-columns">
+					<div>
+						<h4>Basic Combos</h4>
+						<ul>
+							<li><img src="images/dice-1.png" /> → 100 pts</li>
+							<li><img src="images/dice-5.png" /> → 50 pts</li>
+							<li class="combo">
+								<img src="images/dice-1.png" /><img
+									src="images/dice-1.png"
+								/><img src="images/dice-1.png" /> → 300 pts
+							</li>
+							<li class="combo">
+								<img src="images/dice-2.png" /><img
+									src="images/dice-2.png"
+								/><img src="images/dice-2.png" /> → 200 pts
+							</li>
+							<li class="combo">
+								<img src="images/dice-3.png" /><img
+									src="images/dice-3.png"
+								/><img src="images/dice-3.png" /> → 300 pts
+							</li>
+							<li class="combo">
+								<img src="images/dice-4.png" /><img
+									src="images/dice-4.png"
+								/><img src="images/dice-4.png" /> → 400 pts
+							</li>
+							<li class="combo">
+								<img src="images/dice-5.png" /><img
+									src="images/dice-5.png"
+								/><img src="images/dice-5.png" /> → 500 pts
+							</li>
+							<li class="combo">
+								<img src="images/dice-6.png" /><img
+									src="images/dice-6.png"
+								/><img src="images/dice-6.png" /> → 600 pts
+							</li>
+						</ul>
+					</div>
+					<div>
+						<h4>Special Combos</h4>
+						<ul>
+							<li class="combo">4 Of A Kind → 1000 pts</li>
+							<li class="combo">5 Of A Kind → 2000 pts</li>
+							<li class="combo">6 Of A Kind → 3000 pts</li>
+							<li class="combo">
+								4 Of A Kind + A Pair → 1500 pts
+							</li>
+							<li class="combo">
+								<img src="images/dice-1.png" /><img
+									src="images/dice-2.png"
+								/><img src="images/dice-3.png" /><img
+									src="images/dice-4.png"
+								/><img src="images/dice-5.png" /><img
+									src="images/dice-6.png"
+								/>
+								→ 1500 pts
+							</li>
+							<li class="combo">Three Pairs → 1500 pts</li>
+							<li class="combo">Two Triples → 2500 pts</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="cheat-sheet" class="cheat-sheet">
+			<div class="cheat-sheet-box cheat-left">
+				<h3>Basic</h3>
+				<ul>
+					<li><img src="images/dice-1.png" /> → 100 pts</li>
+					<li><img src="images/dice-5.png" /> → 50 pts</li>
+					<li class="combo">
+						<img src="images/dice-1.png" /><img
+							src="images/dice-1.png"
+						/><img src="images/dice-1.png" /> → 300 pts
+					</li>
+					<li class="combo">
+						<img src="images/dice-2.png" /><img
+							src="images/dice-2.png"
+						/><img src="images/dice-2.png" /> → 200 pts
+					</li>
+					<li class="combo">
+						<img src="images/dice-3.png" /><img
+							src="images/dice-3.png"
+						/><img src="images/dice-3.png" /> → 300 pts
+					</li>
+					<li class="combo">
+						<img src="images/dice-4.png" /><img
+							src="images/dice-4.png"
+						/><img src="images/dice-4.png" /> → 400 pts
+					</li>
+					<li class="combo">
+						<img src="images/dice-5.png" /><img
+							src="images/dice-5.png"
+						/><img src="images/dice-5.png" /> → 500 pts
+					</li>
+					<li class="combo">
+						<img src="images/dice-6.png" /><img
+							src="images/dice-6.png"
+						/><img src="images/dice-6.png" /> → 600 pts
+					</li>
+				</ul>
+			</div>
+
+			<div class="cheat-sheet-box cheat-right">
+				<h3>Special</h3>
+				<ul>
+					<li class="combo">4 Of A Kind → 1000 pts</li>
+					<li class="combo">5 Of A Kind → 2000 pts</li>
+					<li class="combo">6 Of A Kind → 3000 pts</li>
+					<li class="combo">4 Of A Kind + A Pair → 1500 pts</li>
+					<li class="combo">
+						<img src="images/dice-1.png" /><img
+							src="images/dice-2.png"
+						/><img src="images/dice-3.png" /><img
+							src="images/dice-4.png"
+						/><img src="images/dice-5.png" /><img
+							src="images/dice-6.png"
+						/>
+						→ 1500 pts
+					</li>
+					<li class="combo">Three Pairs → 1500 pts</li>
+					<li class="combo">Two Triples → 2500 pts</li>
+				</ul>
+			</div>
+		</div>
+
+		<div id="winner-popup" class="winner-popup hidden">
+			<div class="winner-box">
+				<h2 id="winner-message">🎉 Winner!</h2>
+				<ul id="final-scores"></ul>
+				<button id="play-again-btn">Play Again</button>
+			</div>
+		</div>
+
+		<script src="script.js"></script>
+	</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Farkle Frenzy - Choose Players</title>
+		<style>
+			@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Rubik:wght@400;600&display=swap");
+
+			body {
+				margin: 0;
+				padding: 0;
+				font-family: "Rubik", sans-serif;
+				background: linear-gradient(to bottom right, #ffebe0, #ffe9d2);
+				color: #3c1f00;
+				min-height: 100vh;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+
+			.title-screen {
+				text-align: center;
+			}
+
+			h1 {
+				font-family: "Playfair Display", serif;
+				color: #e0462f;
+				text-shadow: 0 0 10px rgba(255, 100, 50, 0.3);
+				font-size: 4rem;
+				margin-bottom: 2rem;
+			}
+
+			.player-select {
+				font-size: 1.2rem;
+				margin-bottom: 1.5rem;
+				color: #c73a21;
+				font-family: "Rubik", sans-serif;
+			}
+
+			.buttons {
+				display: flex;
+				justify-content: center;
+				gap: 1rem;
+				flex-wrap: wrap;
+			}
+
+			.buttons button {
+				padding: 0.6rem 1.5rem;
+				font-size: 1.2rem;
+				border: none;
+				border-radius: 10px;
+				background-color: #d94f2a;
+				color: white;
+				cursor: pointer;
+				transition: background-color 0.2s, transform 0.2s,
+					box-shadow 0.2s;
+				box-shadow: 0 4px 10px rgba(255, 102, 51, 0.3);
+				font-family: "Rubik", sans-serif;
+			}
+
+			.buttons button:hover {
+				background-color: #bf3b1f;
+				transform: scale(1.05);
+			}
+		</style>
+	<style> .tautology-home-link{position:fixed;top:.65rem;left:.75rem;z-index:2147483647;font:700 12px/1 'Courier New',Courier,monospace;text-transform:uppercase;letter-spacing:0;color:currentColor;text-decoration:none;opacity:.42;background:transparent;border:0;padding:0;text-shadow:0 1px 2px rgba(255,255,255,.35);} .tautology-home-link:hover{opacity:.8;text-decoration:underline;} </style></head>
+	<body><a class="tautology-home-link" href="/" aria-label="Tautology home">P or not P</a>
+		<div class="title-screen">
+			<h1>Farkle Frenzy</h1>
+			<div class="player-select">How many players?</div>
+			<div class="buttons">
+				<button onclick="startGame(2, true)">Vs CPU</button>
+				<button onclick="startGame(2)">2 Players</button>
+			</div>
+		</div>
+
+		<script>
+			function startGame(playerCount, vsCPU = false) {
+				const url = new URL(
+					window.location.origin +
+						window.location.pathname.replace(
+							/\/[^\/]*$/,
+							"/start.html"
+						)
+				);
+				url.searchParams.set("players", playerCount);
+				if (vsCPU) url.searchParams.set("cpu", "true");
+				window.location.href = url;
+			}
+		</script>
+	</body>
+</html>

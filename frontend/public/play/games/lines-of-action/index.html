@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Lines of Action</title>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			body {
+				margin: 0;
+				background-color: #fffcd4;
+				font-family: "Orbitron", sans-serif;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				height: 100vh;
+			}
+
+			h1 {
+				font-size: 3rem;
+				color: #fac327;
+				margin-bottom: 2rem;
+				text-align: center;
+			}
+
+			.mode-select {
+				display: flex;
+				gap: 2rem;
+			}
+
+			.mode-select button {
+				padding: 1rem 2rem;
+				font-size: 1.2rem;
+				font-family: inherit;
+				background-color: #fac327;
+				color: #333;
+				border: none;
+				border-radius: 12px;
+				cursor: pointer;
+				transition: transform 0.2s ease, background-color 0.2s ease;
+			}
+
+			.mode-select button:hover {
+				transform: scale(1.05);
+				background-color: #f5b800;
+			}
+		</style>
+	<style> .tautology-home-link{position:fixed;top:.65rem;left:.75rem;z-index:2147483647;font:700 12px/1 'Courier New',Courier,monospace;text-transform:uppercase;letter-spacing:0;color:currentColor;text-decoration:none;opacity:.42;background:transparent;border:0;padding:0;text-shadow:0 1px 2px rgba(255,255,255,.35);} .tautology-home-link:hover{opacity:.8;text-decoration:underline;} </style></head>
+	<body><a class="tautology-home-link" href="/" aria-label="Tautology home">P or not P</a>
+		<h1>Lines of Action</h1>
+		<div class="mode-select">
+			<button onclick="startGame('pass')">Pass and Play</button>
+			<button onclick="startGame('ai')">Vs Computer</button>
+		</div>
+
+		<script>
+			function startGame(mode) {
+				window.location.href = `game.html?mode=${mode}`;
+			}
+		</script>
+	</body>
+</html>
