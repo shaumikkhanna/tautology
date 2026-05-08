@@ -14,6 +14,7 @@ export type SectionItem = {
   body?: string;
   image?: string;
   playHref?: string;
+  requiresBackend?: boolean;
   status?: string;
   href: string;
 };
@@ -39,6 +40,7 @@ type ItemMeta = {
   body?: string;
   image?: string;
   playHref?: string;
+  requiresBackend?: boolean;
   status?: string;
   href?: string;
 };
@@ -83,6 +85,7 @@ function readItem(sectionSlug: string, itemSlug: string): SectionItem | null {
     body: meta.body,
     image: meta.image,
     playHref: meta.playHref,
+    requiresBackend: meta.requiresBackend,
     status: meta.status,
     href: meta.href ?? `/${sectionSlug}/${itemSlug}`,
   };

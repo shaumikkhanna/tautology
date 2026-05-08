@@ -13,7 +13,10 @@ This workspace is a Next.js migration shell for the old Tautology Flask/static-g
 - `frontend/lib/sections.ts` is the small registry/discovery layer for sections and content folders.
 - `frontend/content/<section>/<item>/meta.json` is the content source for section listings and detail cards.
 - `frontend/public/play/games/<slug>/` contains isolated static HTML/CSS/JS game bundles copied from the old games.
+- `frontend/app/play/games/starnim/` is a dynamic isolated Next implementation of Starnim. It has no shell header/footer and talks to the FastAPI backend for computer moves.
 - `frontend/public/favicons/` contains favicon assets used by Next metadata in `frontend/app/layout.tsx`.
+- `backend/` is the FastAPI service intended for Render. It exposes shared health checks and Python-backed game/project APIs.
+- `render.yaml` defines a Render web service for `backend/`; set `FRONTEND_ORIGINS` in Render to include the deployed Vercel URL.
 
 ## Design Direction
 
@@ -25,6 +28,7 @@ The site should feel like a clean, modern version of old basic HTML/JS pages:
 - Individual games should keep their own original styling and not inherit the Tautology beige shell.
 - Static games include a very quiet top-left `P or not P` link back to `/`; it uses current text color and low opacity so it does not fight each game's palette.
 - The Next/Tailwind shell plays `/computer-click.mp3` on pointer clicks via `frontend/components/ClickSound.tsx`. Isolated static game pages under `frontend/public/play/...` do not include this component, so the click sound stops after users press Play.
+- Backend-backed cards use `frontend/components/BackendLaunchButton.tsx`. If `requiresBackend` is true in `meta.json`, the Play button opens a loading modal, polls `GET /api/health`, and only then navigates to the play route.
 
 ## Adding a Section
 
@@ -79,6 +83,25 @@ Keep the game's own `index.html`, CSS, JS, images, and sounds together in that f
 ```
 
 This keeps the game styles isolated from the Next/Tailwind shell.
+
+## Backend-Backed Games
+
+For a game that needs Python or future ML logic:
+
+1. Add backend code under `backend/app/games/<slug>/`.
+2. Add FastAPI routes under `backend/app/api/games/<slug>.py`.
+3. Include the router in `backend/app/main.py`.
+4. Add a frontend play route under `frontend/app/play/games/<slug>/`.
+5. In `frontend/content/games/<slug>/meta.json`, set:
+
+```json
+{
+  "playHref": "/play/games/slug",
+  "requiresBackend": true
+}
+```
+
+The shared wake-up check is `GET /api/health`; Starnim's current move endpoint is `POST /api/games/starnim/computer-move`.
 
 ## Useful Commands
 

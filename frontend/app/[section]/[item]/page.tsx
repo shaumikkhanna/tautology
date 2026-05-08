@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { BackendLaunchButton } from "@/components/BackendLaunchButton";
 import {
   getSection,
   getSectionItem,
@@ -59,12 +60,10 @@ export default async function ItemPage({ params }: ItemPageProps) {
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
             {item.playHref ? (
-              <a
+              <BackendLaunchButton
                 href={item.playHref}
-                className="border-2 border-ink bg-soot px-5 py-3 font-mono text-sm uppercase text-paper shadow-hard hover:bg-brass hover:text-ink"
-              >
-                Play
-              </a>
+                requiresBackend={item.requiresBackend}
+              />
             ) : null}
           </div>
         </div>

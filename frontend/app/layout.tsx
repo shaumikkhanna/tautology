@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ClickSound } from "@/components/ClickSound";
+import { AppShell } from "@/components/AppShell";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 
@@ -26,12 +26,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="flex min-h-screen flex-col">
-          <ClickSound />
-          <SiteHeader />
-          <main className="flex flex-1 flex-col">{children}</main>
-          <SiteFooter />
-        </div>
+        <AppShell header={<SiteHeader />} footer={<SiteFooter />}>
+          {children}
+        </AppShell>
       </body>
     </html>
   );

@@ -34,7 +34,8 @@ The folder appears automatically on `/games`. The item page renders a simple car
   "description": "Short description.",
   "body": "Longer placeholder text for the card.",
   "image": "/game-images/my-game.png",
-  "playHref": "/play/games/my-game/index.html"
+  "playHref": "/play/games/my-game/index.html",
+  "requiresBackend": false
 }
 ```
 
@@ -48,4 +49,10 @@ For a custom Next route in the list, add `href` to `meta.json`:
   "description": "Short description.",
   "href": "/games/my-game-next"
 }
+```
+
+Set `requiresBackend` to `true` when the Play button should first wait for the shared backend health endpoint before opening the app. The frontend reads the API base URL from:
+
+```txt
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 ```

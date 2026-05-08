@@ -1,0 +1,8 @@
+{
+  "title": "Starnim",
+  "description": "A star-shaped impartial game with Python-backed computer moves.",
+  "body": "Choose an odd number of nodes, take one or two connected nodes, and try to leave the computer with the last move. The computer move comes from the FastAPI backend.",
+  "image": "",
+  "playHref": "/play/games/starnim",
+  "requiresBackend": true
+}

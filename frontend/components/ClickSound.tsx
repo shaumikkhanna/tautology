@@ -1,14 +1,20 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 export function ClickSound() {
+  const pathname = usePathname();
   const audioContextRef = useRef<AudioContext | null>(null);
   const clickBufferRef = useRef<AudioBuffer | null>(null);
   const fallbackPoolRef = useRef<HTMLAudioElement[]>([]);
   const fallbackIndexRef = useRef(0);
 
   useEffect(() => {
+    if (pathname.startsWith("/play/")) {
+      return;
+    }
+
     let isMounted = true;
 
     fallbackPoolRef.current = Array.from({ length: 5 }, () => {
@@ -96,7 +102,7 @@ export function ClickSound() {
       clickBufferRef.current = null;
       fallbackPoolRef.current = [];
     };
-  }, []);
+  }, [pathname]);
 
   return null;
 }
