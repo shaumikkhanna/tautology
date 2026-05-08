@@ -3,33 +3,98 @@
 import { useEffect, useRef } from "react";
 
 export function ClickSound() {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const clickBufferRef = useRef<AudioBuffer | null>(null);
+  const fallbackPoolRef = useRef<HTMLAudioElement[]>([]);
+  const fallbackIndexRef = useRef(0);
 
   useEffect(() => {
-    audioRef.current = new Audio("/computer-click.mp3");
-    audioRef.current.preload = "auto";
-    audioRef.current.volume = 0.45;
+    let isMounted = true;
+
+    fallbackPoolRef.current = Array.from({ length: 5 }, () => {
+      const audio = new Audio("/computer-click.mp3");
+      audio.preload = "auto";
+      audio.volume = 0.45;
+      audio.load();
+      return audio;
+    });
+
+    async function loadClickBuffer(context: AudioContext) {
+      const response = await fetch("/computer-click.mp3");
+      const bytes = await response.arrayBuffer();
+      const buffer = await context.decodeAudioData(bytes);
+
+      if (isMounted) {
+        clickBufferRef.current = buffer;
+      }
+    }
+
+    function getAudioContext() {
+      if (!audioContextRef.current) {
+        const AudioContextConstructor =
+          window.AudioContext ||
+          (window as typeof window & { webkitAudioContext?: typeof AudioContext })
+            .webkitAudioContext;
+
+        if (AudioContextConstructor) {
+          audioContextRef.current = new AudioContextConstructor({
+            latencyHint: "interactive",
+          });
+          void loadClickBuffer(audioContextRef.current).catch(() => {});
+        }
+      }
+
+      return audioContextRef.current;
+    }
+
+    function playFallback() {
+      const pool = fallbackPoolRef.current;
+
+      if (!pool.length) {
+        return;
+      }
+
+      const audio = pool[fallbackIndexRef.current % pool.length];
+      fallbackIndexRef.current += 1;
+      audio.currentTime = 0;
+      void audio.play().catch(() => {});
+    }
 
     function playClick(event: PointerEvent) {
       if (event.pointerType === "mouse" && event.button !== 0) {
         return;
       }
 
-      const audio = audioRef.current;
+      const context = getAudioContext();
+      const buffer = clickBufferRef.current;
 
-      if (!audio) {
+      if (!context || !buffer) {
+        playFallback();
         return;
       }
 
-      audio.currentTime = 0;
-      void audio.play().catch(() => {});
+      if (context.state === "suspended") {
+        void context.resume();
+      }
+
+      const source = context.createBufferSource();
+      const gain = context.createGain();
+      gain.gain.value = 0.45;
+      source.buffer = buffer;
+      source.connect(gain);
+      gain.connect(context.destination);
+      source.start();
     }
 
     window.addEventListener("pointerdown", playClick, { capture: true });
 
     return () => {
+      isMounted = false;
       window.removeEventListener("pointerdown", playClick, { capture: true });
-      audioRef.current = null;
+      void audioContextRef.current?.close();
+      audioContextRef.current = null;
+      clickBufferRef.current = null;
+      fallbackPoolRef.current = [];
     };
   }, []);
 
