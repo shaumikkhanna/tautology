@@ -24,6 +24,7 @@ The site should feel like a clean, modern version of old basic HTML/JS pages:
 - Section pages can use the retro cards.
 - Individual games should keep their own original styling and not inherit the Tautology beige shell.
 - Static games include a very quiet top-left `P or not P` link back to `/`; it uses current text color and low opacity so it does not fight each game's palette.
+- The Next/Tailwind shell plays `/computer-click.mp3` on pointer clicks via `frontend/components/ClickSound.tsx`. Isolated static game pages under `frontend/public/play/...` do not include this component, so the click sound stops after users press Play.
 
 ## Adding a Section
 
