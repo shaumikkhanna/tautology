@@ -30,6 +30,11 @@ export const sections: Section[] = [
     label: "Projects",
     description: "Tools, sketches, studies, and half-polished contraptions.",
   },
+  {
+    slug: "tools",
+    label: "Tools",
+    description: "Useful little utilities for words, patterns, and play.",
+  },
 ];
 
 const contentRoot = path.join(process.cwd(), "content");

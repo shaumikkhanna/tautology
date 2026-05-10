@@ -62,6 +62,7 @@ Sections are registered in `frontend/lib/sections.ts`:
 export const sections = [
   { slug: "games", label: "Games", description: "..." },
   { slug: "projects", label: "Projects", description: "..." },
+  { slug: "tools", label: "Tools", description: "..." },
 ];
 ```
 
@@ -69,6 +70,7 @@ Each card is a folder with `meta.json`:
 
 ```txt
 frontend/content/games/starnim/meta.json
+frontend/content/tools/anagram-solver/meta.json
 ```
 
 Example:
@@ -250,6 +252,39 @@ frontend/components/ClickSound.tsx
 ```
 
 It uses Web Audio for low-latency repeated clicks and a fallback audio pool. The click sound is not mounted under `/play/...`, so games/apps do not inherit it.
+
+## Anagram Solver
+
+The Anagram Solver is a normal shell-styled tool, not an isolated `/play/...` app.
+
+Frontend route:
+
+```txt
+frontend/app/tools/anagram-solver/
+```
+
+Card metadata:
+
+```txt
+frontend/content/tools/anagram-solver/meta.json
+```
+
+Dictionary assets live directly under:
+
+```txt
+frontend/public/anagram-dictionaries/
+```
+
+The browser fetches either `scrabble.json` or `general.json` and filters locally. These public JSON files are the maintained deploy-time dictionary assets; there is no build-time dictionary generation step.
+
+Supported pattern syntax:
+
+- `?` matches any single letter.
+- Quoted text keeps relative order, such as `len"ist"`.
+- Parentheses keep a group contiguous but anagrammed internally, such as `abc(def)gh`.
+- Quoted and parenthesized pieces are placed as non-overlapping spans.
+- `^` anchors everything before it to the start; `$` anchors everything after it to the end.
+- Anchors do not imply any extra length. Use `?` for each unknown letter, such as `ab^????` for 6-letter words starting with an anagram of `ab`.
 
 ## Backend
 
