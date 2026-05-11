@@ -286,6 +286,83 @@ Supported pattern syntax:
 - `^` anchors everything before it to the start; `$` anchors everything after it to the end.
 - Anchors do not imply any extra length. Use `?` for each unknown letter, such as `ab^????` for 6-letter words starting with an anagram of `ab`.
 
+## StageSelect
+
+StageSelect is a dedicated project app for rating, reviewing, and tracking video games.
+
+Project card:
+
+```txt
+frontend/content/projects/stageselect/meta.json
+```
+
+Frontend routes and modules:
+
+```txt
+frontend/app/projects/stageselect/page.tsx
+frontend/app/projects/stageselect/StageSelectApp.tsx
+frontend/app/api/projects/stageselect/search/route.ts
+frontend/app/api/projects/stageselect/library/route.ts
+frontend/app/api/projects/stageselect/library/[userGameId]/route.ts
+frontend/lib/igdb/client.ts
+frontend/lib/igdb/types.ts
+frontend/lib/supabase/client.ts
+frontend/lib/supabase/server.ts
+frontend/lib/stageselect/api.ts
+frontend/lib/stageselect/storage.ts
+```
+
+Planning/handoff file:
+
+```txt
+STAGESELECT_PLAN.md
+```
+
+StageSelect intentionally uses a cleaner modern neutral app style rather than the beige retro shell aesthetic, so game covers and library cards get visual priority.
+
+Current behavior:
+
+- Supabase Auth signup, login, logout, and session detection work in the StageSelect account panel.
+- Supabase uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; prefer publishable keys over legacy anon JWT keys.
+- IGDB search runs through the Next route `GET /api/projects/stageselect/search?q=...`; IGDB client id/secret stay server-side.
+- IGDB access tokens are requested with Twitch client credentials and cached in memory until shortly before expiry.
+- Search results are normalized and locally ranked by relevance/popularity signals so obvious major games rise higher.
+- Search and Library are separate tabs.
+- Users can save games with statuses: `finished`, `left`, `playing`, `backlogged`, `wishlisted`.
+- `finished`, `left`, `playing`, and `backlogged` open a modal with mandatory platform plus optional star rating and review.
+- `wishlisted` saves immediately without review/rating.
+- Save, update, and remove writes run through Next API routes under `/api/projects/stageselect/library`.
+- The save route optionally caches cover images in Supabase Object Storage and stores `cover_storage_path` plus the cached public `cover_url`.
+- Library reads from Supabase and shows compact cover cards with colored status/platform chips.
+- Clicking a library card opens an edit modal where the user can update status/platform/rating/review or remove the game.
+- StageSelect should use Supabase Object Storage, not Cloudflare/R2, for cached game images/covers when image caching is added.
+
+Supabase migrations live under:
+
+```txt
+supabase/migrations/
+```
+
+Current migrations:
+
+- `20260511000000_stageselect_schema.sql`: profiles, cached games, user library, reviews, enums, RLS, profile trigger.
+- `20260511001000_stageselect_game_cache_policies.sql`: authenticated users can cache/refresh selected IGDB game metadata.
+- `20260511002000_stageselect_user_game_platform.sql`: user-selected platform on `stageselect_user_games`.
+- `20260511003000_stageselect_storage_bucket.sql`: public Supabase Storage bucket for cached cover images.
+
+Frontend env:
+
+```txt
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SECRET_KEY=
+STAGESELECT_STORAGE_BUCKET=stageselect-game-images
+IGDB_CLIENT_ID=
+IGDB_CLIENT_SECRET=
+```
+
+`frontend/.env.local` is ignored and may contain local Supabase/IGDB credentials. Do not commit secrets. `SUPABASE_SECRET_KEY` is server-only and must not use a `NEXT_PUBLIC_` prefix. The IGDB client secret pasted during development should be rotated before production.
+
 ## Backend
 
 FastAPI backend lives in `backend/`.

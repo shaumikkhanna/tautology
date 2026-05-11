@@ -1,0 +1,7 @@
+{
+  "title": "StageSelect",
+  "description": "A planned game library for rating, reviewing, and tracking what to play next.",
+  "body": "StageSelect is a planned game rating and review project with Supabase accounts, IGDB-powered game search, personal library statuses, and reviews.",
+  "status": "planned",
+  "href": "/projects/stageselect"
+}
