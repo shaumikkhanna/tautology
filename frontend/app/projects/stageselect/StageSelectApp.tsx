@@ -33,6 +33,7 @@ type GameRecord = {
   title: string;
   release_date: string | null;
   cover_url: string | null;
+  platforms: string[] | null;
 };
 
 type UserGameRecord = {
@@ -54,6 +55,7 @@ type LibraryItem = {
   gameId: string;
   title: string;
   platform: string;
+  platformOptions: string[];
   rating: string;
   review: string;
   status: string;
@@ -132,7 +134,7 @@ export function StageSelectApp() {
           supabase
             .from("stageselect_user_games")
             .select(
-              "id, game_id, status, platform, stageselect_games(id, title, release_date, cover_url)",
+              "id, game_id, status, platform, stageselect_games(id, title, release_date, cover_url, platforms)",
             )
             .eq("user_id", nextSession.user.id)
             .order("updated_at", { ascending: false }),
@@ -182,6 +184,10 @@ export function StageSelectApp() {
             gameId: item.game_id,
             title: game.title,
             platform: item.platform ?? "-",
+            platformOptions: getLibraryPlatformOptions(
+              game.platforms,
+              item.platform,
+            ),
             rating:
               reviewsByGame.get(item.game_id)?.rating === null ||
               reviewsByGame.get(item.game_id)?.rating === undefined
@@ -1029,11 +1035,18 @@ export function StageSelectApp() {
                 <span className="font-mono text-xs uppercase text-[#667085]">
                   Platform
                 </span>
-                <input
+                <select
                   className="mt-2 w-full rounded-md border border-[#cfd6e0] bg-white px-3 py-3 text-sm text-[#20242c] outline-none transition focus:border-[#7c8ca5] focus:ring-2 focus:ring-[#dce3ee]"
                   onChange={(event) => setEditPlatform(event.target.value)}
                   value={editPlatform}
-                />
+                >
+                  <option value="">Choose platform</option>
+                  {libraryModal.game.platformOptions.map((platform) => (
+                    <option key={platform} value={platform}>
+                      {platform}
+                    </option>
+                  ))}
+                </select>
               </label>
 
               <label>
@@ -1118,6 +1131,29 @@ function getSortableRating(rating: string) {
   const value = Number(rating);
 
   return Number.isFinite(value) ? value : -1;
+}
+
+function getLibraryPlatformOptions(
+  platforms: string[] | null,
+  selectedPlatform: string | null,
+) {
+  const options = new Set<string>();
+
+  if (selectedPlatform?.trim() && selectedPlatform !== "-") {
+    options.add(selectedPlatform.trim());
+  }
+
+  platforms?.forEach((platform) => {
+    if (platform.trim()) {
+      options.add(platform.trim());
+    }
+  });
+
+  if (options.size === 0) {
+    options.add("Unknown");
+  }
+
+  return Array.from(options).sort();
 }
 
 function getStatusLabel(statusValue: string) {

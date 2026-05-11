@@ -76,6 +76,7 @@ supabase/migrations/20260511000000_stageselect_schema.sql
 supabase/migrations/20260511001000_stageselect_game_cache_policies.sql
 supabase/migrations/20260511002000_stageselect_user_game_platform.sql
 supabase/migrations/20260511003000_stageselect_storage_bucket.sql
+supabase/migrations/20260511004000_stageselect_cover_storage_path.sql
 ```
 
 Local env shape:

@@ -349,6 +349,7 @@ Current migrations:
 - `20260511001000_stageselect_game_cache_policies.sql`: authenticated users can cache/refresh selected IGDB game metadata.
 - `20260511002000_stageselect_user_game_platform.sql`: user-selected platform on `stageselect_user_games`.
 - `20260511003000_stageselect_storage_bucket.sql`: public Supabase Storage bucket for cached cover images.
+- `20260511004000_stageselect_cover_storage_path.sql`: forward migration for existing databases that predate `cover_storage_path`.
 
 Frontend env:
 
