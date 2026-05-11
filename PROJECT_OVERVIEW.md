@@ -340,6 +340,8 @@ Current behavior:
 - Library reads from Supabase and shows compact cover cards with colored status/platform chips.
 - Library rendering is paginated client-side in chunks so large libraries do not render every visible card at once.
 - Clicking a library card opens an edit modal where the user can update status/platform/rating/review or remove the game; platform edits use a dropdown from cached IGDB platform data.
+- Library ratings render as 5-star displays with half-star clipping; unrated games show a dash.
+- Library filters currently include platform, status, release year, rating bucket, and review presence; sorts include title, rating high/low, newest/oldest, status, and platform.
 - StageSelect uses Supabase Object Storage, not Cloudflare/R2, for cached game images/covers.
 
 Supabase migrations live under:

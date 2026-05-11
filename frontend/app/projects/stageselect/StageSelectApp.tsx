@@ -106,6 +106,9 @@ export function StageSelectApp() {
   const [activeTab, setActiveTab] = useState("search");
   const [statusFilter, setStatusFilter] = useState("all");
   const [platformFilter, setPlatformFilter] = useState("all");
+  const [ratingFilter, setRatingFilter] = useState("all");
+  const [releaseFilter, setReleaseFilter] = useState("all");
+  const [reviewFilter, setReviewFilter] = useState("all");
   const [sortMode, setSortMode] = useState("title");
   const [libraryVisibleCount, setLibraryVisibleCount] =
     useState(libraryPageSize);
@@ -244,24 +247,88 @@ export function StageSelectApp() {
     return Array.from(new Set(library.map((item) => item.platform))).sort();
   }, [library]);
 
+  const releaseYearOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        library
+          .map((item) => item.releaseYear)
+          .filter((year) => year !== "-"),
+      ),
+    ).sort((a, b) => Number(b) - Number(a));
+  }, [library]);
+
   const visibleLibrary = useMemo(() => {
     return library
       .filter((item) => statusFilter === "all" || item.status === statusFilter)
       .filter(
         (item) => platformFilter === "all" || item.platform === platformFilter,
       )
+      .filter(
+        (item) =>
+          releaseFilter === "all" || item.releaseYear === releaseFilter,
+      )
+      .filter((item) => {
+        if (ratingFilter === "rated") {
+          return getSortableRating(item.rating) > 0;
+        }
+
+        if (ratingFilter === "unrated") {
+          return getSortableRating(item.rating) < 0;
+        }
+
+        if (ratingFilter.startsWith("min-")) {
+          return getSortableRating(item.rating) >= Number(ratingFilter.slice(4));
+        }
+
+        return true;
+      })
+      .filter((item) => {
+        if (reviewFilter === "reviewed") {
+          return Boolean(item.review);
+        }
+
+        if (reviewFilter === "unreviewed") {
+          return !item.review;
+        }
+
+        return true;
+      })
       .sort((a, b) => {
         if (sortMode === "rating") {
           return getSortableRating(b.rating) - getSortableRating(a.rating);
+        }
+
+        if (sortMode === "rating-asc") {
+          return getSortableRating(a.rating) - getSortableRating(b.rating);
+        }
+
+        if (sortMode === "release-desc") {
+          return getSortableYear(b.releaseYear) - getSortableYear(a.releaseYear);
+        }
+
+        if (sortMode === "release-asc") {
+          return getSortableYear(a.releaseYear) - getSortableYear(b.releaseYear);
         }
 
         if (sortMode === "status") {
           return a.status.localeCompare(b.status);
         }
 
+        if (sortMode === "platform") {
+          return a.platform.localeCompare(b.platform);
+        }
+
         return a.title.localeCompare(b.title);
       });
-  }, [library, platformFilter, sortMode, statusFilter]);
+  }, [
+    library,
+    platformFilter,
+    ratingFilter,
+    releaseFilter,
+    reviewFilter,
+    sortMode,
+    statusFilter,
+  ]);
 
   const pagedLibrary = useMemo(() => {
     return visibleLibrary.slice(0, libraryVisibleCount);
@@ -269,7 +336,14 @@ export function StageSelectApp() {
 
   useEffect(() => {
     setLibraryVisibleCount(libraryPageSize);
-  }, [platformFilter, sortMode, statusFilter]);
+  }, [
+    platformFilter,
+    ratingFilter,
+    releaseFilter,
+    reviewFilter,
+    sortMode,
+    statusFilter,
+  ]);
 
   async function signUp() {
     if (!supabase) {
@@ -544,6 +618,10 @@ export function StageSelectApp() {
             <h1 className="mt-3 font-mono text-4xl font-bold uppercase tracking-normal text-[#111827] sm:text-5xl">
               StageSelect
             </h1>
+            <p className="mt-4 max-w-2xl text-sm leading-6 text-[#4b5563] sm:text-base">
+              Keep the backlog honest, remember what clicked, and give every
+              finished game a little closing ceremony.
+            </p>
           </div>
 
           <div className="rounded-lg border border-[#d8dde5] bg-white p-4 shadow-sm">
@@ -779,14 +857,53 @@ export function StageSelectApp() {
                     ))}
                   </select>
                   <select
+                    aria-label="Filter library by release year"
+                    className="rounded-md border border-[#cfd6e0] bg-white px-3 py-2 text-xs font-medium text-[#394150]"
+                    onChange={(event) => setReleaseFilter(event.target.value)}
+                    value={releaseFilter}
+                  >
+                    <option value="all">All years</option>
+                    {releaseYearOptions.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    aria-label="Filter library by rating"
+                    className="rounded-md border border-[#cfd6e0] bg-white px-3 py-2 text-xs font-medium text-[#394150]"
+                    onChange={(event) => setRatingFilter(event.target.value)}
+                    value={ratingFilter}
+                  >
+                    <option value="all">All ratings</option>
+                    <option value="rated">Rated</option>
+                    <option value="unrated">Unrated</option>
+                    <option value="min-4">4+ stars</option>
+                    <option value="min-3">3+ stars</option>
+                  </select>
+                  <select
+                    aria-label="Filter library by review"
+                    className="rounded-md border border-[#cfd6e0] bg-white px-3 py-2 text-xs font-medium text-[#394150]"
+                    onChange={(event) => setReviewFilter(event.target.value)}
+                    value={reviewFilter}
+                  >
+                    <option value="all">All reviews</option>
+                    <option value="reviewed">Reviewed</option>
+                    <option value="unreviewed">No review</option>
+                  </select>
+                  <select
                     aria-label="Sort library"
                     className="rounded-md border border-[#cfd6e0] bg-white px-3 py-2 text-xs font-medium text-[#394150]"
                     onChange={(event) => setSortMode(event.target.value)}
                     value={sortMode}
                   >
                     <option value="title">Title</option>
-                    <option value="rating">Rating</option>
+                    <option value="rating">Rating high</option>
+                    <option value="rating-asc">Rating low</option>
+                    <option value="release-desc">Newest</option>
+                    <option value="release-asc">Oldest</option>
                     <option value="status">Status</option>
+                    <option value="platform">Platform</option>
                   </select>
                 </div>
               </div>
@@ -837,13 +954,13 @@ export function StageSelectApp() {
                               {game.title}
                             </h3>
                             <span className="rounded-full border border-[#d8dde5] bg-white px-2 py-1 text-xs text-[#394150]">
-                              {game.rating === "-" ? "-" : `${game.rating}/5`}
+                              <StarRating rating={game.rating} />
                             </span>
                           </div>
                           <div className="mt-3 flex flex-wrap gap-2 text-xs text-[#4b5563]">
                             <span
                               className={[
-                                "rounded-full px-2 py-1",
+                                "rounded-full px-2 py-1 font-mono uppercase",
                                 getStatusChipClass(game.status),
                               ].join(" ")}
                             >
@@ -1178,6 +1295,55 @@ function getSortableRating(rating: string) {
   return Number.isFinite(value) ? value : -1;
 }
 
+function getSortableYear(releaseYear: string) {
+  const value = Number(releaseYear);
+
+  return Number.isFinite(value) ? value : -1;
+}
+
+function StarRating({ rating }: { rating: string }) {
+  const value = Number(rating);
+
+  if (!Number.isFinite(value)) {
+    return <span aria-label="No rating">-</span>;
+  }
+
+  const roundedValue = Math.max(0, Math.min(5, value));
+
+  return (
+    <span
+      aria-label={`${roundedValue} out of 5 stars`}
+      className="flex items-center gap-0.5 text-[#f59e0b]"
+      title={`${roundedValue} / 5`}
+    >
+      {Array.from({ length: 5 }, (_item, index) => {
+        const fill = Math.max(0, Math.min(1, roundedValue - index));
+
+        return <StarIcon fill={fill} key={index} />;
+      })}
+    </span>
+  );
+}
+
+function StarIcon({ fill }: { fill: number }) {
+  const percentage = `${fill * 100}%`;
+
+  return (
+    <span
+      aria-hidden="true"
+      className="relative inline-block h-3.5 w-3.5 text-[#d0d5dd]"
+    >
+      <span className="absolute inset-0">★</span>
+      <span
+        className="absolute inset-0 overflow-hidden text-[#f59e0b]"
+        style={{ width: percentage }}
+      >
+        ★
+      </span>
+    </span>
+  );
+}
+
 function getLibraryPlatformOptions(
   platforms: string[],
   selectedPlatform: string | null,
@@ -1217,9 +1383,9 @@ function getStatusLabel(statusValue: string) {
 function getStatusChipClass(statusValue: string) {
   const classes: Record<string, string> = {
     finished: "bg-[#ecfdf3] text-[#027a48]",
-    left: "bg-[#fff1f3] text-[#c01048]",
+    left: "bg-[#fffaeb] text-[#b54708]",
     playing: "bg-[#eff8ff] text-[#175cd3]",
-    backlogged: "bg-[#fffaeb] text-[#b54708]",
+    backlogged: "bg-[#fff1f3] text-[#c01048]",
     wishlisted: "bg-[#f5f3ff] text-[#6941c6]",
   };
 
