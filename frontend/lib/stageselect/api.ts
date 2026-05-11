@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { StageSelectGameSearchResult } from "@/lib/igdb/types";
+import type { Database } from "@/lib/supabase/database.types";
 
 export const stageselectStatuses = [
   "finished",
@@ -17,22 +18,6 @@ export const stageselectReviewStatuses = new Set<string>([
   "playing",
   "backlogged",
 ]);
-
-export type SaveStageSelectGameInput = {
-  game: StageSelectGameSearchResult;
-  status: StageSelectStatus;
-  platform: string;
-  rating?: string;
-  review?: string;
-};
-
-export type UpdateStageSelectGameInput = {
-  status: StageSelectStatus;
-  platform: string;
-  rating?: string;
-  review?: string;
-  gameId: string;
-};
 
 export function isStageSelectStatus(value: unknown): value is StageSelectStatus {
   return (
@@ -104,7 +89,7 @@ export function validateGamePayload(
 }
 
 export async function getAuthenticatedUser(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   accessToken: string,
 ) {
   const { data, error } = await supabase.auth.getUser(accessToken);

@@ -307,6 +307,7 @@ frontend/app/api/projects/stageselect/library/[userGameId]/route.ts
 frontend/lib/igdb/client.ts
 frontend/lib/igdb/types.ts
 frontend/lib/supabase/client.ts
+frontend/lib/supabase/database.types.ts
 frontend/lib/supabase/server.ts
 frontend/lib/stageselect/api.ts
 frontend/lib/stageselect/storage.ts
@@ -324,6 +325,8 @@ Current behavior:
 
 - Supabase Auth signup, login, logout, and session detection work in the StageSelect account panel.
 - Supabase uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; prefer publishable keys over legacy anon JWT keys.
+- Supabase clients are typed with `frontend/lib/supabase/database.types.ts`, derived from the current StageSelect migrations.
+- Signup sends `emailRedirectTo` to `/projects/stageselect` on the current origin so confirmation links do not fall back to localhost.
 - IGDB search runs through the Next route `GET /api/projects/stageselect/search?q=...`; IGDB client id/secret stay server-side.
 - IGDB access tokens are requested with Twitch client credentials and cached in memory until shortly before expiry.
 - Search results are normalized and locally ranked by relevance/popularity signals so obvious major games rise higher.
@@ -332,10 +335,12 @@ Current behavior:
 - `finished`, `left`, `playing`, and `backlogged` open a modal with mandatory platform plus optional star rating and review.
 - `wishlisted` saves immediately without review/rating.
 - Save, update, and remove writes run through Next API routes under `/api/projects/stageselect/library`.
-- The save route optionally caches cover images in Supabase Object Storage and stores `cover_storage_path` plus the cached public `cover_url`.
+- The save route caches cover images in Supabase Object Storage when `SUPABASE_SECRET_KEY` and the bucket are configured, then stores `cover_storage_path` plus the cached public `cover_url`.
+- If cover upload is unavailable, the save route preserves any existing cached cover before falling back to the IGDB URL.
 - Library reads from Supabase and shows compact cover cards with colored status/platform chips.
-- Clicking a library card opens an edit modal where the user can update status/platform/rating/review or remove the game.
-- StageSelect should use Supabase Object Storage, not Cloudflare/R2, for cached game images/covers when image caching is added.
+- Library rendering is paginated client-side in chunks so large libraries do not render every visible card at once.
+- Clicking a library card opens an edit modal where the user can update status/platform/rating/review or remove the game; platform edits use a dropdown from cached IGDB platform data.
+- StageSelect uses Supabase Object Storage, not Cloudflare/R2, for cached game images/covers.
 
 Supabase migrations live under:
 

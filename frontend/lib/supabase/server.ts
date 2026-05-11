@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "./database.types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabasePublishableKey =
@@ -12,12 +13,12 @@ export function hasServerSupabaseConfig() {
 
 export function createRequestSupabaseClient(
   accessToken: string,
-): SupabaseClient | null {
+): SupabaseClient<Database> | null {
   if (!supabaseUrl || !supabasePublishableKey) {
     return null;
   }
 
-  return createClient(supabaseUrl, supabasePublishableKey, {
+  return createClient<Database>(supabaseUrl, supabasePublishableKey, {
     global: {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -26,12 +27,12 @@ export function createRequestSupabaseClient(
   });
 }
 
-export function createAdminSupabaseClient(): SupabaseClient | null {
+export function createAdminSupabaseClient(): SupabaseClient<Database> | null {
   if (!supabaseUrl || !supabaseSecretKey) {
     return null;
   }
 
-  return createClient(supabaseUrl, supabaseSecretKey, {
+  return createClient<Database>(supabaseUrl, supabaseSecretKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,

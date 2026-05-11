@@ -50,10 +50,6 @@ export async function PATCH(request: Request, context: RouteContext) {
       throw new Error("Choose a valid status.");
     }
 
-    if (!payload.gameId || typeof payload.gameId !== "string") {
-      throw new Error("Game id is required.");
-    }
-
     const platform =
       typeof payload.platform === "string" ? payload.platform.trim() : "";
 
@@ -73,7 +69,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       })
       .eq("id", userGameId)
       .eq("user_id", user.id)
-      .select("id")
+      .select("id, game_id")
       .single();
 
     if (userGameError || !userGame) {
@@ -88,7 +84,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         .upsert(
           {
             user_id: user.id,
-            game_id: payload.gameId,
+            game_id: userGame.game_id,
             rating,
             body: review || null,
             visibility: "private",
@@ -104,7 +100,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         .from("stageselect_reviews")
         .delete()
         .eq("user_id", user.id)
-        .eq("game_id", payload.gameId);
+        .eq("game_id", userGame.game_id);
     }
 
     return NextResponse.json({ ok: true });
@@ -142,10 +138,15 @@ export async function DELETE(request: Request, context: RouteContext) {
   try {
     const { userGameId } = await context.params;
     const user = await getAuthenticatedUser(supabase, accessToken);
-    const gameId = new URL(request.url).searchParams.get("gameId");
+    const { data: userGame, error: findError } = await supabase
+      .from("stageselect_user_games")
+      .select("game_id")
+      .eq("id", userGameId)
+      .eq("user_id", user.id)
+      .single();
 
-    if (!gameId) {
-      throw new Error("Game id is required.");
+    if (findError || !userGame) {
+      throw new Error(findError?.message ?? "Library game was not found.");
     }
 
     const { error } = await supabase
@@ -162,7 +163,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       .from("stageselect_reviews")
       .delete()
       .eq("user_id", user.id)
-      .eq("game_id", gameId);
+      .eq("game_id", userGame.game_id);
 
     return NextResponse.json({ ok: true });
   } catch (error) {

@@ -49,6 +49,10 @@ frontend/content/projects/stageselect/meta.json
   - remove game from library
 - Added server-side save/update/remove routes so write flows no longer write directly to Supabase tables from the browser.
 - Added optional Supabase Object Storage cover caching in the server-side save route.
+- Added email confirmation redirects back to `/projects/stageselect` on the current deployed origin.
+- Changed library edit platform control from free text to a dropdown based on cached IGDB platform data.
+- Added typed Supabase database definitions and typed Supabase clients.
+- Added incremental library rendering pagination so large filtered libraries render in manageable chunks.
 
 ## Current Files
 
@@ -63,6 +67,7 @@ frontend/app/api/projects/stageselect/library/[userGameId]/route.ts
 frontend/lib/igdb/client.ts
 frontend/lib/igdb/types.ts
 frontend/lib/supabase/client.ts
+frontend/lib/supabase/database.types.ts
 frontend/lib/supabase/server.ts
 frontend/lib/stageselect/api.ts
 frontend/lib/stageselect/storage.ts
@@ -102,7 +107,7 @@ IGDB_CLIENT_SECRET=
 `stageselect_games`
 
 - Local cache of selected IGDB game metadata.
-- Stores IGDB id, title, slug, summary, cover URL, release date, platforms, genres, raw normalized payload, and sync time.
+- Stores IGDB id, title, slug, summary, cover URL, cover storage path, release date, platforms, genres, raw normalized payload, and sync time.
 
 `stageselect_user_games`
 
@@ -119,16 +124,14 @@ IGDB_CLIENT_SECRET=
 
 ## Remaining Work
 
-- Apply the Supabase Object Storage bucket migration in production and confirm saved games prefer cached cover/image URLs after save.
-- Add typed Supabase database definitions instead of local ad hoc response types.
 - Add Apple login through Supabase Auth.
 - Add public/private review controls and public game detail pages.
 - Add richer game detail pages for cached games.
 - Add better search filtering, including hiding adult/low-quality edge results if needed.
 - Add optimistic UI and toast notifications for save/update/remove actions.
-- Add pagination or virtualized loading for large libraries.
 - Add tests for IGDB normalization/ranking and core save/update flows.
 - Add production deployment env docs for Vercel/Supabase.
+- Configure custom SMTP before public launch to avoid Supabase's very low built-in email rate limits.
 
 ## Test Plan
 
@@ -136,6 +139,7 @@ IGDB_CLIENT_SECRET=
 - `/projects` should show the StageSelect card.
 - `/projects/stageselect` should load the app.
 - Signup/login/logout should work with Supabase.
+- Email confirmation should redirect back to `/projects/stageselect` on the same deployed origin.
 - Search should return IGDB results through `/api/projects/stageselect/search`.
 - Save/update/remove should run through `/api/projects/stageselect/library` routes.
 - Saving a game should create/reuse a cached `stageselect_games` row.

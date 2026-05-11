@@ -57,13 +57,17 @@ export async function POST(request: Request) {
     const rating = validateRating(payload.rating);
     const review =
       typeof payload.review === "string" ? payload.review.trim() : "";
-    const cachedCover = await cacheStageSelectCover(
-      createAdminSupabaseClient(),
-      {
+    const [{ data: existingGame }, cachedCover] = await Promise.all([
+      supabase
+        .from("stageselect_games")
+        .select("cover_url, cover_storage_path")
+        .eq("igdb_id", game.igdbId)
+        .maybeSingle(),
+      cacheStageSelectCover(createAdminSupabaseClient(), {
         coverUrl: game.coverUrl,
         igdbId: game.igdbId,
-      },
-    );
+      }),
+    ]);
 
     const { data: gameRow, error: gameError } = await supabase
       .from("stageselect_games")
@@ -73,8 +77,15 @@ export async function POST(request: Request) {
           slug: game.slug ?? null,
           title: game.title,
           summary: game.summary ?? null,
-          cover_url: cachedCover?.coverUrl ?? game.coverUrl ?? null,
-          cover_storage_path: cachedCover?.coverStoragePath ?? null,
+          cover_url:
+            cachedCover?.coverUrl ??
+            existingGame?.cover_url ??
+            game.coverUrl ??
+            null,
+          cover_storage_path:
+            cachedCover?.coverStoragePath ??
+            existingGame?.cover_storage_path ??
+            null,
           release_date: game.releaseYear ? `${game.releaseYear}-01-01` : null,
           platforms: game.platforms,
           genres: game.genres,

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/database.types";
 
 const bucketName =
   process.env.STAGESELECT_STORAGE_BUCKET ?? "stageselect-game-images";
@@ -10,7 +11,7 @@ type CachedCover = {
 };
 
 export async function cacheStageSelectCover(
-  supabase: SupabaseClient | null,
+  supabase: SupabaseClient<Database> | null,
   input: {
     coverUrl?: string;
     igdbId: number;

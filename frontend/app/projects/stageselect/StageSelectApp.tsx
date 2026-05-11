@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { StageSelectGameSearchResult } from "@/lib/igdb/types";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import type { Json, Tables } from "@/lib/supabase/database.types";
 import { stageselectReviewStatuses } from "@/lib/stageselect/api";
 
 const statuses = [
@@ -24,31 +25,26 @@ const tabs = [
   { value: "library", label: "Library" },
 ];
 
-type Profile = {
-  display_name: string | null;
-};
+const libraryPageSize = 24;
 
-type GameRecord = {
-  id: string;
-  title: string;
-  release_date: string | null;
-  cover_url: string | null;
-  platforms: string[] | null;
-};
+type Profile = Pick<Tables<"profiles">, "display_name">;
 
-type UserGameRecord = {
-  id: string;
-  game_id: string;
-  status: string;
-  platform: string | null;
+type GameRecord = Pick<
+  Tables<"stageselect_games">,
+  "id" | "title" | "release_date" | "cover_url" | "platforms"
+>;
+
+type UserGameRecord = Pick<
+  Tables<"stageselect_user_games">,
+  "id" | "game_id" | "status" | "platform"
+> & {
   stageselect_games: GameRecord | null;
 };
 
-type ReviewRecord = {
-  game_id: string;
-  rating: number | null;
-  body: string | null;
-};
+type ReviewRecord = Pick<
+  Tables<"stageselect_reviews">,
+  "game_id" | "rating" | "body"
+>;
 
 type LibraryItem = {
   id: string;
@@ -111,6 +107,8 @@ export function StageSelectApp() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [platformFilter, setPlatformFilter] = useState("all");
   const [sortMode, setSortMode] = useState("title");
+  const [libraryVisibleCount, setLibraryVisibleCount] =
+    useState(libraryPageSize);
 
   const loadUserData = useCallback(
     async (nextSession: Session | null) => {
@@ -155,8 +153,7 @@ export function StageSelectApp() {
         return;
       }
 
-      const userGames = (libraryResponse.data ?? []) as unknown as
-        UserGameRecord[];
+      const userGames = (libraryResponse.data ?? []) as UserGameRecord[];
       const gameIds = userGames.map((item) => item.game_id);
       let reviews: ReviewRecord[] = [];
 
@@ -185,7 +182,7 @@ export function StageSelectApp() {
             title: game.title,
             platform: item.platform ?? "-",
             platformOptions: getLibraryPlatformOptions(
-              game.platforms,
+              jsonToStringArray(game.platforms),
               item.platform,
             ),
             rating:
@@ -266,6 +263,14 @@ export function StageSelectApp() {
       });
   }, [library, platformFilter, sortMode, statusFilter]);
 
+  const pagedLibrary = useMemo(() => {
+    return visibleLibrary.slice(0, libraryVisibleCount);
+  }, [libraryVisibleCount, visibleLibrary]);
+
+  useEffect(() => {
+    setLibraryVisibleCount(libraryPageSize);
+  }, [platformFilter, sortMode, statusFilter]);
+
   async function signUp() {
     if (!supabase) {
       setAuthMessage("Supabase is not configured yet.");
@@ -275,7 +280,13 @@ export function StageSelectApp() {
     setIsAuthLoading(true);
     setAuthMessage("Creating account...");
 
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/projects/stageselect`,
+      },
+    });
 
     if (error) {
       setAuthMessage(error.message);
@@ -478,7 +489,6 @@ export function StageSelectApp() {
           platform: editPlatform,
           rating: editRating,
           review: editReview,
-          gameId: libraryModal.game.gameId,
         }),
       },
     );
@@ -506,7 +516,7 @@ export function StageSelectApp() {
 
     const response = await fetchWithSession(
       session,
-      `/api/projects/stageselect/library/${libraryModal.game.id}?gameId=${encodeURIComponent(libraryModal.game.gameId)}`,
+      `/api/projects/stageselect/library/${libraryModal.game.id}`,
       { method: "DELETE" },
     );
 
@@ -785,8 +795,24 @@ export function StageSelectApp() {
 
               <div className="mt-5">
                 {visibleLibrary.length > 0 ? (
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {visibleLibrary.map((game) => (
+                  <>
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-xs text-[#667085]">
+                      <span>
+                        Showing {pagedLibrary.length} of {visibleLibrary.length}
+                      </span>
+                      {pagedLibrary.length > libraryPageSize ? (
+                        <button
+                          className="font-mono font-bold uppercase text-[#20242c] transition hover:text-[#111827] disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={pagedLibrary.length >= visibleLibrary.length}
+                          onClick={() => setLibraryVisibleCount(libraryPageSize)}
+                          type="button"
+                        >
+                          Reset
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {pagedLibrary.map((game) => (
                       <button
                         className="overflow-hidden rounded-lg border border-[#d8dde5] bg-[#fbfcfd] text-left transition hover:-translate-y-0.5 hover:border-[#b8c2d1] hover:shadow-sm"
                         key={game.id}
@@ -843,8 +869,27 @@ export function StageSelectApp() {
                           </div>
                         </div>
                       </button>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                    {pagedLibrary.length < visibleLibrary.length ? (
+                      <div className="mt-5 flex justify-center">
+                        <button
+                          className="rounded-md border border-[#cfd6e0] bg-white px-4 py-2 font-mono text-xs font-bold uppercase text-[#20242c] transition hover:bg-[#f0f3f7]"
+                          onClick={() =>
+                            setLibraryVisibleCount((count) =>
+                              Math.min(
+                                count + libraryPageSize,
+                                visibleLibrary.length,
+                              ),
+                            )
+                          }
+                          type="button"
+                        >
+                          Show more
+                        </button>
+                      </div>
+                    ) : null}
+                  </>
                 ) : (
                   <div className="rounded-lg border border-dashed border-[#cfd6e0] bg-[#fbfcfd] px-4 py-8 text-center text-sm text-[#667085]">
                     {isLibraryLoading
@@ -1134,7 +1179,7 @@ function getSortableRating(rating: string) {
 }
 
 function getLibraryPlatformOptions(
-  platforms: string[] | null,
+  platforms: string[],
   selectedPlatform: string | null,
 ) {
   const options = new Set<string>();
@@ -1143,7 +1188,7 @@ function getLibraryPlatformOptions(
     options.add(selectedPlatform.trim());
   }
 
-  platforms?.forEach((platform) => {
+  platforms.forEach((platform) => {
     if (platform.trim()) {
       options.add(platform.trim());
     }
@@ -1154,6 +1199,12 @@ function getLibraryPlatformOptions(
   }
 
   return Array.from(options).sort();
+}
+
+function jsonToStringArray(value: Json) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
 }
 
 function getStatusLabel(statusValue: string) {
