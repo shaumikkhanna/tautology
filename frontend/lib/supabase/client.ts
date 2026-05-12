@@ -6,10 +6,17 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabasePublishableKey =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
+let browserSupabaseClient: SupabaseClient<Database> | null = null;
+
 export function createBrowserSupabaseClient(): SupabaseClient<Database> | null {
   if (!supabaseUrl || !supabasePublishableKey) {
     return null;
   }
 
-  return createClient<Database>(supabaseUrl, supabasePublishableKey);
+  browserSupabaseClient ??= createClient<Database>(
+    supabaseUrl,
+    supabasePublishableKey,
+  );
+
+  return browserSupabaseClient;
 }

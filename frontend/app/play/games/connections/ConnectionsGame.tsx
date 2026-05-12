@@ -385,14 +385,14 @@ function PlayScreen({ code, onBack }: { code: string; onBack: () => void }) {
 
   return (
     <section className={styles.playPanel}>
-      <header className={styles.screenHeader}>
-        <div>
-          <p>{activePuzzle.puzzleDescription}</p>
-          <h1>{activePuzzle.puzzleName}</h1>
-        </div>
+      <header className={styles.playHeader}>
         <button type="button" onClick={onBack}>
           Back
         </button>
+        <div className={styles.playIntro}>
+          <h1>{activePuzzle.puzzleName}</h1>
+          {activePuzzle.puzzleDescription ? <p>{activePuzzle.puzzleDescription}</p> : null}
+        </div>
       </header>
 
       <div className={styles.solvedGroups}>

@@ -109,6 +109,56 @@
 	padding-inline: 24px;
 }
 
+.playHeader {
+	position: relative;
+	width: min(630px, 100%);
+	margin: 56px auto 28px;
+	text-align: center;
+}
+
+.playHeader button {
+	position: absolute;
+	top: 8px;
+	left: 0;
+	width: auto;
+	min-width: 0;
+	border: none;
+	border-radius: 6px;
+	background: #6a0572;
+	color: white;
+	cursor: pointer;
+	font-size: 0.78rem;
+	font-weight: 700;
+	line-height: 1;
+	padding: 7px 10px;
+	transition: background 0.3s;
+}
+
+.playHeader button:hover {
+	background: #4a0350;
+}
+
+.playIntro {
+	padding: 0 72px;
+}
+
+.playIntro h1 {
+	margin: 0;
+	color: #6a0572;
+	font-size: clamp(2.6rem, 7vw, 4.25rem);
+	line-height: 0.98;
+	overflow-wrap: anywhere;
+}
+
+.playIntro p {
+	margin: 12px auto 0;
+	color: #555;
+	font-size: 1rem;
+	line-height: 1.45;
+	max-width: 520px;
+	overflow-wrap: anywhere;
+}
+
 .createPanel {
 	max-width: 1080px;
 }
@@ -440,6 +490,23 @@
 
 	.screenHeader {
 		margin-top: 48px;
+	}
+
+	.playHeader {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 16px;
+		margin-top: 42px;
+	}
+
+	.playHeader button {
+		position: static;
+		align-self: flex-start;
+	}
+
+	.playIntro {
+		padding: 0;
 	}
 
 	.categoryInputs,
