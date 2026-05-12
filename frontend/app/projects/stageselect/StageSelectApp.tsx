@@ -90,6 +90,7 @@ export function StageSelectApp() {
   const [editPlatform, setEditPlatform] = useState("");
   const [editRating, setEditRating] = useState("");
   const [editReview, setEditReview] = useState("");
+  const [isEditReviewOpen, setIsEditReviewOpen] = useState(false);
   const [reviewMessage, setReviewMessage] = useState("");
   const [libraryActionMessage, setLibraryActionMessage] = useState("");
   const [authMessage, setAuthMessage] = useState("Checking account...");
@@ -103,6 +104,7 @@ export function StageSelectApp() {
   const [isSearching, setIsSearching] = useState(false);
   const [isSavingGame, setIsSavingGame] = useState(false);
   const [isLibraryLoading, setIsLibraryLoading] = useState(false);
+  const [isExportingData, setIsExportingData] = useState(false);
   const [activeTab, setActiveTab] = useState("search");
   const [statusFilter, setStatusFilter] = useState("all");
   const [platformFilter, setPlatformFilter] = useState("all");
@@ -411,6 +413,45 @@ export function StageSelectApp() {
     setIsAuthLoading(false);
   }
 
+  async function downloadUserData() {
+    if (!session) {
+      setAuthMessage("Log in before exporting your data.");
+      return;
+    }
+
+    setIsExportingData(true);
+    setAuthMessage("Preparing JSON export...");
+
+    const response = await fetchWithSession(
+      session,
+      "/api/projects/stageselect/export",
+      { method: "GET" },
+    );
+
+    if (!response.ok) {
+      const payload = (await response.json()) as { error?: string };
+
+      setAuthMessage(payload.error ?? "Could not export your data.");
+      setIsExportingData(false);
+      return;
+    }
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const date = new Date().toISOString().slice(0, 10);
+
+    link.href = objectUrl;
+    link.download = `stageselect-export-${date}.json`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(objectUrl);
+
+    setAuthMessage("JSON export downloaded.");
+    setIsExportingData(false);
+  }
+
   async function searchGames(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -537,6 +578,7 @@ export function StageSelectApp() {
     setEditPlatform(game.platform === "-" ? "" : game.platform);
     setEditRating(game.rating === "-" ? "" : game.rating);
     setEditReview(game.review);
+    setIsEditReviewOpen(false);
     setLibraryActionMessage("");
   }
 
@@ -651,7 +693,15 @@ export function StageSelectApp() {
                 </div>
                 <button
                   className="rounded-md border border-[#cfd6e0] bg-white px-3 py-2 font-mono text-xs font-bold uppercase text-[#20242c] transition hover:bg-[#f0f3f7] disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isAuthLoading}
+                  disabled={isAuthLoading || isExportingData}
+                  onClick={downloadUserData}
+                  type="button"
+                >
+                  {isExportingData ? "Preparing" : "Download JSON"}
+                </button>
+                <button
+                  className="rounded-md border border-[#cfd6e0] bg-white px-3 py-2 font-mono text-xs font-bold uppercase text-[#20242c] transition hover:bg-[#f0f3f7] disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isAuthLoading || isExportingData}
                   onClick={logOut}
                   type="button"
                 >
@@ -1230,16 +1280,32 @@ export function StageSelectApp() {
               </label>
             </div>
 
-            <label className="mt-4 block">
-              <span className="font-mono text-xs uppercase text-[#667085]">
-                Review
-              </span>
-              <textarea
-                className="mt-2 min-h-32 w-full rounded-md border border-[#cfd6e0] bg-white px-3 py-3 text-sm text-[#20242c] outline-none transition focus:border-[#7c8ca5] focus:ring-2 focus:ring-[#dce3ee]"
-                onChange={(event) => setEditReview(event.target.value)}
-                value={editReview}
-              />
-            </label>
+            <div className="mt-4">
+              <button
+                aria-expanded={isEditReviewOpen}
+                className="flex w-full items-center justify-between rounded-md border border-[#cfd6e0] bg-[#fbfcfd] px-3 py-2 text-left font-mono text-xs font-bold uppercase text-[#394150] transition hover:bg-[#f0f3f7]"
+                onClick={() => setIsEditReviewOpen((isOpen) => !isOpen)}
+                type="button"
+              >
+                <span>
+                  {libraryModal.game.review ? "Edit review" : "Add review"}
+                </span>
+                <span aria-hidden="true">{isEditReviewOpen ? "v" : ">"}</span>
+              </button>
+
+              {isEditReviewOpen ? (
+                <label className="mt-3 block">
+                  <span className="font-mono text-xs uppercase text-[#667085]">
+                    Review
+                  </span>
+                  <textarea
+                    className="mt-2 min-h-32 w-full rounded-md border border-[#cfd6e0] bg-white px-3 py-3 text-sm text-[#20242c] outline-none transition focus:border-[#7c8ca5] focus:ring-2 focus:ring-[#dce3ee]"
+                    onChange={(event) => setEditReview(event.target.value)}
+                    value={editReview}
+                  />
+                </label>
+              ) : null}
+            </div>
 
             {libraryActionMessage ? (
               <p className="mt-3 text-sm text-[#b42318]">

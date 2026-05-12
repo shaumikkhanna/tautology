@@ -1,7 +1,7 @@
 {
-  "title": "Bowling Solitaire",
-  "description": "A bowling-inspired solitaire card game.",
-  "body": "Placeholder text for Bowling Solitaire. This is the spot for a short description, rules note, or image-backed intro later.",
-  "image": "",
-  "playHref": "/play/games/bowling-solitaire/index.html"
+	"title": "Bowling Solitaire",
+	"description": "A bowling-inspired solitaire card game.",
+	"body": "A bowling-inspired solitaire card game.",
+	"image": "",
+	"playHref": "/play/games/bowling-solitaire/index.html"
 }

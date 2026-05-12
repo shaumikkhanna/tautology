@@ -2,7 +2,9 @@
 
 ## Summary
 
-StageSelect is now a working early-stage game library project inside the existing Next.js frontend. Users can sign up or log in with Supabase Auth, search IGDB through a server-side route, save games to their account, rate/review selected statuses, and manage their library.
+StageSelect is now a working early-stage game library project inside the existing Next.js frontend. Users can sign up or log in with Supabase Auth, search IGDB through a server-side route, save games to their account, rate/review selected statuses, manage their library, and export their user-owned library data.
+
+Status: parked for now. The current chapter is complete unless bugs appear or there is a concrete product expansion plan.
 
 The app lives at:
 
@@ -53,6 +55,14 @@ frontend/content/projects/stageselect/meta.json
 - Changed library edit platform control from free text to a dropdown based on cached IGDB platform data.
 - Added typed Supabase database definitions and typed Supabase clients.
 - Added incremental library rendering pagination so large filtered libraries render in manageable chunks.
+- Added authenticated JSON export for user-owned StageSelect data:
+  - IGDB ids
+  - statuses
+  - selected platforms
+  - dates
+  - ratings/reviews
+- Added a signed-in account action to download that JSON export.
+- Collapsed the library modal review editor behind an edit/add review toggle.
 
 ## Current Files
 
@@ -62,6 +72,7 @@ Important frontend files:
 frontend/app/projects/stageselect/page.tsx
 frontend/app/projects/stageselect/StageSelectApp.tsx
 frontend/app/api/projects/stageselect/search/route.ts
+frontend/app/api/projects/stageselect/export/route.ts
 frontend/app/api/projects/stageselect/library/route.ts
 frontend/app/api/projects/stageselect/library/[userGameId]/route.ts
 frontend/lib/igdb/client.ts
@@ -122,16 +133,20 @@ IGDB_CLIENT_SECRET=
 - Unique per user/game.
 - Current UI stores private reviews only.
 
-## Remaining Work
+## Parked Future Work
+
+None of this is pressing for the current private/early StageSelect app. Revisit only when expanding the product or preparing a public launch.
 
 - Add Apple login through Supabase Auth.
 - Add public/private review controls and public game detail pages.
 - Add richer game detail pages for cached games.
+- Add visualizations powered by the same user-owned data shape as the JSON export.
 - Add better search filtering, including hiding adult/low-quality edge results if needed.
 - Add optimistic UI and toast notifications for save/update/remove actions.
 - Add tests for IGDB normalization/ranking and core save/update flows.
 - Add production deployment env docs for Vercel/Supabase.
 - Configure custom SMTP before public launch to avoid Supabase's very low built-in email rate limits.
+- Rotate the IGDB client secret before any production/public launch because it was shared during development.
 
 ## Test Plan
 
@@ -149,6 +164,7 @@ IGDB_CLIENT_SECRET=
 - Wishlist should save without rating/review.
 - Library filters/sorting should work after saved games exist.
 - Editing/removing from the library modal should persist.
+- Download JSON should export only user-owned StageSelect data, using IGDB ids instead of cached game metadata.
 
 ## Assumptions
 
