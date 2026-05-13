@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "import:crosswords": "node scripts/import-crosswords.mjs",
+    "validate:crosswords": "node scripts/validate-crosswords.mjs",
     "start": "next start",
     "lint": "next lint"
   },

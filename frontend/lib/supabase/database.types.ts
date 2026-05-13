@@ -9,6 +9,111 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      crossword_approvals: {
+        Row: {
+          user_id: string;
+          email: string | null;
+          approved_at: string | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          email?: string | null;
+          approved_at?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          email?: string | null;
+          approved_at?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      crossword_progress: {
+        Row: {
+          id: string;
+          user_id: string;
+          crossword_id: string;
+          grid_state: Json;
+          elapsed_seconds: number;
+          checked_count: number;
+          revealed_count: number;
+          completed_at: string | null;
+          perfect: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          crossword_id: string;
+          grid_state?: Json;
+          elapsed_seconds?: number;
+          checked_count?: number;
+          revealed_count?: number;
+          completed_at?: string | null;
+          perfect?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          crossword_id?: string;
+          grid_state?: Json;
+          elapsed_seconds?: number;
+          checked_count?: number;
+          revealed_count?: number;
+          completed_at?: string | null;
+          perfect?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      crossword_invites: {
+        Row: {
+          code: string;
+          email: string | null;
+          created_by: string | null;
+          used_by: string | null;
+          expires_at: string | null;
+          used_at: string | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          code: string;
+          email?: string | null;
+          created_by?: string | null;
+          used_by?: string | null;
+          expires_at?: string | null;
+          used_at?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          code?: string;
+          email?: string | null;
+          created_by?: string | null;
+          used_by?: string | null;
+          expires_at?: string | null;
+          used_at?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string;

@@ -160,6 +160,80 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ ,-'".
 
 Puzzle text is normalized to that character set before encoding. Do not mark Connections with `"requiresBackend": true`; it does not call FastAPI. The backend loading modal should be reserved for games that actually need Render to wake up.
 
+## Cryptic Crossword Archive
+
+Cryptic Crossword Archive is a gated client-side Next.js game/subapp backed by Supabase auth and progress storage.
+
+For detailed status, data shape, test checklist, limitations, and future work, read:
+
+```txt
+CROSSWORD_ARCHIVE_PLAN.md
+```
+
+Frontend play route:
+
+```txt
+frontend/app/play/games/cryptic-crossword-archive/
+```
+
+Important files:
+
+- `frontend/app/play/games/cryptic-crossword-archive/CrypticCrosswordArchiveApp.tsx`: auth/access states, archive list, player UI, timer, checks/reveals, autosave, and completion reasonings.
+- `frontend/app/play/games/cryptic-crossword-archive/crypticCrossword.module.css`: game-local styling.
+- `frontend/content/games/cryptic-crossword-archive/meta.json`: Games card entry.
+- `frontend/content/crosswords/archive.json`: bundled crossword archive data.
+- `all_crosswords.json`: raw crossword source file used by the import script.
+- `frontend/lib/crosswords/`: archive/types/server helpers.
+- `frontend/scripts/import-crosswords.mjs`: converts `all_crosswords.json` into the normalized archive shape.
+- `frontend/scripts/validate-crosswords.mjs`: validates ids, bars, bounds, clue starts, lengths, and crossings.
+- `frontend/app/admin/crosswords/`: admin UI for approving users and creating invite links.
+
+Crossword API routes:
+
+```txt
+GET /api/games/crosswords/access
+GET /api/games/crosswords/archive
+GET /api/games/crosswords/archive/[crosswordId]
+POST /api/games/crosswords/invites/redeem
+GET /api/games/crosswords/progress
+PUT /api/games/crosswords/progress/[crosswordId]
+DELETE /api/games/crosswords/progress/[crosswordId]
+GET /api/admin/crosswords
+POST /api/admin/crosswords/approvals
+POST /api/admin/crosswords/invites
+```
+
+All crossword API routes require a Supabase bearer token. Archive/progress routes also require a row in `crossword_approvals` with `approved_at` set. Users can be approved from `/admin/crosswords` by an admin email listed in `CROSSWORD_ADMIN_EMAILS`, or by redeeming an invite link. Users cannot approve themselves without a valid invite.
+
+The local development bypass button appears only when running in development on `localhost`, `127.0.0.1`, or `::1`; the matching API bypass also requires a local host and the internal `x-crossword-dev-bypass` header.
+
+Admin env:
+
+```txt
+SUPABASE_SECRET_KEY=your-service-role-key
+CROSSWORD_ADMIN_EMAILS=admin@example.com,second@example.com
+```
+
+Crossword archive scripts, from `frontend/`:
+
+```txt
+npm run import:crosswords
+npm run validate:crosswords
+```
+
+Supabase migration:
+
+```txt
+supabase/migrations/20260512000000_crossword_archive.sql
+supabase/migrations/20260513000000_crossword_invites.sql
+```
+
+Tables:
+
+- `crossword_approvals`: manual allowlist keyed by `auth.users.id`.
+- `crossword_invites`: admin-created invite codes, optionally email-bound, single-use.
+- `crossword_progress`: per-user/per-crossword grid state, elapsed time, checks, reveals, completion time, and perfect flag.
+
 ## Starnim
 
 Starnim is different from the static games because it needs Python logic for computer moves.

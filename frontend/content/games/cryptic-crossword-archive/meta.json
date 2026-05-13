@@ -1,0 +1,6 @@
+{
+  "title": "Cryptic Crossword Archive",
+  "description": "A gated archive of cryptic crosswords with solve tracking.",
+  "body": "A private cryptic crossword archive with timers, checks, reveals, and answer reasoning after completion.",
+  "playHref": "/play/games/cryptic-crossword-archive"
+}

@@ -1,0 +1,2194 @@
+[
+  {
+    "id": "cryptic-crossword-2023-11-19",
+    "title": "The Cryptic Crossword: Sunday, November 19, 2023",
+    "rows": 10,
+    "cols": 8,
+    "blackCells": [],
+    "numberedCells": [
+      {
+        "row": 0,
+        "col": 0,
+        "number": 1
+      },
+      {
+        "row": 0,
+        "col": 2,
+        "number": 2
+      },
+      {
+        "row": 0,
+        "col": 3,
+        "number": 3
+      },
+      {
+        "row": 0,
+        "col": 5,
+        "number": 4
+      },
+      {
+        "row": 0,
+        "col": 7,
+        "number": 5
+      },
+      {
+        "row": 1,
+        "col": 0,
+        "number": 6
+      },
+      {
+        "row": 2,
+        "col": 1,
+        "number": 7
+      },
+      {
+        "row": 3,
+        "col": 0,
+        "number": 8
+      },
+      {
+        "row": 3,
+        "col": 4,
+        "number": 9
+      },
+      {
+        "row": 3,
+        "col": 6,
+        "number": 10
+      },
+      {
+        "row": 4,
+        "col": 3,
+        "number": 11
+      },
+      {
+        "row": 4,
+        "col": 4,
+        "number": 12
+      },
+      {
+        "row": 5,
+        "col": 0,
+        "number": 13
+      },
+      {
+        "row": 5,
+        "col": 2,
+        "number": 14
+      },
+      {
+        "row": 5,
+        "col": 5,
+        "number": 15
+      },
+      {
+        "row": 6,
+        "col": 0,
+        "number": 16
+      },
+      {
+        "row": 6,
+        "col": 4,
+        "number": 17
+      },
+      {
+        "row": 7,
+        "col": 0,
+        "number": 18
+      },
+      {
+        "row": 8,
+        "col": 0,
+        "number": 19
+      },
+      {
+        "row": 9,
+        "col": 0,
+        "number": 20
+      }
+    ],
+    "dividers": [
+      {
+        "from": {
+          "row": 2,
+          "col": 0
+        },
+        "to": {
+          "row": 2,
+          "col": 1
+        }
+      },
+      {
+        "from": {
+          "row": 3,
+          "col": 3
+        },
+        "to": {
+          "row": 3,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 4,
+          "col": 0
+        },
+        "to": {
+          "row": 4,
+          "col": 1
+        }
+      },
+      {
+        "from": {
+          "row": 4,
+          "col": 1
+        },
+        "to": {
+          "row": 4,
+          "col": 2
+        }
+      },
+      {
+        "from": {
+          "row": 4,
+          "col": 2
+        },
+        "to": {
+          "row": 4,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 5,
+          "col": 4
+        },
+        "to": {
+          "row": 5,
+          "col": 5
+        }
+      },
+      {
+        "from": {
+          "row": 5,
+          "col": 5
+        },
+        "to": {
+          "row": 5,
+          "col": 6
+        }
+      },
+      {
+        "from": {
+          "row": 5,
+          "col": 6
+        },
+        "to": {
+          "row": 5,
+          "col": 7
+        }
+      },
+      {
+        "from": {
+          "row": 6,
+          "col": 3
+        },
+        "to": {
+          "row": 6,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 7,
+          "col": 6
+        },
+        "to": {
+          "row": 7,
+          "col": 7
+        }
+      },
+      {
+        "from": {
+          "row": 0,
+          "col": 1
+        },
+        "to": {
+          "row": 1,
+          "col": 1
+        }
+      },
+      {
+        "from": {
+          "row": 0,
+          "col": 4
+        },
+        "to": {
+          "row": 1,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 0,
+          "col": 6
+        },
+        "to": {
+          "row": 1,
+          "col": 6
+        }
+      },
+      {
+        "from": {
+          "row": 1,
+          "col": 1
+        },
+        "to": {
+          "row": 2,
+          "col": 1
+        }
+      },
+      {
+        "from": {
+          "row": 1,
+          "col": 4
+        },
+        "to": {
+          "row": 2,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 1,
+          "col": 6
+        },
+        "to": {
+          "row": 2,
+          "col": 6
+        }
+      },
+      {
+        "from": {
+          "row": 2,
+          "col": 4
+        },
+        "to": {
+          "row": 3,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 2,
+          "col": 6
+        },
+        "to": {
+          "row": 3,
+          "col": 6
+        }
+      },
+      {
+        "from": {
+          "row": 3,
+          "col": 4
+        },
+        "to": {
+          "row": 4,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 4,
+          "col": 2
+        },
+        "to": {
+          "row": 5,
+          "col": 2
+        }
+      },
+      {
+        "from": {
+          "row": 4,
+          "col": 5
+        },
+        "to": {
+          "row": 5,
+          "col": 5
+        }
+      },
+      {
+        "from": {
+          "row": 5,
+          "col": 3
+        },
+        "to": {
+          "row": 6,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 6,
+          "col": 1
+        },
+        "to": {
+          "row": 7,
+          "col": 1
+        }
+      },
+      {
+        "from": {
+          "row": 6,
+          "col": 3
+        },
+        "to": {
+          "row": 7,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 7,
+          "col": 1
+        },
+        "to": {
+          "row": 8,
+          "col": 1
+        }
+      },
+      {
+        "from": {
+          "row": 7,
+          "col": 3
+        },
+        "to": {
+          "row": 8,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 7,
+          "col": 6
+        },
+        "to": {
+          "row": 8,
+          "col": 6
+        }
+      },
+      {
+        "from": {
+          "row": 8,
+          "col": 1
+        },
+        "to": {
+          "row": 9,
+          "col": 1
+        }
+      },
+      {
+        "from": {
+          "row": 8,
+          "col": 3
+        },
+        "to": {
+          "row": 9,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 8,
+          "col": 6
+        },
+        "to": {
+          "row": 9,
+          "col": 6
+        }
+      }
+    ],
+    "clues": {
+      "across": [
+        {
+          "id": "1a",
+          "number": 1,
+          "direction": "across",
+          "start": {
+            "row": 0,
+            "col": 0
+          },
+          "clue": "Starting late each time, fraud zaps pork knuckles (3,5)",
+          "answer": "HAMHOCKS",
+          "reasoning": "(s)HAM (s)HOCKS"
+        },
+        {
+          "id": "6a",
+          "number": 6,
+          "direction": "across",
+          "start": {
+            "row": 1,
+            "col": 0
+          },
+          "clue": "Need to call aro/ace stranger near outskirts of Dubuque (4,4)",
+          "answer": "AREACODE",
+          "reasoning": "AREA CO + DE (aro/ace anagram)"
+        },
+        {
+          "id": "7a",
+          "number": 7,
+          "direction": "across",
+          "start": {
+            "row": 2,
+            "col": 1
+          },
+          "clue": "Mixing up “tie” and “draw” leads to !ght on Wikipedia (4,3)",
+          "answer": "EDITWAR",
+          "reasoning": "EDIT WAR (tie draw anag)"
+        },
+        {
+          "id": "8a",
+          "number": 8,
+          "direction": "across",
+          "start": {
+            "row": 3,
+            "col": 0
+          },
+          "clue": "Rafa backtracks a great distance (4)",
+          "answer": "AFAR",
+          "reasoning": "AFAR (rev.)"
+        },
+        {
+          "id": "9a",
+          "number": 9,
+          "direction": "across",
+          "start": {
+            "row": 3,
+            "col": 4
+          },
+          "clue": "Claim ESPN shows Western Conference !nal in the  N.B.A. playoffs, e.g. (4)",
+          "answer": "SEMI",
+          "reasoning": "SEMI (hidden rev.)"
+        },
+        {
+          "id": "11a",
+          "number": 11,
+          "direction": "across",
+          "start": {
+            "row": 4,
+            "col": 3
+          },
+          "clue": "MTV cartoon !nally aired opera highlight (5)",
+          "answer": "DARIA",
+          "reasoning": "D + ARIA"
+        },
+        {
+          "id": "13a",
+          "number": 13,
+          "direction": "across",
+          "start": {
+            "row": 5,
+            "col": 0
+          },
+          "clue": "Introductions of antiquated labor laws obviate work per mit (5)",
+          "answer": "ALLOW",
+          "reasoning": "ALLOW (first letters)"
+        },
+        {
+          "id": "16a",
+          "number": 16,
+          "direction": "across",
+          "start": {
+            "row": 6,
+            "col": 0
+          },
+          "clue": "Drive, say, in unbridled rage (4)",
+          "answer": "GEAR",
+          "reasoning": "GEAR (anag.)"
+        },
+        {
+          "id": "17a",
+          "number": 17,
+          "direction": "across",
+          "start": {
+            "row": 6,
+            "col": 4
+          },
+          "clue": "First half of holistic festival (4)",
+          "answer": "HOLI",
+          "reasoning": "HOLI(stic)"
+        },
+        {
+          "id": "18a",
+          "number": 18,
+          "direction": "across",
+          "start": {
+            "row": 7,
+            "col": 0
+          },
+          "clue": "Temperature breaks Arctic people’s senses (7)",
+          "answer": "INTUITS",
+          "reasoning": "IN(T)UIT'S"
+        },
+        {
+          "id": "19a",
+          "number": 19,
+          "direction": "across",
+          "start": {
+            "row": 8,
+            "col": 0
+          },
+          "clue": "Cut fabric cost (8)",
+          "answer": "LACERATE",
+          "reasoning": "LACE + RATE"
+        },
+        {
+          "id": "20a",
+          "number": 20,
+          "direction": "across",
+          "start": {
+            "row": 9,
+            "col": 0
+          },
+          "clue": "At the outset, Avengers !nish off most laid-back hero (8)",
+          "answer": "ACHILLES",
+          "reasoning": "A + CHILLES(t)"
+        }
+      ],
+      "down": [
+        {
+          "id": "1d",
+          "number": 1,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 0
+          },
+          "clue": "Cuban city adding word before “monster” in Jewish folk  song (4,6)",
+          "answer": "HAVANAGILA",
+          "reasoning": "HAVA NA+GILA"
+        },
+        {
+          "id": "2d",
+          "number": 2,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 2
+          },
+          "clue": "Chef ’s creation takes Beard’s ultimate prize (5)",
+          "answer": "MEDAL",
+          "reasoning": "ME(D)AL"
+        },
+        {
+          "id": "3d",
+          "number": 3,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 3
+          },
+          "clue": "For example, Beehive State mammal drops in the morn ing (6)",
+          "answer": "HAIRDO",
+          "reasoning": "HAIRDO (hair dew hom.)"
+        },
+        {
+          "id": "4d",
+          "number": 4,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 5
+          },
+          "clue": "A hundred and one in debt shrink in fear (5)",
+          "answer": "COWER",
+          "reasoning": "C + OWER"
+        },
+        {
+          "id": "5d",
+          "number": 5,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 7
+          },
+          "clue": "By the sound of it, cook learns and publishes in regular  installments (10)",
+          "answer": "SERIALIZES",
+          "reasoning": "SERIALIZES (sear realizes hom.)"
+        },
+        {
+          "id": "7d",
+          "number": 7,
+          "direction": "down",
+          "start": {
+            "row": 2,
+            "col": 1
+          },
+          "clue": "Corrupt leader goes missing? Submit a government form  online (1-4)",
+          "answer": "EFILE",
+          "reasoning": "(d)E-FILE"
+        },
+        {
+          "id": "10d",
+          "number": 10,
+          "direction": "down",
+          "start": {
+            "row": 3,
+            "col": 6
+          },
+          "clue": "Feminist magazine covers ailing plants (5)",
+          "answer": "MILLS",
+          "reasoning": "M(ILL)S"
+        },
+        {
+          "id": "12d",
+          "number": 12,
+          "direction": "down",
+          "start": {
+            "row": 4,
+            "col": 4
+          },
+          "clue": "A White House invitation really left leaders spinning (6)",
+          "answer": "AWHIRL",
+          "reasoning": "AWHIRL (first letters)"
+        },
+        {
+          "id": "14d",
+          "number": 14,
+          "direction": "down",
+          "start": {
+            "row": 5,
+            "col": 2
+          },
+          "clue": "Flat character smuggles bit of hardware (5)",
+          "answer": "LATCH",
+          "reasoning": "LATCH (hidden)"
+        },
+        {
+          "id": "15d",
+          "number": 15,
+          "direction": "down",
+          "start": {
+            "row": 5,
+            "col": 5
+          },
+          "clue": "Little kid with a large sum (5)",
+          "answer": "TOTAL",
+          "reasoning": "TOT + A + L"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cryptic-crossword-2023-12-03",
+    "title": "The Cryptic Crossword: Sunday, December 3, 2023",
+    "rows": 10,
+    "cols": 8,
+    "blackCells": [],
+    "numberedCells": [
+      {
+        "row": 0,
+        "col": 0,
+        "number": 1
+      },
+      {
+        "row": 0,
+        "col": 1,
+        "number": 2
+      },
+      {
+        "row": 0,
+        "col": 2,
+        "number": 3
+      },
+      {
+        "row": 0,
+        "col": 4,
+        "number": 4
+      },
+      {
+        "row": 0,
+        "col": 6,
+        "number": 5
+      },
+      {
+        "row": 0,
+        "col": 7,
+        "number": 6
+      },
+      {
+        "row": 1,
+        "col": 0,
+        "number": 7
+      },
+      {
+        "row": 1,
+        "col": 4,
+        "number": 8
+      },
+      {
+        "row": 2,
+        "col": 2,
+        "number": 9
+      },
+      {
+        "row": 3,
+        "col": 0,
+        "number": 10
+      },
+      {
+        "row": 3,
+        "col": 5,
+        "number": 11
+      },
+      {
+        "row": 4,
+        "col": 0,
+        "number": 12
+      },
+      {
+        "row": 5,
+        "col": 3,
+        "number": 13
+      },
+      {
+        "row": 6,
+        "col": 0,
+        "number": 14
+      },
+      {
+        "row": 6,
+        "col": 7,
+        "number": 15
+      },
+      {
+        "row": 7,
+        "col": 0,
+        "number": 16
+      },
+      {
+        "row": 8,
+        "col": 0,
+        "number": 17
+      },
+      {
+        "row": 8,
+        "col": 4,
+        "number": 18
+      },
+      {
+        "row": 9,
+        "col": 2,
+        "number": 19
+      }
+    ],
+    "dividers": [
+      {
+        "from": {
+          "row": 0,
+          "col": 5
+        },
+        "to": {
+          "row": 0,
+          "col": 6
+        }
+      },
+      {
+        "from": {
+          "row": 0,
+          "col": 6
+        },
+        "to": {
+          "row": 0,
+          "col": 7
+        }
+      },
+      {
+        "from": {
+          "row": 1,
+          "col": 3
+        },
+        "to": {
+          "row": 1,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 2,
+          "col": 0
+        },
+        "to": {
+          "row": 2,
+          "col": 1
+        }
+      },
+      {
+        "from": {
+          "row": 2,
+          "col": 1
+        },
+        "to": {
+          "row": 2,
+          "col": 2
+        }
+      },
+      {
+        "from": {
+          "row": 4,
+          "col": 4
+        },
+        "to": {
+          "row": 4,
+          "col": 5
+        }
+      },
+      {
+        "from": {
+          "row": 4,
+          "col": 5
+        },
+        "to": {
+          "row": 4,
+          "col": 6
+        }
+      },
+      {
+        "from": {
+          "row": 4,
+          "col": 6
+        },
+        "to": {
+          "row": 4,
+          "col": 7
+        }
+      },
+      {
+        "from": {
+          "row": 5,
+          "col": 0
+        },
+        "to": {
+          "row": 5,
+          "col": 1
+        }
+      },
+      {
+        "from": {
+          "row": 5,
+          "col": 1
+        },
+        "to": {
+          "row": 5,
+          "col": 2
+        }
+      },
+      {
+        "from": {
+          "row": 5,
+          "col": 2
+        },
+        "to": {
+          "row": 5,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 7,
+          "col": 5
+        },
+        "to": {
+          "row": 7,
+          "col": 6
+        }
+      },
+      {
+        "from": {
+          "row": 7,
+          "col": 6
+        },
+        "to": {
+          "row": 7,
+          "col": 7
+        }
+      },
+      {
+        "from": {
+          "row": 8,
+          "col": 3
+        },
+        "to": {
+          "row": 8,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 9,
+          "col": 0
+        },
+        "to": {
+          "row": 9,
+          "col": 1
+        }
+      },
+      {
+        "from": {
+          "row": 9,
+          "col": 1
+        },
+        "to": {
+          "row": 9,
+          "col": 2
+        }
+      },
+      {
+        "from": {
+          "row": 0,
+          "col": 3
+        },
+        "to": {
+          "row": 1,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 0,
+          "col": 5
+        },
+        "to": {
+          "row": 1,
+          "col": 5
+        }
+      },
+      {
+        "from": {
+          "row": 1,
+          "col": 3
+        },
+        "to": {
+          "row": 2,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 1,
+          "col": 5
+        },
+        "to": {
+          "row": 2,
+          "col": 5
+        }
+      },
+      {
+        "from": {
+          "row": 2,
+          "col": 3
+        },
+        "to": {
+          "row": 3,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 2,
+          "col": 5
+        },
+        "to": {
+          "row": 3,
+          "col": 5
+        }
+      },
+      {
+        "from": {
+          "row": 3,
+          "col": 0
+        },
+        "to": {
+          "row": 4,
+          "col": 0
+        }
+      },
+      {
+        "from": {
+          "row": 3,
+          "col": 3
+        },
+        "to": {
+          "row": 4,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 4,
+          "col": 3
+        },
+        "to": {
+          "row": 5,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 4,
+          "col": 4
+        },
+        "to": {
+          "row": 5,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 5,
+          "col": 4
+        },
+        "to": {
+          "row": 6,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 5,
+          "col": 7
+        },
+        "to": {
+          "row": 6,
+          "col": 7
+        }
+      },
+      {
+        "from": {
+          "row": 6,
+          "col": 2
+        },
+        "to": {
+          "row": 7,
+          "col": 2
+        }
+      },
+      {
+        "from": {
+          "row": 6,
+          "col": 4
+        },
+        "to": {
+          "row": 7,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 7,
+          "col": 2
+        },
+        "to": {
+          "row": 8,
+          "col": 2
+        }
+      },
+      {
+        "from": {
+          "row": 7,
+          "col": 4
+        },
+        "to": {
+          "row": 8,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 8,
+          "col": 2
+        },
+        "to": {
+          "row": 9,
+          "col": 2
+        }
+      },
+      {
+        "from": {
+          "row": 8,
+          "col": 4
+        },
+        "to": {
+          "row": 9,
+          "col": 4
+        }
+      }
+    ],
+    "clues": {
+      "across": [
+        {
+          "id": "1a",
+          "number": 1,
+          "direction": "across",
+          "start": {
+            "row": 0,
+            "col": 0
+          },
+          "clue": "Thirst after changing top (1-5)",
+          "answer": "TSHIRT",
+          "reasoning": "TSHIRT (anag.)"
+        },
+        {
+          "id": "7a",
+          "number": 7,
+          "direction": "across",
+          "start": {
+            "row": 1,
+            "col": 0
+          },
+          "clue": "Victor’s saying “Ow!” in buggy (1,3)",
+          "answer": "IWON",
+          "reasoning": "IWON (anag.)"
+        },
+        {
+          "id": "8a",
+          "number": 8,
+          "direction": "across",
+          "start": {
+            "row": 1,
+            "col": 4
+          },
+          "clue": "My gosh! Georgia’s interrupting Edward (4)",
+          "answer": "EGAD",
+          "reasoning": "E(GA)D"
+        },
+        {
+          "id": "9a",
+          "number": 9,
+          "direction": "across",
+          "start": {
+            "row": 2,
+            "col": 2
+          },
+          "clue": "Northern European mentioned lacquer, for example (6)",
+          "answer": "FINISH",
+          "reasoning": "FINISH (finnish hom.)"
+        },
+        {
+          "id": "10a",
+          "number": 10,
+          "direction": "across",
+          "start": {
+            "row": 3,
+            "col": 0
+          },
+          "clue": "Egyptian President Anwar appearing in Italian Em bassy’s opening? I’ll be there (3,1,4)",
+          "answer": "ITSADATE",
+          "reasoning": "IT + SADAT + E"
+        },
+        {
+          "id": "12a",
+          "number": 12,
+          "direction": "across",
+          "start": {
+            "row": 4,
+            "col": 0
+          },
+          "clue": "Sub for cooler teaching assistants (3,2)",
+          "answer": "ACTAS",
+          "reasoning": "AC + TAS"
+        },
+        {
+          "id": "13a",
+          "number": 13,
+          "direction": "across",
+          "start": {
+            "row": 5,
+            "col": 3
+          },
+          "clue": "Arizona university backing away from red color (5)",
+          "answer": "AZURE",
+          "reasoning": "AZ + U + RE(d)"
+        },
+        {
+          "id": "14a",
+          "number": 14,
+          "direction": "across",
+          "start": {
+            "row": 6,
+            "col": 0
+          },
+          "clue": "Group of songwriters admitted to observe painting of a  coastal scene (8)",
+          "answer": "SEASCAPE",
+          "reasoning": "SE(ASCAP)E"
+        },
+        {
+          "id": "16a",
+          "number": 16,
+          "direction": "across",
+          "start": {
+            "row": 7,
+            "col": 0
+          },
+          "clue": "Newspaper employee awkwardly tried including head of  operations (6)",
+          "answer": "EDITOR",
+          "reasoning": "EDIT(O)R (tried anag.)"
+        },
+        {
+          "id": "17a",
+          "number": 17,
+          "direction": "across",
+          "start": {
+            "row": 8,
+            "col": 0
+          },
+          "clue": "Recognizes pronounced facial feature (4)",
+          "answer": "NOSE",
+          "reasoning": "NOSE (knows hom.)"
+        },
+        {
+          "id": "18a",
+          "number": 18,
+          "direction": "across",
+          "start": {
+            "row": 8,
+            "col": 4
+          },
+          "clue": "Distorted judgment is part of rehab, I assume (4)",
+          "answer": "BIAS",
+          "reasoning": "BIAS (hidden)"
+        },
+        {
+          "id": "19a",
+          "number": 19,
+          "direction": "across",
+          "start": {
+            "row": 9,
+            "col": 2
+          },
+          "clue": "Hard to understand a Republican staff (6)",
+          "answer": "ARCANE",
+          "reasoning": "A + R + CANE"
+        }
+      ],
+      "down": [
+        {
+          "id": "1d",
+          "number": 1,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 0
+          },
+          "clue": "Kit lifted one type of torch (4)",
+          "answer": "TIKI",
+          "reasoning": "TIK + I (kit rev.)"
+        },
+        {
+          "id": "2d",
+          "number": 2,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 1
+          },
+          "clue": "Activated inverted network connections broken by stu dent at Hogwarts (8,2)",
+          "answer": "SWITCHEDON",
+          "reasoning": "S(WITCH)ED ON (nodes rev.)"
+        },
+        {
+          "id": "3d",
+          "number": 3,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 2
+          },
+          "clue": "New York school tucked into dish of strawberries (7)",
+          "answer": "HOFSTRA",
+          "reasoning": "HOFSTRA (hidden)"
+        },
+        {
+          "id": "4d",
+          "number": 4,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 4
+          },
+          "clue": "Tears initially noticed in Warren Beatty drama (5)",
+          "answer": "RENDS",
+          "reasoning": "RE(N)DS"
+        },
+        {
+          "id": "5d",
+          "number": 5,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 6
+          },
+          "clue": "Big scheme involved planet Mars (6,4)",
+          "answer": "MASTERPLAN",
+          "reasoning": "MASTER PLAN (anag.)"
+        },
+        {
+          "id": "6d",
+          "number": 6,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 7
+          },
+          "clue": "Spot that woman with last piece of licorice stick (6)",
+          "answer": "ADHERE",
+          "reasoning": "AD + HER + E"
+        },
+        {
+          "id": "11d",
+          "number": 11,
+          "direction": "down",
+          "start": {
+            "row": 3,
+            "col": 5
+          },
+          "clue": "Operatic highlight includes #fty-per-cent quartz tanks (7)",
+          "answer": "AQUARIA",
+          "reasoning": "A(QUA)RIA"
+        },
+        {
+          "id": "12d",
+          "number": 12,
+          "direction": "down",
+          "start": {
+            "row": 4,
+            "col": 0
+          },
+          "clue": "Discussed trip up a mountain, yes (6)",
+          "answer": "ASSENT",
+          "reasoning": "ASSENT (ascent hom.)"
+        },
+        {
+          "id": "13d",
+          "number": 13,
+          "direction": "down",
+          "start": {
+            "row": 5,
+            "col": 3
+          },
+          "clue": "Trim the top of holiday $ower (5)",
+          "answer": "ASTER",
+          "reasoning": "(e)ASTER"
+        },
+        {
+          "id": "15d",
+          "number": 15,
+          "direction": "down",
+          "start": {
+            "row": 6,
+            "col": 7
+          },
+          "clue": "Eels swimming in a different way (4)",
+          "answer": "ELSE",
+          "reasoning": "ELSE (anag.)"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cryptic-crossword-2023-11-26",
+    "title": "The Cryptic Crossword: Sunday, November 26, 2023",
+    "rows": 10,
+    "cols": 8,
+    "blackCells": [],
+    "numberedCells": [
+      {
+        "row": 0,
+        "col": 0,
+        "number": 1
+      },
+      {
+        "row": 0,
+        "col": 1,
+        "number": 2
+      },
+      {
+        "row": 0,
+        "col": 3,
+        "number": 3
+      },
+      {
+        "row": 0,
+        "col": 4,
+        "number": 4
+      },
+      {
+        "row": 0,
+        "col": 5,
+        "number": 5
+      },
+      {
+        "row": 0,
+        "col": 6,
+        "number": 6
+      },
+      {
+        "row": 0,
+        "col": 7,
+        "number": 7
+      },
+      {
+        "row": 1,
+        "col": 0,
+        "number": 8
+      },
+      {
+        "row": 2,
+        "col": 0,
+        "number": 9
+      },
+      {
+        "row": 3,
+        "col": 2,
+        "number": 10
+      },
+      {
+        "row": 3,
+        "col": 4,
+        "number": 11
+      },
+      {
+        "row": 4,
+        "col": 0,
+        "number": 12
+      },
+      {
+        "row": 4,
+        "col": 6,
+        "number": 13
+      },
+      {
+        "row": 5,
+        "col": 2,
+        "number": 14
+      },
+      {
+        "row": 5,
+        "col": 4,
+        "number": 15
+      },
+      {
+        "row": 6,
+        "col": 0,
+        "number": 16
+      },
+      {
+        "row": 6,
+        "col": 1,
+        "number": 17
+      },
+      {
+        "row": 6,
+        "col": 7,
+        "number": 18
+      },
+      {
+        "row": 7,
+        "col": 2,
+        "number": 19
+      },
+      {
+        "row": 8,
+        "col": 0,
+        "number": 20
+      },
+      {
+        "row": 9,
+        "col": 0,
+        "number": 21
+      },
+      {
+        "row": 9,
+        "col": 4,
+        "number": 22
+      }
+    ],
+    "dividers": [
+      {
+        "from": {
+          "row": 0,
+          "col": 3
+        },
+        "to": {
+          "row": 0,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 2,
+          "col": 5
+        },
+        "to": {
+          "row": 2,
+          "col": 6
+        }
+      },
+      {
+        "from": {
+          "row": 2,
+          "col": 6
+        },
+        "to": {
+          "row": 2,
+          "col": 7
+        }
+      },
+      {
+        "from": {
+          "row": 3,
+          "col": 0
+        },
+        "to": {
+          "row": 3,
+          "col": 1
+        }
+      },
+      {
+        "from": {
+          "row": 3,
+          "col": 1
+        },
+        "to": {
+          "row": 3,
+          "col": 2
+        }
+      },
+      {
+        "from": {
+          "row": 3,
+          "col": 2
+        },
+        "to": {
+          "row": 3,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 3,
+          "col": 3
+        },
+        "to": {
+          "row": 3,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 4,
+          "col": 5
+        },
+        "to": {
+          "row": 4,
+          "col": 6
+        }
+      },
+      {
+        "from": {
+          "row": 4,
+          "col": 6
+        },
+        "to": {
+          "row": 4,
+          "col": 7
+        }
+      },
+      {
+        "from": {
+          "row": 5,
+          "col": 0
+        },
+        "to": {
+          "row": 5,
+          "col": 1
+        }
+      },
+      {
+        "from": {
+          "row": 5,
+          "col": 1
+        },
+        "to": {
+          "row": 5,
+          "col": 2
+        }
+      },
+      {
+        "from": {
+          "row": 6,
+          "col": 3
+        },
+        "to": {
+          "row": 6,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 6,
+          "col": 4
+        },
+        "to": {
+          "row": 6,
+          "col": 5
+        }
+      },
+      {
+        "from": {
+          "row": 6,
+          "col": 5
+        },
+        "to": {
+          "row": 6,
+          "col": 6
+        }
+      },
+      {
+        "from": {
+          "row": 6,
+          "col": 6
+        },
+        "to": {
+          "row": 6,
+          "col": 7
+        }
+      },
+      {
+        "from": {
+          "row": 7,
+          "col": 0
+        },
+        "to": {
+          "row": 7,
+          "col": 1
+        }
+      },
+      {
+        "from": {
+          "row": 7,
+          "col": 1
+        },
+        "to": {
+          "row": 7,
+          "col": 2
+        }
+      },
+      {
+        "from": {
+          "row": 9,
+          "col": 3
+        },
+        "to": {
+          "row": 9,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 0,
+          "col": 2
+        },
+        "to": {
+          "row": 1,
+          "col": 2
+        }
+      },
+      {
+        "from": {
+          "row": 0,
+          "col": 4
+        },
+        "to": {
+          "row": 1,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 1,
+          "col": 2
+        },
+        "to": {
+          "row": 2,
+          "col": 2
+        }
+      },
+      {
+        "from": {
+          "row": 1,
+          "col": 4
+        },
+        "to": {
+          "row": 2,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 2,
+          "col": 2
+        },
+        "to": {
+          "row": 3,
+          "col": 2
+        }
+      },
+      {
+        "from": {
+          "row": 2,
+          "col": 4
+        },
+        "to": {
+          "row": 3,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 3,
+          "col": 0
+        },
+        "to": {
+          "row": 4,
+          "col": 0
+        }
+      },
+      {
+        "from": {
+          "row": 3,
+          "col": 4
+        },
+        "to": {
+          "row": 4,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 3,
+          "col": 6
+        },
+        "to": {
+          "row": 4,
+          "col": 6
+        }
+      },
+      {
+        "from": {
+          "row": 4,
+          "col": 3
+        },
+        "to": {
+          "row": 5,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 4,
+          "col": 4
+        },
+        "to": {
+          "row": 5,
+          "col": 4
+        }
+      },
+      {
+        "from": {
+          "row": 5,
+          "col": 1
+        },
+        "to": {
+          "row": 6,
+          "col": 1
+        }
+      },
+      {
+        "from": {
+          "row": 5,
+          "col": 3
+        },
+        "to": {
+          "row": 6,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 5,
+          "col": 7
+        },
+        "to": {
+          "row": 6,
+          "col": 7
+        }
+      },
+      {
+        "from": {
+          "row": 6,
+          "col": 3
+        },
+        "to": {
+          "row": 7,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 6,
+          "col": 5
+        },
+        "to": {
+          "row": 7,
+          "col": 5
+        }
+      },
+      {
+        "from": {
+          "row": 7,
+          "col": 3
+        },
+        "to": {
+          "row": 8,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 7,
+          "col": 5
+        },
+        "to": {
+          "row": 8,
+          "col": 5
+        }
+      },
+      {
+        "from": {
+          "row": 8,
+          "col": 3
+        },
+        "to": {
+          "row": 9,
+          "col": 3
+        }
+      },
+      {
+        "from": {
+          "row": 8,
+          "col": 5
+        },
+        "to": {
+          "row": 9,
+          "col": 5
+        }
+      }
+    ],
+    "clues": {
+      "across": [
+        {
+          "id": "1a",
+          "number": 1,
+          "direction": "across",
+          "start": {
+            "row": 0,
+            "col": 0
+          },
+          "clue": "Well-behaved canine returned, carrying ball (4)",
+          "answer": "GOOD",
+          "reasoning": "G(O)OD (dog rev.)"
+        },
+        {
+          "id": "4a",
+          "number": 4,
+          "direction": "across",
+          "start": {
+            "row": 0,
+            "col": 4
+          },
+          "clue": "Time magazine covering comeback match (4)",
+          "answer": "GAME",
+          "reasoning": "GAME (hidden rev.)"
+        },
+        {
+          "id": "8a",
+          "number": 8,
+          "direction": "across",
+          "start": {
+            "row": 1,
+            "col": 0
+          },
+          "clue": "Little troublemaker roots out charlatan (8)",
+          "answer": "IMPOSTOR",
+          "reasoning": "IMP + OSTOR (roots anag.)"
+        },
+        {
+          "id": "9a",
+          "number": 9,
+          "direction": "across",
+          "start": {
+            "row": 2,
+            "col": 0
+          },
+          "clue": "Gas up play reviewer before second half of sequel (6)",
+          "answer": "REFUEL",
+          "reasoning": "REF + UEL (second half of sequel)"
+        },
+        {
+          "id": "11a",
+          "number": 11,
+          "direction": "across",
+          "start": {
+            "row": 3,
+            "col": 4
+          },
+          "clue": "Information is a tiny bit backward (4)",
+          "answer": "DATA",
+          "reasoning": "DATA (a tad rev.)"
+        },
+        {
+          "id": "12a",
+          "number": 12,
+          "direction": "across",
+          "start": {
+            "row": 4,
+            "col": 0
+          },
+          "clue": "Battleship initially downed and defeated (6)",
+          "answer": "BEATEN",
+          "reasoning": "B + EATEN"
+        },
+        {
+          "id": "14a",
+          "number": 14,
+          "direction": "across",
+          "start": {
+            "row": 5,
+            "col": 2
+          },
+          "clue": "Vampire seen in marble statue (6)",
+          "answer": "LESTAT",
+          "reasoning": "LESTAT (hidden)"
+        },
+        {
+          "id": "16a",
+          "number": 16,
+          "direction": "across",
+          "start": {
+            "row": 6,
+            "col": 0
+          },
+          "clue": "Neal, with head turned ninety degrees, reveals passion (4)",
+          "answer": "ZEAL",
+          "reasoning": "ZEAL (rotate N ninety degrees)"
+        },
+        {
+          "id": "19a",
+          "number": 19,
+          "direction": "across",
+          "start": {
+            "row": 7,
+            "col": 2
+          },
+          "clue": "Tarantino title character, Jan, consumed by angry god (6)",
+          "answer": "DJANGO",
+          "reasoning": "D(JAN)GO (god anag.)"
+        },
+        {
+          "id": "20a",
+          "number": 20,
+          "direction": "across",
+          "start": {
+            "row": 8,
+            "col": 0
+          },
+          "clue": "“Midsommar” director restyled as artier (3,5)",
+          "answer": "ARIASTER",
+          "reasoning": "ARI ASTER (anag.)"
+        },
+        {
+          "id": "21a",
+          "number": 21,
+          "direction": "across",
+          "start": {
+            "row": 9,
+            "col": 0
+          },
+          "clue": "Faceless loner returning to Nevada city (4)",
+          "answer": "RENO",
+          "reasoning": "RENO (loner - l rev.)"
+        },
+        {
+          "id": "22a",
+          "number": 22,
+          "direction": "across",
+          "start": {
+            "row": 9,
+            "col": 4
+          },
+          "clue": "Really dislike “Heat” saving energy for !nale (4)",
+          "answer": "HATE",
+          "reasoning": "HATE (e moved in Heat)"
+        }
+      ],
+      "down": [
+        {
+          "id": "1d",
+          "number": 1,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 0
+          },
+          "clue": "Set up rising Bulls center and young woman (4)",
+          "answer": "GIRL",
+          "reasoning": "GIR + L (rig rev.)"
+        },
+        {
+          "id": "2d",
+          "number": 2,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 1
+          },
+          "clue": "Breakfast order (egg over medium and bit of enchilada)  with imperfect service (6)",
+          "answer": "OMELET",
+          "reasoning": "O + M + E + LET"
+        },
+        {
+          "id": "3d",
+          "number": 3,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 3
+          },
+          "clue": "Act recklessly, but have reservations (5)",
+          "answer": "DOUBT",
+          "reasoning": "DO + UBT (but anag.)"
+        },
+        {
+          "id": "5d",
+          "number": 5,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 5
+          },
+          "clue": "Bug in un!nished book of maps for U.S. capital (7)",
+          "answer": "ATLANTA",
+          "reasoning": "ATL(ANT)A(s)"
+        },
+        {
+          "id": "6d",
+          "number": 6,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 6
+          },
+          "clue": "Defensive feature in edges of metro airport (4)",
+          "answer": "MOAT",
+          "reasoning": "MO + AT"
+        },
+        {
+          "id": "7d",
+          "number": 7,
+          "direction": "down",
+          "start": {
+            "row": 0,
+            "col": 7
+          },
+          "clue": "Meandering, misguided ranter (6)",
+          "answer": "ERRANT",
+          "reasoning": "ERRANT (anag.)"
+        },
+        {
+          "id": "10d",
+          "number": 10,
+          "direction": "down",
+          "start": {
+            "row": 3,
+            "col": 2
+          },
+          "clue": "Sadly, uprising ultimately did in Richard I’s opponent (7)",
+          "answer": "SALADIN",
+          "reasoning": "SALA + D + IN (alas rev.)"
+        },
+        {
+          "id": "12d",
+          "number": 12,
+          "direction": "down",
+          "start": {
+            "row": 4,
+            "col": 0
+          },
+          "clue": "Selling point: top-rated pizza in tavern (6)",
+          "answer": "BAZAAR",
+          "reasoning": "B(A + ZA)AR"
+        },
+        {
+          "id": "13d",
+          "number": 13,
+          "direction": "down",
+          "start": {
+            "row": 4,
+            "col": 6
+          },
+          "clue": "Aim, pitch, and fetch (6)",
+          "answer": "TARGET",
+          "reasoning": "TAR + GET"
+        },
+        {
+          "id": "15d",
+          "number": 15,
+          "direction": "down",
+          "start": {
+            "row": 5,
+            "col": 4
+          },
+          "clue": "Mother’s hugged by returning high-school crush (5)",
+          "answer": "SMASH",
+          "reasoning": "S(MA'S)H"
+        },
+        {
+          "id": "17d",
+          "number": 17,
+          "direction": "down",
+          "start": {
+            "row": 6,
+            "col": 1
+          },
+          "clue": "Literary heroine involved in Whiskey Rebellion (4)",
+          "answer": "EYRE",
+          "reasoning": "EYRE (hidden)"
+        },
+        {
+          "id": "18d",
+          "number": 18,
+          "direction": "down",
+          "start": {
+            "row": 6,
+            "col": 7
+          },
+          "clue": "Dig someone who’s tiresome (4)",
+          "answer": "BORE",
+          "reasoning": "BORE (double def.)"
+        }
+      ]
+    }
+  }
+]
