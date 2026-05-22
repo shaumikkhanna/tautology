@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: ItemPageProps) {
   const sectionItem = getSectionItem(section, item);
 
   return {
-    title: sectionItem ? `${sectionItem.title} | Tautology` : "Tautology",
+    title: sectionItem ? `${sectionItem.title} | toomuchmaths` : "toomuchmaths",
   };
 }
 

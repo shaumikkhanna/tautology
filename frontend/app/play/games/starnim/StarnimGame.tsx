@@ -240,7 +240,7 @@ export function StarnimGame() {
 
 function HomeLink() {
   return (
-    <a className={styles.homeLink} href="/" aria-label="Tautology home">
+    <a className={styles.homeLink} href="/" aria-label="toomuchmaths home">
       P or not P
     </a>
   );

@@ -451,7 +451,7 @@ function PlayScreen({ code, onBack }: { code: string; onBack: () => void }) {
 
 function HomeLink() {
   return (
-    <a className={styles.homeLink} href="/" aria-label="Tautology home">
+    <a className={styles.homeLink} href="/" aria-label="toomuchmaths home">
       P or not P
     </a>
   );

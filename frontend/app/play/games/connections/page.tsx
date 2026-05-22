@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { ConnectionsGame } from "./ConnectionsGame";
 
 export const metadata = {
-  title: "Connections | Tautology",
+  title: "Connections | toomuchmaths",
 };
 
 export default function ConnectionsPage() {

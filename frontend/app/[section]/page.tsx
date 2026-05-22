@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: SectionPageProps) {
   const section = getSection(sectionSlug);
 
   return {
-    title: section ? `${section.label} | Tautology` : "Tautology",
+    title: section ? `${section.label} | toomuchmaths` : "toomuchmaths",
   };
 }
 

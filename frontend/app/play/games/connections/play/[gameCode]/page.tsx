@@ -8,7 +8,7 @@ type ConnectionsPlayPageProps = {
 };
 
 export const metadata = {
-  title: "Connections | Tautology",
+  title: "Connections | toomuchmaths",
 };
 
 export default async function ConnectionsPlayPage({ params }: ConnectionsPlayPageProps) {

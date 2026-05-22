@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
-  title: "Tautology",
+  title: "toomuchmaths",
   description: "P or not P.",
   icons: {
     icon: [

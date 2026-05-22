@@ -1,7 +1,7 @@
 import { AnagramSolver } from "./AnagramSolver";
 
 export const metadata = {
-  title: "Anagram Solver | Tautology",
+  title: "Anagram Solver | toomuchmaths",
 };
 
 export default function AnagramSolverPage() {
