@@ -12,7 +12,7 @@ type BackendLoadingModalProps = {
 
 const BACKEND_LOADING_MESSAGE =
 	"This part of the app needs the backend. This may take upto a minute to wake up. If you find your attention drifting, reflect on the state of the current generation's attention spans and the tech industrial complex's compute costs. If it still bothers you, listen to some calming newage music..";
-const BACKEND_LOADING_LINK_HREF = "https://www.youtube.com/watch?v=jfKfPfyJRdk";
+const BACKEND_LOADING_LINK_HREF = "https://www.youtube.com/watch?v=EWrX250Zhko";
 const BACKEND_LOADING_LINK_LABEL = "Calming newage music";
 
 export function BackendLoadingModal({
