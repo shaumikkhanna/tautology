@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     const platform =
       typeof payload.platform === "string" ? payload.platform.trim() : "";
 
-    if (stageselectReviewStatuses.has(status) && !platform) {
+    if (!platform) {
       throw new Error("Choose a platform before saving.");
     }
 

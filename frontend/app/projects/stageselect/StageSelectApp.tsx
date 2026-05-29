@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { StageSelectGameSearchResult } from "@/lib/igdb/types";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
@@ -9,11 +9,11 @@ import type { Json, Tables } from "@/lib/supabase/database.types";
 import { stageselectReviewStatuses } from "@/lib/stageselect/api";
 
 const statuses = [
-  { value: "finished", label: "finished" },
-  { value: "left", label: "left" },
-  { value: "playing", label: "playing" },
-  { value: "backlogged", label: "backlogged" },
-  { value: "wishlisted", label: "wishlist" },
+  { value: "finished", label: "Finished" },
+  { value: "left", label: "Left" },
+  { value: "playing", label: "Playing" },
+  { value: "backlogged", label: "Backlogged" },
+  { value: "wishlisted", label: "Wishlist" },
 ];
 
 const ratingOptions = Array.from({ length: 10 }, (_item, index) =>
@@ -23,6 +23,7 @@ const ratingOptions = Array.from({ length: 10 }, (_item, index) =>
 const tabs = [
   { value: "search", label: "Search" },
   { value: "library", label: "Library" },
+  { value: "stats", label: "Stats" },
 ];
 
 const libraryPageSize = 24;
@@ -31,7 +32,7 @@ type Profile = Pick<Tables<"profiles">, "display_name">;
 
 type GameRecord = Pick<
   Tables<"stageselect_games">,
-  "id" | "title" | "release_date" | "cover_url" | "platforms"
+  "id" | "igdb_id" | "title" | "release_date" | "cover_url" | "platforms"
 >;
 
 type UserGameRecord = Pick<
@@ -49,6 +50,7 @@ type ReviewRecord = Pick<
 type LibraryItem = {
   id: string;
   gameId: string;
+  igdbId: number;
   title: string;
   platform: string;
   platformOptions: string[];
@@ -66,6 +68,12 @@ type ReviewModalState = {
 
 type LibraryModalState = {
   game: LibraryItem;
+};
+
+type ChartRow = {
+  label: string;
+  value: number;
+  className?: string;
 };
 
 export function StageSelectApp() {
@@ -106,6 +114,7 @@ export function StageSelectApp() {
   const [isLibraryLoading, setIsLibraryLoading] = useState(false);
   const [isExportingData, setIsExportingData] = useState(false);
   const [activeTab, setActiveTab] = useState("search");
+  const [librarySearchQuery, setLibrarySearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [platformFilter, setPlatformFilter] = useState("all");
   const [ratingFilter, setRatingFilter] = useState("all");
@@ -137,7 +146,7 @@ export function StageSelectApp() {
           supabase
             .from("stageselect_user_games")
             .select(
-              "id, game_id, status, platform, stageselect_games(id, title, release_date, cover_url, platforms)",
+              "id, game_id, status, platform, stageselect_games(id, igdb_id, title, release_date, cover_url, platforms)",
             )
             .eq("user_id", nextSession.user.id)
             .order("updated_at", { ascending: false }),
@@ -184,6 +193,7 @@ export function StageSelectApp() {
           return {
             id: item.id,
             gameId: item.game_id,
+            igdbId: game.igdb_id,
             title: game.title,
             platform: item.platform ?? "-",
             platformOptions: getLibraryPlatformOptions(
@@ -259,8 +269,30 @@ export function StageSelectApp() {
     ).sort((a, b) => Number(b) - Number(a));
   }, [library]);
 
+  const libraryByIgdbId = useMemo(() => {
+    return new Map(library.map((item) => [item.igdbId, item]));
+  }, [library]);
+
   const visibleLibrary = useMemo(() => {
+    const normalizedSearchQuery = librarySearchQuery.trim().toLowerCase();
+
     return library
+      .filter((item) => {
+        if (!normalizedSearchQuery) {
+          return true;
+        }
+
+        return [
+          item.title,
+          item.platform,
+          getStatusLabel(item.status),
+          item.releaseYear,
+          item.review,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedSearchQuery);
+      })
       .filter((item) => statusFilter === "all" || item.status === statusFilter)
       .filter(
         (item) => platformFilter === "all" || item.platform === platformFilter,
@@ -324,6 +356,7 @@ export function StageSelectApp() {
       });
   }, [
     library,
+    librarySearchQuery,
     platformFilter,
     ratingFilter,
     releaseFilter,
@@ -336,9 +369,77 @@ export function StageSelectApp() {
     return visibleLibrary.slice(0, libraryVisibleCount);
   }, [libraryVisibleCount, visibleLibrary]);
 
+  const libraryStats = useMemo(() => {
+    const ratedGames = library.filter((item) => getSortableRating(item.rating) > 0);
+    const averageRating =
+      ratedGames.length > 0
+        ? ratedGames.reduce(
+            (total, item) => total + getSortableRating(item.rating),
+            0,
+          ) / ratedGames.length
+        : 0;
+
+    return {
+      totalGames: library.length,
+      reviewedGames: library.filter((item) => Boolean(item.review)).length,
+      ratedGames: ratedGames.length,
+      averageRating,
+      statusRows: statuses.map((status) => ({
+        label: status.label,
+        value: library.filter((item) => item.status === status.value).length,
+        className: getStatusBarClass(status.value),
+      })),
+      platformRows: getCountRows(
+        library.map((item) => item.platform).filter((platform) => platform !== "-"),
+      ).slice(0, 8),
+      ratingRows: [
+        {
+          label: "5 stars",
+          value: library.filter((item) => getSortableRating(item.rating) === 5)
+            .length,
+          className: "bg-[#f59e0b]",
+        },
+        {
+          label: "4-4.5",
+          value: library.filter((item) => {
+            const rating = getSortableRating(item.rating);
+
+            return rating >= 4 && rating < 5;
+          }).length,
+          className: "bg-[#22c55e]",
+        },
+        {
+          label: "3-3.5",
+          value: library.filter((item) => {
+            const rating = getSortableRating(item.rating);
+
+            return rating >= 3 && rating < 4;
+          }).length,
+          className: "bg-[#3b82f6]",
+        },
+        {
+          label: "0.5-2.5",
+          value: library.filter((item) => {
+            const rating = getSortableRating(item.rating);
+
+            return rating > 0 && rating < 3;
+          }).length,
+          className: "bg-[#f97316]",
+        },
+        {
+          label: "Unrated",
+          value: library.filter((item) => getSortableRating(item.rating) < 0)
+            .length,
+          className: "bg-[#94a3b8]",
+        },
+      ],
+    };
+  }, [library]);
+
   useEffect(() => {
     setLibraryVisibleCount(libraryPageSize);
   }, [
+    librarySearchQuery,
     platformFilter,
     ratingFilter,
     releaseFilter,
@@ -497,20 +598,19 @@ export function StageSelectApp() {
       return;
     }
 
-    if (stageselectReviewStatuses.has(status)) {
-      setReviewModal({ game, status });
-      setReviewRating("");
-      setReviewBody("");
-      setSelectedPlatform(game.platforms[0] ?? "");
-      setReviewMessage("");
+    const existingGame = libraryByIgdbId.get(game.igdbId);
+
+    if (existingGame) {
+      openLibraryModal(existingGame);
+      setSearchMessage(`${game.title} is already in your library.`);
       return;
     }
 
-    saveGameToLibrary({
-      game,
-      status,
-      platform: game.platforms[0] ?? "Unknown",
-    });
+    setReviewModal({ game, status });
+    setReviewRating("");
+    setReviewBody("");
+    setSelectedPlatform(game.platforms[0] ?? "");
+    setReviewMessage("");
   }
 
   async function saveGameToLibrary({
@@ -531,7 +631,7 @@ export function StageSelectApp() {
       return;
     }
 
-    if (stageselectReviewStatuses.has(status) && !platform.trim()) {
+    if (!platform.trim()) {
       setReviewMessage("Choose a platform before saving.");
       return;
     }
@@ -565,7 +665,6 @@ export function StageSelectApp() {
 
     await loadUserData(session);
     setReviewModal(null);
-    setActiveTab("library");
     setSearchMessage(
       `${game.title} saved as ${getStatusLabel(status)}.`,
     );
@@ -587,7 +686,7 @@ export function StageSelectApp() {
       return;
     }
 
-    if (stageselectReviewStatuses.has(editStatus) && !editPlatform.trim()) {
+    if (!editPlatform.trim()) {
       setLibraryActionMessage("Choose a platform before saving.");
       return;
     }
@@ -804,10 +903,34 @@ export function StageSelectApp() {
 
             <div className="mt-6 grid gap-4">
               {searchResults.length > 0 ? (
-                searchResults.map((game) => (
+                searchResults.map((game) => {
+                  const libraryGame = libraryByIgdbId.get(game.igdbId);
+
+                  return (
                 <article
-                  className="grid gap-4 rounded-lg border border-[#d8dde5] bg-[#fbfcfd] p-4 transition hover:border-[#b8c2d1] sm:grid-cols-[88px_minmax(0,1fr)]"
+                  className={[
+                    "grid gap-4 rounded-lg border border-[#d8dde5] bg-[#fbfcfd] p-4 transition hover:border-[#b8c2d1] sm:grid-cols-[88px_minmax(0,1fr)]",
+                    libraryGame ? "cursor-pointer hover:shadow-sm" : "",
+                  ].join(" ")}
                   key={game.igdbId}
+                  onClick={() => {
+                    if (libraryGame) {
+                      openLibraryModal(libraryGame);
+                      setSearchMessage(`${game.title} is already in your library.`);
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if (
+                      libraryGame &&
+                      (event.key === "Enter" || event.key === " ")
+                    ) {
+                      event.preventDefault();
+                      openLibraryModal(libraryGame);
+                      setSearchMessage(`${game.title} is already in your library.`);
+                    }
+                  }}
+                  role={libraryGame ? "button" : undefined}
+                  tabIndex={libraryGame ? 0 : undefined}
                 >
                   {game.coverUrl ? (
                     <img
@@ -835,6 +958,11 @@ export function StageSelectApp() {
                           {game.genres[0]}
                         </span>
                       ) : null}
+                      {libraryGame ? (
+                        <span className="rounded-full bg-[#ecfdf3] px-3 py-1 font-mono text-xs uppercase text-[#027a48]">
+                          In library
+                        </span>
+                      ) : null}
                     </div>
                     {game.summary ? (
                       <p className="mt-3 line-clamp-2 text-sm leading-6 text-[#4b5563]">
@@ -850,7 +978,10 @@ export function StageSelectApp() {
                           ].join(" ")}
                           disabled={isSavingGame}
                           key={status.value}
-                          onClick={() => beginStatusAction(game, status.value)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            beginStatusAction(game, status.value);
+                          }}
                           type="button"
                         >
                           {status.label}
@@ -859,7 +990,8 @@ export function StageSelectApp() {
                     </div>
                   </div>
                 </article>
-                ))
+                  );
+                })
               ) : (
                 <div className="rounded-lg border border-dashed border-[#cfd6e0] bg-[#fbfcfd] px-4 py-8 text-center text-sm text-[#667085]">
                   Results will appear here with cover art, platforms, genres,
@@ -868,7 +1000,7 @@ export function StageSelectApp() {
               )}
             </div>
             </div>
-            ) : (
+            ) : activeTab === "library" ? (
             <div className="rounded-lg border border-[#d8dde5] bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -880,6 +1012,16 @@ export function StageSelectApp() {
                   </h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <input
+                    aria-label="Search library"
+                    className="min-w-48 rounded-md border border-[#cfd6e0] bg-white px-3 py-2 text-xs font-medium text-[#394150] outline-none transition placeholder:text-[#98a2b3] focus:border-[#7c8ca5] focus:ring-2 focus:ring-[#dce3ee]"
+                    onChange={(event) =>
+                      setLibrarySearchQuery(event.target.value)
+                    }
+                    placeholder="Search library"
+                    type="search"
+                    value={librarySearchQuery}
+                  />
                   <select
                     aria-label="Filter library by platform"
                     className="rounded-md border border-[#cfd6e0] bg-white px-3 py-2 text-xs font-medium text-[#394150]"
@@ -1066,6 +1208,69 @@ export function StageSelectApp() {
                 )}
               </div>
             </div>
+            ) : (
+            <div className="rounded-lg border border-[#d8dde5] bg-white p-5 shadow-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="font-mono text-xs uppercase text-[#667085]">
+                    Mini dashboard
+                  </p>
+                  <h2 className="mt-2 font-mono text-2xl font-bold uppercase tracking-normal text-[#111827]">
+                    Stats
+                  </h2>
+                </div>
+                <p className="text-sm text-[#667085]">
+                  {session
+                    ? `${libraryStats.totalGames} saved game${libraryStats.totalGames === 1 ? "" : "s"}`
+                    : "Log in to load your stats."}
+                </p>
+              </div>
+
+              {libraryStats.totalGames > 0 ? (
+                <>
+                  <div className="mt-5 grid gap-3 sm:grid-cols-4">
+                    <StatTile
+                      label="Games"
+                      value={String(libraryStats.totalGames)}
+                    />
+                    <StatTile
+                      label="Rated"
+                      value={String(libraryStats.ratedGames)}
+                    />
+                    <StatTile
+                      label="Reviewed"
+                      value={String(libraryStats.reviewedGames)}
+                    />
+                    <StatTile
+                      label="Avg rating"
+                      value={
+                        libraryStats.averageRating > 0
+                          ? libraryStats.averageRating.toFixed(1)
+                          : "-"
+                      }
+                    />
+                  </div>
+
+                  <div className="mt-5 grid gap-4 lg:grid-cols-3">
+                    <ChartPanel title="By status">
+                      <BarChart rows={libraryStats.statusRows} />
+                    </ChartPanel>
+                    <ChartPanel title="By platform">
+                      <BarChart rows={libraryStats.platformRows} />
+                    </ChartPanel>
+                    <ChartPanel title="By rating">
+                      <BarChart rows={libraryStats.ratingRows} />
+                    </ChartPanel>
+                  </div>
+                </>
+              ) : (
+                <div className="mt-5 rounded-lg border border-dashed border-[#cfd6e0] bg-[#fbfcfd] px-4 py-8 text-center text-sm text-[#667085]">
+                  {isLibraryLoading
+                    ? "Loading..."
+                    : "Save games to build your dashboard."}
+                </div>
+              )}
+            </div>
             )}
           </div>
         </section>
@@ -1114,35 +1319,39 @@ export function StageSelectApp() {
               </select>
             </label>
 
-            <label className="mt-4 block">
-              <span className="font-mono text-xs uppercase text-[#667085]">
-                Stars
-              </span>
-              <select
-                className="mt-2 w-full rounded-md border border-[#cfd6e0] bg-white px-3 py-3 text-sm text-[#20242c] outline-none transition focus:border-[#7c8ca5] focus:ring-2 focus:ring-[#dce3ee]"
-                onChange={(event) => setReviewRating(event.target.value)}
-                value={reviewRating}
-              >
-                <option value="">No rating</option>
-                {ratingOptions.map((rating) => (
-                  <option key={rating} value={rating}>
-                    {rating} / 5
-                  </option>
-                ))}
-              </select>
-            </label>
+            {stageselectReviewStatuses.has(reviewModal.status) ? (
+              <>
+                <label className="mt-4 block">
+                  <span className="font-mono text-xs uppercase text-[#667085]">
+                    Stars
+                  </span>
+                  <select
+                    className="mt-2 w-full rounded-md border border-[#cfd6e0] bg-white px-3 py-3 text-sm text-[#20242c] outline-none transition focus:border-[#7c8ca5] focus:ring-2 focus:ring-[#dce3ee]"
+                    onChange={(event) => setReviewRating(event.target.value)}
+                    value={reviewRating}
+                  >
+                    <option value="">No rating</option>
+                    {ratingOptions.map((rating) => (
+                      <option key={rating} value={rating}>
+                        {rating} / 5
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-            <label className="mt-4 block">
-              <span className="font-mono text-xs uppercase text-[#667085]">
-                Review
-              </span>
-              <textarea
-                className="mt-2 min-h-32 w-full rounded-md border border-[#cfd6e0] bg-white px-3 py-3 text-sm text-[#20242c] outline-none transition focus:border-[#7c8ca5] focus:ring-2 focus:ring-[#dce3ee]"
-                onChange={(event) => setReviewBody(event.target.value)}
-                placeholder="Optional notes, thoughts, or verdict."
-                value={reviewBody}
-              />
-            </label>
+                <label className="mt-4 block">
+                  <span className="font-mono text-xs uppercase text-[#667085]">
+                    Review
+                  </span>
+                  <textarea
+                    className="mt-2 min-h-32 w-full rounded-md border border-[#cfd6e0] bg-white px-3 py-3 text-sm text-[#20242c] outline-none transition focus:border-[#7c8ca5] focus:ring-2 focus:ring-[#dce3ee]"
+                    onChange={(event) => setReviewBody(event.target.value)}
+                    placeholder="Optional notes, thoughts, or verdict."
+                    value={reviewBody}
+                  />
+                </label>
+              </>
+            ) : null}
 
             {reviewMessage ? (
               <p className="mt-3 text-sm text-[#b42318]">{reviewMessage}</p>
@@ -1170,7 +1379,7 @@ export function StageSelectApp() {
                 }
                 type="button"
               >
-                {isSavingGame ? "Saving" : "Save"}
+                {isSavingGame ? "Saving" : `Save ${getStatusLabel(reviewModal.status)}`}
               </button>
             </div>
           </div>
@@ -1355,6 +1564,79 @@ function getReleaseYear(releaseDate: string | null) {
   return releaseDate.slice(0, 4);
 }
 
+function StatTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-[#d8dde5] bg-[#fbfcfd] p-4">
+      <p className="font-mono text-xs uppercase text-[#667085]">{label}</p>
+      <p className="mt-2 font-mono text-3xl font-bold tracking-normal text-[#111827]">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function ChartPanel({
+  children,
+  title,
+}: {
+  children: ReactNode;
+  title: string;
+}) {
+  return (
+    <section className="rounded-lg border border-[#d8dde5] bg-[#fbfcfd] p-4">
+      <h3 className="font-mono text-sm font-bold uppercase tracking-normal text-[#111827]">
+        {title}
+      </h3>
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
+
+function BarChart({ rows }: { rows: ChartRow[] }) {
+  const maxValue = Math.max(1, ...rows.map((row) => row.value));
+
+  return (
+    <div className="grid gap-3">
+      {rows.length > 0 ? (
+        rows.map((row) => (
+          <div className="grid gap-1" key={row.label}>
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <span className="truncate text-[#394150]">{row.label}</span>
+              <span className="font-mono font-bold text-[#111827]">
+                {row.value}
+              </span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-[#e8ecf2]">
+              <div
+                className={["h-full rounded-full", row.className ?? "bg-[#64748b]"].join(
+                  " ",
+                )}
+                style={{ width: `${(row.value / maxValue) * 100}%` }}
+              />
+            </div>
+          </div>
+        ))
+      ) : (
+        <p className="text-sm text-[#667085]">No data yet.</p>
+      )}
+    </div>
+  );
+}
+
+function getCountRows(values: string[]) {
+  const counts = new Map<string, number>();
+
+  values.forEach((value) => {
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  });
+
+  return Array.from(counts, ([label, value]) => ({
+    label,
+    value,
+    className: "bg-[#14b8a6]",
+  })).sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+}
+
 function getSortableRating(rating: string) {
   const value = Number(rating);
 
@@ -1456,6 +1738,18 @@ function getStatusChipClass(statusValue: string) {
   };
 
   return classes[statusValue] ?? "bg-white text-[#394150]";
+}
+
+function getStatusBarClass(statusValue: string) {
+  const classes: Record<string, string> = {
+    finished: "bg-[#12b76a]",
+    left: "bg-[#f79009]",
+    playing: "bg-[#2e90fa]",
+    backlogged: "bg-[#f63d68]",
+    wishlisted: "bg-[#7a5af8]",
+  };
+
+  return classes[statusValue] ?? "bg-[#64748b]";
 }
 
 function getPlatformChipClass(platform: string) {

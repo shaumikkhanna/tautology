@@ -37,10 +37,12 @@ frontend/content/projects/stageselect/meta.json
 - Normalized IGDB search results for the frontend.
 - Added local relevance/popularity ranking for search results.
 - Split the app into Search and Library tabs.
+- Added Stats tab with simple local dashboard charts by platform, status, and rating.
 - Added game save flows:
   - `finished`, `left`, `playing`, and `backlogged` require platform and can include optional rating/review.
-  - `wishlisted` saves immediately without rating/review.
+  - `wishlisted` requires platform and saves without rating/review.
 - Added library card grid with cover art.
+- Added library text search across titles, platforms, statuses, years, and review text.
 - Added colored status and platform chips.
 - Added library detail/edit modal:
   - view existing review
@@ -49,6 +51,7 @@ frontend/content/projects/stageselect/meta.json
   - edit rating
   - edit review
   - remove game from library
+- Search results for games already in the user's library open the existing library edit modal instead of starting a duplicate add flow.
 - Added server-side save/update/remove routes so write flows no longer write directly to Supabase tables from the browser.
 - Added optional Supabase Object Storage cover caching in the server-side save route.
 - Added email confirmation redirects back to `/projects/stageselect` on the current deployed origin.
@@ -140,7 +143,7 @@ None of this is pressing for the current private/early StageSelect app. Revisit 
 - Add Apple login through Supabase Auth.
 - Add public/private review controls and public game detail pages.
 - Add richer game detail pages for cached games.
-- Add visualizations powered by the same user-owned data shape as the JSON export.
+- Add richer visualizations powered by the same user-owned data shape as the JSON export.
 - Add better search filtering, including hiding adult/low-quality edge results if needed.
 - Add optimistic UI and toast notifications for save/update/remove actions.
 - Add tests for IGDB normalization/ranking and core save/update flows.
@@ -161,7 +164,8 @@ None of this is pressing for the current private/early StageSelect app. Revisit 
 - Saving a game should cache the cover in Supabase Object Storage when `SUPABASE_SECRET_KEY` and the storage bucket are configured.
 - Saving a status should create/update the user’s `stageselect_user_games` row.
 - Saving with rating/review should create/update `stageselect_reviews`.
-- Wishlist should save without rating/review.
+- Wishlist should require platform and save without rating/review.
+- Stats should summarize the current library by platform, status, and rating.
 - Library filters/sorting should work after saved games exist.
 - Editing/removing from the library modal should persist.
 - Download JSON should export only user-owned StageSelect data, using IGDB ids instead of cached game metadata.
