@@ -1,0 +1,282 @@
+.stage {
+  position: relative;
+  display: flex;
+  min-height: clamp(31rem, calc(100vh - 8.4rem), 52rem);
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.stage::before {
+  position: absolute;
+  width: min(70vw, 46rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(214, 204, 155, 0.4) 0%,
+    rgba(214, 204, 155, 0.12) 48%,
+    transparent 72%
+  );
+  content: "";
+  filter: blur(18px);
+  pointer-events: none;
+}
+
+.graph {
+  z-index: 1;
+  display: block;
+  width: min(94vw, 72rem);
+  height: min(72vh, 44rem);
+  min-height: 27rem;
+  overflow: visible;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.edgeLine {
+  pointer-events: none;
+  stroke: rgba(36, 33, 29, 0.58);
+  stroke-linecap: round;
+  stroke-width: 2.15;
+  transition:
+    stroke 120ms ease,
+    stroke-width 120ms ease;
+  vector-effect: non-scaling-stroke;
+}
+
+.edgeControl {
+  cursor: pointer;
+  opacity: 0;
+  outline: none;
+  stroke: #000;
+  stroke-linecap: round;
+  stroke-width: 18;
+  vector-effect: non-scaling-stroke;
+}
+
+.edgeControl:hover + .edgeLine {
+  stroke: rgba(36, 33, 29, 0.82);
+  stroke-width: 3.6;
+}
+
+.edgeControl:focus-visible + .edgeLine {
+  stroke: #ffcc00;
+  stroke-width: 4;
+}
+
+.edgePulsing {
+  animation: edge-jiggle 420ms ease-out;
+}
+
+.vertex {
+  cursor: pointer;
+  outline: none;
+}
+
+.vertex:focus-visible .node {
+  stroke: #ffcc00;
+  stroke-width: 5;
+}
+
+.hitTarget {
+  fill: transparent;
+}
+
+.node {
+  fill: var(--node-color);
+  stroke: #24211d;
+  stroke-width: 3;
+  transition:
+    fill 280ms ease,
+    filter 280ms ease,
+    stroke-width 180ms ease;
+  vector-effect: non-scaling-stroke;
+}
+
+.nodePulse {
+  fill: none;
+  opacity: 0;
+  stroke: var(--node-color);
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.uncolored {
+  --node-color: #d6cc9b;
+}
+
+.color0 {
+  --node-color: #9b675d;
+}
+
+.color1 {
+  --node-color: #68817b;
+}
+
+.color2 {
+  --node-color: #a58b4d;
+}
+
+.color3 {
+  --node-color: #777094;
+}
+
+.pulsing .node {
+  animation: node-breathe 440ms ease-out;
+}
+
+.pulsing .nodePulse {
+  animation: node-ring 520ms ease-out;
+}
+
+.celebrating .edgeLine {
+  animation: edge-flash 720ms ease-out;
+}
+
+.celebrating .vertex,
+.solved .vertex,
+.celebrating .edgeControl,
+.solved .edgeControl {
+  cursor: default;
+}
+
+.celebrating .color0,
+.solved .color0 {
+  --node-color: #c44938;
+}
+
+.celebrating .color1,
+.solved .color1 {
+  --node-color: #278b7c;
+}
+
+.celebrating .color2,
+.solved .color2 {
+  --node-color: #d9a514;
+}
+
+.celebrating .color3,
+.solved .color3 {
+  --node-color: #7160b4;
+}
+
+.celebrating .node,
+.solved .node {
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
+  stroke-width: 3.5;
+}
+
+.successRings circle {
+  fill: none;
+  opacity: 0;
+  stroke: #ffcc00;
+  stroke-width: 3;
+  transform-box: fill-box;
+  transform-origin: center;
+  vector-effect: non-scaling-stroke;
+}
+
+.successRings circle:first-child {
+  animation: success-ring 1.2s ease-out;
+}
+
+.successRings circle:last-child {
+  animation: success-ring 1.2s 180ms ease-out;
+}
+
+@keyframes node-breathe {
+  0% {
+    r: 17px;
+  }
+  42% {
+    r: 22px;
+  }
+  100% {
+    r: 17px;
+  }
+}
+
+@keyframes node-ring {
+  0% {
+    opacity: 0.6;
+    r: 19px;
+  }
+  100% {
+    opacity: 0;
+    r: 32px;
+  }
+}
+
+@keyframes edge-flash {
+  0%,
+  100% {
+    stroke: rgba(36, 33, 29, 0.58);
+  }
+  48% {
+    stroke: #ffcc00;
+  }
+}
+
+@keyframes edge-jiggle {
+  0%,
+  100% {
+    stroke: rgba(36, 33, 29, 0.58);
+    stroke-width: 2.15;
+  }
+  42% {
+    stroke: #ffcc00;
+    stroke-width: 4;
+  }
+}
+
+@keyframes success-ring {
+  0% {
+    opacity: 0.62;
+    transform: scale(0.25);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(4.6);
+  }
+}
+
+@media (max-width: 640px) {
+  .stage {
+    min-height: calc(100vh - 8.25rem);
+  }
+
+  .graph {
+    width: 165vw;
+    max-width: none;
+    height: 72vh;
+    min-height: 29rem;
+  }
+
+  .edgeLine {
+    stroke-width: 1.75;
+  }
+
+  .edgeControl {
+    stroke-width: 24;
+  }
+
+  .hitTarget {
+    r: 35px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .node,
+  .pulsing .node,
+  .pulsing .nodePulse,
+  .edgePulsing,
+  .celebrating .edgeLine,
+  .successRings circle:first-child,
+  .successRings circle:last-child {
+    animation-duration: 1ms;
+    transition-duration: 1ms;
+  }
+}

@@ -67,7 +67,7 @@ export function ClickSound() {
     }
 
     function playClick(event: PointerEvent) {
-      if (event.pointerType === "mouse" && event.button !== 0) {
+      if (event.pointerType !== "mouse" || event.button !== 0) {
         return;
       }
 

@@ -32,7 +32,7 @@ The frontend lives in `frontend/` and uses the Next.js App Router.
 
 Important files:
 
-- `frontend/app/page.tsx`: minimal home page with only `P ∨ ¬ P`.
+- `frontend/app/page.tsx`: home page hosting the floating four-color graph toy.
 - `frontend/app/layout.tsx`: root layout and metadata/favicons.
 - `frontend/components/AppShell.tsx`: wraps normal site pages with header/footer/click sound, but hides the shell for `/play/...`.
 - `frontend/app/[section]/page.tsx`: section listing page, such as `/games`.
@@ -53,6 +53,16 @@ For local development:
 ```txt
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 ```
+
+## Homepage Graph
+
+The homepage renders a dependency-free interactive SVG graph toy:
+
+- `frontend/app/FloatingFourColorGraph.tsx`: client-side spring simulation, color interaction, responsive SVG, and solved-state celebration.
+- `frontend/app/homeGraph.ts`: seeded planar graph generation and pure coloring helpers.
+- `frontend/app/homeGraph.test.mjs`: generation, four-chromaticity, density, connectivity, coloring, and color-cycle tests.
+
+Each graph has 12–16 vertices and 30–35% density. Generation preserves an odd-wheel core, so the graph is planar and exactly four-chromatic. Clicking a vertex cycles through four muted colors and adds a physical impulse; clicking an edge sends a perpendicular jiggle through its spring-connected endpoints. Edges use enlarged invisible hit targets, become bolder on hover, and use a brass edge highlight for keyboard focus. Nodes and edges support keyboard activation, mobile layouts use larger touch targets, and `prefers-reduced-motion` suppresses ambient drift and shortens effects. A valid coloring brightens, celebrates, and then freezes until reload.
 
 ## Sections And Cards
 
@@ -110,7 +120,7 @@ For a static game, `playHref` should point to its static HTML:
 }
 ```
 
-These pages are plain public assets and do not mount the Next shell. They include a quiet top-left `P or not P` link back to `/`.
+These pages are plain public assets and do not mount the Next shell. They include a quiet top-left `TOOMUCHMATHS` link back to `/`.
 
 Current static games:
 
@@ -385,7 +395,7 @@ The Next/Tailwind shell plays `frontend/public/computer-click.mp3` on pointer cl
 frontend/components/ClickSound.tsx
 ```
 
-It uses Web Audio for low-latency repeated clicks and a fallback audio pool. The click sound is not mounted under `/play/...`, so games/apps do not inherit it.
+It uses Web Audio for low-latency repeated clicks and a fallback audio pool. Sound plays only for primary mouse-button pointer events; touch and pen interactions stay silent. The click sound is not mounted under `/play/...`, so games/apps do not inherit it.
 
 ## Anagram Solver
 
