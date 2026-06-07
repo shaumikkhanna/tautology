@@ -160,6 +160,66 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ ,-'".
 
 Puzzle text is normalized to that character set before encoding. Do not mark Connections with `"requiresBackend": true`; it does not call FastAPI. The backend loading modal should be reserved for games that actually need Render to wake up.
 
+## Red7
+
+Red7 is a native Next.js multiplayer card game backed by Supabase, not the Render/FastAPI service.
+
+Frontend routes:
+
+```txt
+/play/games/red7
+/play/games/red7/room/<room-code>
+```
+
+Important files:
+
+- `frontend/app/play/games/red7/Red7Game.tsx`: create/join flow, realtime room UI, reconnects, host controls, and turn interactions.
+- `frontend/app/play/games/red7/red7Engine.ts`: pure client-side rule evaluation used for move previews and tests.
+- `frontend/app/play/games/red7/red7Engine.test.mjs`: unit coverage for hierarchy, all seven rules, ties, empty Palettes, action previews, and the optional draw rule.
+- `frontend/app/play/games/red7/red7Types.ts`: shared cards, rules, room state, player state, and action payload types.
+- `frontend/app/play/games/red7/red7.module.css`: game-local responsive layout, rule-color atmosphere, center-out color transition, and translucent glass surfaces.
+- `frontend/content/games/red7/meta.json`: Games card entry.
+- `frontend/lib/supabase/database.types.ts`: typed Red7 tables and RPC signatures alongside the other Supabase types.
+
+Players use invisible Supabase anonymous auth unless they already have a session. The room link is the invitation; no visible account flow is required. Supabase Realtime publishes room, roster, and owner-only hand changes. All mutations go through security-definer RPCs, and rooms expire after 24 hours without activity.
+
+Rooms support two to five seated players. Late joins during a round are spectators. The host can remove players; a stale host can be replaced by the earliest active seated player. Refreshes and short disconnects retain identity through the persistent Supabase auth session and existing room membership. An offline active player pauses play until they reconnect or the host removes them.
+
+The finalized round behavior is:
+
+- Every player receives seven hand cards and starts with an empty Palette.
+- The Canvas starts on Red.
+- A turn is staged locally by selecting a hand card and then clicking the shared Canvas or the player's Palette. Palette-then-Canvas is supported in that order.
+- `Cancel` clears the staged move. `End turn` submits it for authoritative validation; an invalid/non-winning move is rejected without publishing its staged changes.
+- There is no pass action in the UI. `Give up` performs the elimination/pass RPC.
+- Cards display the rule associated with their color.
+- The optional draw rule triggers only when a Canvas card is played and its value is strictly greater than the player's final Palette size. It draws one card if the deck is nonempty.
+- The table places players across the top, the shared Canvas in the center, and each player's clearly labelled Palette below. Player panels show public hand counts.
+- The current Canvas color spreads through the page background. A successful rule change animates outward from the center.
+
+Red7 migrations must be applied in timestamp order:
+
+```txt
+supabase/migrations/20260607000000_red7_multiplayer.sql
+supabase/migrations/20260607001000_red7_fix_uuid_winner.sql
+supabase/migrations/20260607002000_red7_redeal_starting_palettes.sql
+supabase/migrations/20260607003000_red7_empty_starting_palettes.sql
+supabase/migrations/20260607004000_red7_canvas_draw_rule.sql
+supabase/migrations/20260607005000_red7_public_hand_counts.sql
+```
+
+The `02000` starting-Palette migration is historical and is intentionally superseded by `03000`, which establishes the final empty-Palette rule. The UUID fix avoids PostgreSQL aggregate calls such as `min(uuid)`, which are not available by default. The initial migration also uses a compatible random invite-code implementation rather than assuming `gen_random_bytes(integer)` is installed.
+
+Run Red7 checks from `frontend/`:
+
+```bash
+npm run test:red7
+npx tsc --noEmit
+npm run build
+```
+
+The latest verification passed all eight Red7 engine tests, TypeScript checking, and the production Next.js build.
+
 ## Cryptic Crossword Archive
 
 Cryptic Crossword Archive is a gated client-side Next.js game/subapp backed by Supabase auth and progress storage.
@@ -570,6 +630,6 @@ Use the shared `BackendLaunchButton` and health endpoint unless the feature need
 
 ## Current Working Tree Notes
 
-As of this update, there are uncommitted changes related to the backend/Starnim migration and loading modal. The user has asked not to commit unless explicitly requested.
+As of June 7, 2026, the completed Red7 implementation and Supabase migrations are uncommitted. The user has asked not to commit unless explicitly requested.
 
 `render.yaml` appears deleted in Git status. This matches the later decision to use a manual Render Web Service rather than Render Blueprints. Do not recreate it unless the user asks.

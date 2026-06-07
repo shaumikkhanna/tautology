@@ -859,7 +859,7 @@ export function CrypticCrosswordArchiveApp() {
   return (
     <main className={styles.page}>
       <a className={styles.homeLink} href="/" aria-label="toomuchmaths home">
-        P or not P
+        TOOMUCHMATHS
       </a>
       <div className={styles.shell}>
         <header className={styles.header}>

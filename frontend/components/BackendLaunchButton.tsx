@@ -51,6 +51,17 @@ export function BackendLaunchButton({
     abortRef.current?.abort();
   }
 
+  if (!requiresBackend) {
+    return (
+      <a
+        href={href}
+        className="border-2 border-ink bg-soot px-5 py-3 font-mono text-sm uppercase text-paper shadow-hard hover:bg-brass hover:text-ink"
+      >
+        Play
+      </a>
+    );
+  }
+
   return (
     <>
       <button

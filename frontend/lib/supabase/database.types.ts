@@ -9,6 +9,147 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      red7_hands: {
+        Row: {
+          player_id: string;
+          room_id: string;
+          user_id: string;
+          cards: Json;
+          updated_at: string;
+        };
+        Insert: {
+          player_id: string;
+          room_id: string;
+          user_id: string;
+          cards?: Json;
+          updated_at?: string;
+        };
+        Update: {
+          player_id?: string;
+          room_id?: string;
+          user_id?: string;
+          cards?: Json;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      red7_players: {
+        Row: {
+          id: string;
+          room_id: string;
+          user_id: string;
+          display_name: string;
+          role: Database["public"]["Enums"]["red7_player_role"];
+          seat: number | null;
+          active: boolean;
+          eliminated: boolean;
+          palette: Json;
+          last_seen_at: string;
+          joined_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          room_id: string;
+          user_id: string;
+          display_name: string;
+          role?: Database["public"]["Enums"]["red7_player_role"];
+          seat?: number | null;
+          active?: boolean;
+          eliminated?: boolean;
+          palette?: Json;
+          last_seen_at?: string;
+          joined_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          room_id?: string;
+          user_id?: string;
+          display_name?: string;
+          role?: Database["public"]["Enums"]["red7_player_role"];
+          seat?: number | null;
+          active?: boolean;
+          eliminated?: boolean;
+          palette?: Json;
+          last_seen_at?: string;
+          joined_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      red7_rooms: {
+        Row: {
+          id: string;
+          code: string;
+          host_user_id: string;
+          status: Database["public"]["Enums"]["red7_room_status"];
+          draw_rule: boolean;
+          canvas_color: string;
+          revision: number;
+          winner_player_id: string | null;
+          last_activity_at: string;
+          expires_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          host_user_id: string;
+          status?: Database["public"]["Enums"]["red7_room_status"];
+          draw_rule?: boolean;
+          canvas_color?: string;
+          revision?: number;
+          winner_player_id?: string | null;
+          last_activity_at?: string;
+          expires_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          host_user_id?: string;
+          status?: Database["public"]["Enums"]["red7_room_status"];
+          draw_rule?: boolean;
+          canvas_color?: string;
+          revision?: number;
+          winner_player_id?: string | null;
+          last_activity_at?: string;
+          expires_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      red7_rounds: {
+        Row: {
+          room_id: string;
+          deck: Json;
+          turn_order: string[];
+          current_player_id: string | null;
+          round_number: number;
+          updated_at: string;
+        };
+        Insert: {
+          room_id: string;
+          deck?: Json;
+          turn_order?: string[];
+          current_player_id?: string | null;
+          round_number?: number;
+          updated_at?: string;
+        };
+        Update: {
+          room_id?: string;
+          deck?: Json;
+          turn_order?: string[];
+          current_player_id?: string | null;
+          round_number?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       crossword_approvals: {
         Row: {
           user_id: string;
@@ -276,8 +417,56 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      red7_create_room: {
+        Args: { display_name: string; enable_draw_rule?: boolean };
+        Returns: Json;
+      };
+      red7_get_state: {
+        Args: { room_code: string };
+        Returns: Json;
+      };
+      red7_heartbeat: {
+        Args: { room_code: string };
+        Returns: Json;
+      };
+      red7_join_room: {
+        Args: { room_code: string; display_name: string };
+        Returns: Json;
+      };
+      red7_kick_player: {
+        Args: {
+          room_code: string;
+          target_player_id: string;
+          expected_revision: number;
+        };
+        Returns: Json;
+      };
+      red7_pass_turn: {
+        Args: { room_code: string; expected_revision: number };
+        Returns: Json;
+      };
+      red7_play_turn: {
+        Args: {
+          room_code: string;
+          expected_revision: number;
+          palette_card?: Json | null;
+          canvas_card?: Json | null;
+        };
+        Returns: Json;
+      };
+      red7_return_to_lobby: {
+        Args: { room_code: string };
+        Returns: Json;
+      };
+      red7_start_round: {
+        Args: { room_code: string };
+        Returns: Json;
+      };
+    };
     Enums: {
+      red7_player_role: "seated" | "spectator";
+      red7_room_status: "lobby" | "playing" | "finished";
       stageselect_game_status:
         | "finished"
         | "left"

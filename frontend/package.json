@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "test:red7": "node --experimental-strip-types --test app/play/games/red7/red7Engine.test.mjs",
     "import:crosswords": "node scripts/import-crosswords.mjs",
     "validate:crosswords": "node scripts/validate-crosswords.mjs",
     "start": "next start",

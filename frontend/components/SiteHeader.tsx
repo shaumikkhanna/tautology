@@ -9,7 +9,7 @@ export function SiteHeader() {
           href="/"
           className="font-mono text-sm uppercase tracking-normal text-paper hover:text-brass"
         >
-          P or not P
+          TOOMUCHMATHS
         </Link>
         <nav aria-label="Sections">
           <ul className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2">
