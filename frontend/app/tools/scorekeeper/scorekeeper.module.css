@@ -1,0 +1,101 @@
+.nameDraw {
+	display: flex;
+	min-height: 170px;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	border: 4px solid #24211d;
+	background: #bab084;
+	box-shadow: 8px 8px 0 #24211d;
+	padding: 1.5rem;
+	text-align: center;
+}
+
+.nameDrawLabel {
+	font-family: "Courier New", Courier, monospace;
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.nameDrawValue {
+	display: block;
+	width: 100%;
+	overflow: hidden;
+	margin-top: 0.75rem;
+	font-family: "Courier New", Courier, monospace;
+	font-size: clamp(1.8rem, 7vw, 3.7rem);
+	font-weight: 700;
+	line-height: 1;
+	text-overflow: ellipsis;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.nameDrawPicking {
+	background: #d6cc9b;
+	animation: name-flicker 0.16s steps(2, end) infinite;
+}
+
+.nameDrawWinner {
+	background: #ffcc00;
+}
+
+@keyframes name-flicker {
+	0% {
+		transform: translateX(-2px);
+	}
+	50% {
+		transform: translateX(2px);
+	}
+	100% {
+		transform: translateX(0);
+	}
+}
+
+.die {
+	display: grid;
+	width: 150px;
+	aspect-ratio: 1;
+	place-items: center;
+	border: 4px solid #24211d;
+	border-radius: 18px;
+	background: #ffcc00;
+	box-shadow: 8px 8px 0 #24211d;
+	color: #24211d;
+	font-family: "Courier New", Courier, monospace;
+	font-size: 5rem;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.dieRolling {
+	animation: tumble 0.32s linear infinite;
+}
+
+@keyframes tumble {
+	0% {
+		transform: rotate(0deg) scale(1);
+	}
+	35% {
+		transform: rotate(11deg) scale(0.92);
+	}
+	70% {
+		transform: rotate(-9deg) scale(1.05);
+	}
+	100% {
+		transform: rotate(0deg) scale(1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.nameDrawPicking {
+		animation: none;
+	}
+
+	.dieRolling {
+		animation: none;
+	}
+}
