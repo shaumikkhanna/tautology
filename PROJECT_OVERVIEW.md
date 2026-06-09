@@ -183,17 +183,19 @@ Frontend routes:
 
 Important files:
 
-- `frontend/app/play/games/red7/Red7Game.tsx`: create/join flow, realtime room UI, reconnects, host controls, and turn interactions.
+- `frontend/app/play/games/red7/Red7Game.tsx`: focused create flow, invite-link join flow, realtime room UI, reconnects, host controls, and turn interactions.
 - `frontend/app/play/games/red7/red7Engine.ts`: pure client-side rule evaluation used for move previews and tests.
 - `frontend/app/play/games/red7/red7Engine.test.mjs`: unit coverage for hierarchy, all seven rules, ties, empty Palettes, action previews, and the optional draw rule.
 - `frontend/app/play/games/red7/red7Types.ts`: shared cards, rules, room state, player state, and action payload types.
-- `frontend/app/play/games/red7/red7.module.css`: game-local responsive layout, rule-color atmosphere, center-out color transition, and translucent glass surfaces.
+- `frontend/app/play/games/red7/red7.module.css`: game-local responsive layout, website-matching monospace typography, rule-color atmosphere, center-out color transition, and translucent glass surfaces.
 - `frontend/content/games/red7/meta.json`: Games card entry.
 - `frontend/lib/supabase/database.types.ts`: typed Red7 tables and RPC signatures alongside the other Supabase types.
 
 Players use invisible Supabase anonymous auth unless they already have a session. The room link is the invitation; no visible account flow is required. Supabase Realtime publishes room, roster, and owner-only hand changes. All mutations go through security-definer RPCs, and rooms expire after 24 hours without activity.
 
 Rooms support two to five seated players. Late joins during a round are spectators. The host can remove players; a stale host can be replaced by the earliest active seated player. Refreshes and short disconnects retain identity through the persistent Supabase auth session and existing room membership. An offline active player pauses play until they reconnect or the host removes them.
+
+The start screen is intentionally focused on creating a room. It has no room-code or join form; invited players join from `/room/<room-code>`, where they enter a display name and take a seat. The Red7 screens use the website's monospace visual language with a more colorful card-game treatment.
 
 The finalized round behavior is:
 
@@ -204,7 +206,10 @@ The finalized round behavior is:
 - There is no pass action in the UI. `Give up` performs the elimination/pass RPC.
 - Cards display the rule associated with their color.
 - The optional draw rule triggers only when a Canvas card is played and its value is strictly greater than the player's final Palette size. It draws one card if the deck is nonempty.
-- The table places players across the top, the shared Canvas in the center, and each player's clearly labelled Palette below. Player panels show public hand counts.
+- Opponent spaces across the top merge player presence, public hand count, turn status, and Palette into one panel.
+- The shared Canvas sits below the opponent spaces with centered content. Its colored rule box carries the active rule, with the interaction hint beneath it.
+- The local player's actionable Palette sits below the Canvas, followed by a simplified private Hand and move controls.
+- Spectators are shown separately without recreating the old standalone player roster.
 - The current Canvas color spreads through the page background. A successful rule change animates outward from the center.
 
 Red7 migrations must be applied in timestamp order:
@@ -228,7 +233,7 @@ npx tsc --noEmit
 npm run build
 ```
 
-The latest verification passed all eight Red7 engine tests, TypeScript checking, and the production Next.js build.
+The latest UI verification on June 8, 2026 passed all eight Red7 engine tests and TypeScript checking. The redesigned create screen was visually checked at desktop and mobile widths. The production build was stopped after it stalled while an existing Next.js development server was running.
 
 ## Cryptic Crossword Archive
 
@@ -640,6 +645,4 @@ Use the shared `BackendLaunchButton` and health endpoint unless the feature need
 
 ## Current Working Tree Notes
 
-As of June 7, 2026, the completed Red7 implementation and Supabase migrations are uncommitted. The user has asked not to commit unless explicitly requested.
-
-`render.yaml` appears deleted in Git status. This matches the later decision to use a manual Render Web Service rather than Render Blueprints. Do not recreate it unless the user asks.
+As of June 8, 2026, the Red7 UI redesign and this overview update are uncommitted. The user has asked not to commit unless explicitly requested.

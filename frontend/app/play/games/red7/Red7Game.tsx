@@ -36,7 +36,6 @@ export function Red7Game({ roomCode }: { roomCode?: string }) {
   const [user, setUser] = useState<User | null>(null);
   const [state, setState] = useState<Red7PublicState | null>(null);
   const [displayName, setDisplayName] = useState("");
-  const [joinCode, setJoinCode] = useState("");
   const [drawRule, setDrawRule] = useState(false);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -307,9 +306,9 @@ export function Red7Game({ roomCode }: { roomCode?: string }) {
       return;
     }
 
-    const code = roomCode ?? extractRoomCode(joinCode);
+    const code = roomCode;
     if (!code) {
-      setMessage("Paste a Red7 room link or code.");
+      setMessage("Open Red7 from a valid invite link.");
       return;
     }
 
@@ -400,13 +399,16 @@ export function Red7Game({ roomCode }: { roomCode?: string }) {
   if (screen === "home") {
     return (
       <Page>
-        <section className={styles.startPanel}>
-          <p className={styles.eyebrow}>Card game · 2–5 players</p>
+        <section className={`${styles.startPanel} ${styles.homePanel}`}>
+          <div className={styles.colorFan} aria-hidden="true">
+            {["red", "orange", "yellow", "green", "blue", "indigo", "violet"].map(
+              (color) => (
+                <span key={color} data-color={color} />
+              ),
+            )}
+          </div>
           <h1>Red7</h1>
-          <p className={styles.intro}>
-            Be winning at the end of your turn. Change your Palette, change
-            the rule, or do both.
-          </p>
+          <p className={styles.intro}>Be winning at the end of your turn.</p>
           <label className={styles.field}>
             <span>Your name</span>
             <input
@@ -416,38 +418,22 @@ export function Red7Game({ roomCode }: { roomCode?: string }) {
               placeholder="Ada"
             />
           </label>
-          <div className={styles.startActions}>
-            <div className={styles.actionCard}>
-              <h2>Create</h2>
-              <label className={styles.checkField}>
-                <input
-                  type="checkbox"
-                  checked={drawRule}
-                  onChange={(event) => setDrawRule(event.target.checked)}
-                />
-                <span>
-                  Draw after a Canvas card whose value exceeds your Palette size
-                </span>
-              </label>
-              <button type="button" disabled={busy} onClick={createRoom}>
-                {busy ? "Creating..." : "Create game"}
-              </button>
-            </div>
-            <div className={styles.actionCard}>
-              <h2>Join</h2>
-              <label className={styles.field}>
-                <span>Room link or code</span>
-                <input
-                  value={joinCode}
-                  onChange={(event) => setJoinCode(event.target.value)}
-                  placeholder="Paste invite"
-                />
-              </label>
-              <button type="button" disabled={busy} onClick={joinRoom}>
-                Join game
-              </button>
-            </div>
-          </div>
+          <label className={styles.checkField}>
+            <input
+              type="checkbox"
+              checked={drawRule}
+              onChange={(event) => setDrawRule(event.target.checked)}
+            />
+            <span>Use the optional Canvas draw rule</span>
+          </label>
+          <button
+            type="button"
+            className={styles.primaryAction}
+            disabled={busy}
+            onClick={createRoom}
+          >
+            {busy ? "Creating..." : "Create game"}
+          </button>
           {message ? <p className={styles.error}>{message}</p> : null}
         </section>
       </Page>
@@ -457,9 +443,11 @@ export function Red7Game({ roomCode }: { roomCode?: string }) {
   if (screen === "join") {
     return (
       <Page>
-        <section className={styles.startPanel}>
+        <section className={`${styles.startPanel} ${styles.joinPanel}`}>
+          <div className={styles.inviteMark} aria-hidden="true">7</div>
           <p className={styles.eyebrow}>You have been invited</p>
           <h1>Join Red7</h1>
+          <p className={styles.intro}>Choose your name and take your place at the table.</p>
           <label className={styles.field}>
             <span>Your name</span>
             <input
@@ -469,7 +457,12 @@ export function Red7Game({ roomCode }: { roomCode?: string }) {
               onChange={(event) => setDisplayName(event.target.value)}
             />
           </label>
-          <button type="button" disabled={busy} onClick={joinRoom}>
+          <button
+            type="button"
+            className={styles.primaryAction}
+            disabled={busy}
+            onClick={joinRoom}
+          >
             {busy ? "Joining..." : "Take a seat"}
           </button>
           {message ? <p className={styles.error}>{message}</p> : null}
@@ -591,6 +584,13 @@ function RoomView({
     (card) =>
       !(paletteCard && cardsEqual(paletteCard, card)) &&
       !(canvasCard && cardsEqual(canvasCard, card)),
+  );
+  const seatedPlayers = state.players.filter(
+    (player) => player.role === "seated",
+  );
+  const otherPlayers = seatedPlayers.filter((player) => player.id !== me?.id);
+  const spectators = state.players.filter(
+    (player) => player.role === "spectator",
   );
 
   useEffect(() => {
@@ -728,12 +728,10 @@ function RoomView({
       ) : (
         <>
           <div className={styles.tableLayout}>
-            <aside className={styles.roster}>
-              <h2>Players</h2>
-              {state.players
-                .filter((player) => player.role === "seated")
-                .map((player) => (
-                  <PlayerRow
+            <div className={styles.playArea}>
+              <div className={styles.opponentPalettes}>
+                {otherPlayers.map((player) => (
+                  <PlayerPalette
                     key={player.id}
                     player={player}
                     hostUserId={state.room.hostUserId}
@@ -744,28 +742,26 @@ function RoomView({
                     onKick={onKick}
                   />
                 ))}
-              {state.players.some((player) => player.role === "spectator") ? (
-                <>
-                  <h3>Spectators</h3>
-                  {state.players
-                    .filter((player) => player.role === "spectator")
-                    .map((player) => (
-                      <PlayerRow
-                        key={player.id}
-                        player={player}
-                        hostUserId={state.room.hostUserId}
-                        currentPlayerId={null}
-                        currentWinnerId={null}
-                        isOnline={onlineUserIds.has(player.userId)}
-                        canKick={isHost && player.userId !== userId}
-                        onKick={onKick}
-                      />
-                    ))}
-                </>
-              ) : null}
-            </aside>
+              </div>
 
-            <div className={styles.playArea}>
+              {spectators.length > 0 ? (
+                <div className={styles.spectatorBar}>
+                  <span>Spectators</span>
+                  {spectators.map((player) => (
+                    <PlayerRow
+                      key={player.id}
+                      player={player}
+                      hostUserId={state.room.hostUserId}
+                      currentPlayerId={null}
+                      currentWinnerId={null}
+                      isOnline={onlineUserIds.has(player.userId)}
+                      canKick={isHost && player.userId !== userId}
+                      onKick={onKick}
+                    />
+                  ))}
+                </div>
+              ) : null}
+
               <section
                 className={[
                   styles.canvasZone,
@@ -782,17 +778,7 @@ function RoomView({
                 }}
               >
                 <div className={styles.zoneHeading}>
-                  <div>
-                    <span>Shared Canvas</span>
-                    <strong>
-                      {canvasCard
-                        ? `Change rule to ${ruleLabel(canvasCard.color)}`
-                        : ruleLabel(state.room.canvasColor)}
-                    </strong>
-                  </div>
-                  <small>
-                    {canvasCard ? "Staged for this turn" : "Current rule"}
-                  </small>
+                  <span>Shared Canvas</span>
                 </div>
                 <div className={styles.canvasContents}>
                   <div
@@ -812,42 +798,31 @@ function RoomView({
                         onClick={() => returnStagedCard(canvasCard)}
                       />
                     </>
-                  ) : (
-                    <p>
-                      {isMyTurn
-                        ? selectedCard
-                          ? "Click here to play the selected card to the Canvas."
-                          : "Select a card from your hand to change the rule."
-                        : "The Canvas sets the rule everyone must satisfy."}
-                    </p>
-                  )}
+                  ) : null}
                 </div>
+                <p className={styles.canvasHint}>
+                  {canvasCard
+                    ? "Rule change staged for this turn."
+                    : isMyTurn && selectedCard
+                      ? "Play the selected card here to change the rule."
+                      : "Select a card from your hand to change the rule."}
+                </p>
               </section>
 
-              <div className={styles.palettes}>
-                {state.players
-                  .filter((player) => player.role === "seated")
-                  .map((player) => (
+              {me?.role === "seated" ? (
+                <div className={styles.myPaletteWrap}>
                     <section
-                      key={player.id}
                       className={[
                         styles.palette,
-                        player.id === currentWinnerId ? styles.winningPalette : "",
-                        player.eliminated ? styles.eliminatedPalette : "",
-                        player.id === me?.id && selectedCard && isMyTurn
-                          ? styles.availableDestination
-                          : "",
+                        me.id === currentWinnerId ? styles.winningPalette : "",
+                        me.eliminated ? styles.eliminatedPalette : "",
+                        selectedCard && isMyTurn ? styles.availableDestination : "",
                       ].join(" ")}
-                      role={player.id === me?.id && isMyTurn ? "button" : undefined}
-                      tabIndex={player.id === me?.id && isMyTurn ? 0 : undefined}
-                      onClick={
-                        player.id === me?.id && isMyTurn
-                          ? stageOnPalette
-                          : undefined
-                      }
+                      role={isMyTurn ? "button" : undefined}
+                      tabIndex={isMyTurn ? 0 : undefined}
+                      onClick={isMyTurn ? stageOnPalette : undefined}
                       onKeyDown={(event) => {
                         if (
-                          player.id === me?.id &&
                           isMyTurn &&
                           (event.key === "Enter" || event.key === " ")
                         ) {
@@ -856,17 +831,18 @@ function RoomView({
                       }}
                     >
                       <div className={styles.paletteHeading}>
-                        <span>Palette</span>
+                        <span>Your Palette</span>
                         <h3>
-                          {player.displayName}
-                          {player.id === me?.id ? " (you)" : ""}
+                          {me.displayName} · {me.handCount} card
+                          {me.handCount === 1 ? "" : "s"} ·{" "}
+                          {onlineUserIds.has(me.userId) ? "Online" : "Reconnecting"}
                         </h3>
                       </div>
                       <div className={styles.cardRow}>
-                        {player.palette.map((card) => (
+                        {me.palette.map((card) => (
                           <Card key={cardKey(card)} card={card} compact />
                         ))}
-                        {player.id === me?.id && paletteCard ? (
+                        {paletteCard ? (
                           <Card
                             card={paletteCard}
                             compact
@@ -874,19 +850,18 @@ function RoomView({
                             onClick={() => returnStagedCard(paletteCard)}
                           />
                         ) : null}
-                        {player.palette.length === 0 &&
-                        !(player.id === me?.id && paletteCard) ? (
+                        {me.palette.length === 0 && !paletteCard ? (
                           <span className={styles.emptyPalette}>Empty</span>
                         ) : null}
                       </div>
-                      {player.id === me?.id && selectedCard && !paletteCard ? (
+                      {selectedCard && !paletteCard ? (
                         <p className={styles.destinationHint}>
-                          Click here to add the selected card to your Palette.
+                          Add the selected card to your Palette.
                         </p>
                       ) : null}
                     </section>
-                  ))}
-              </div>
+                </div>
+              ) : null}
 
               {state.room.status === "finished" ? (
                 <section className={styles.winnerPanel}>
@@ -912,11 +887,9 @@ function RoomView({
                       <p className={styles.eyebrow}>
                         {isMyTurn ? "Your turn" : "Current turn"}
                       </p>
-                      <h2>
-                        {isMyTurn
-                          ? "Choose your play"
-                          : currentPlayer?.displayName ?? "Waiting"}
-                      </h2>
+                      {!isMyTurn ? (
+                        <h2>{currentPlayer?.displayName ?? "Waiting"}</h2>
+                      ) : null}
                     </div>
                     <span>{state.round.deckCount} cards in deck</span>
                   </div>
@@ -930,21 +903,8 @@ function RoomView({
                   ) : null}
 
                   <div className={styles.handLabel}>
-                    <strong>Your hand</strong>
-                    <span>
-                      {isMyTurn
-                        ? selectedCard
-                          ? "Now click your Palette or the shared Canvas."
-                          : "Click a card to select it."
-                        : "Your cards stay private."}
-                    </span>
+                    <strong>Hand</strong>
                   </div>
-                  {!isMyTurn ? (
-                    <p className={styles.waitingBanner}>
-                      Waiting for {currentPlayer?.displayName ?? "the current player"}.
-                      Your cards unlock when your turn begins.
-                    </p>
-                  ) : null}
                   <div className={styles.hand}>
                     {availableHand.map((card) => (
                       <Card
@@ -969,8 +929,8 @@ function RoomView({
                       <div>
                         <strong>
                           {hasStagedMove
-                            ? "Review your staged move"
-                            : "Select a card, then choose its destination"}
+                            ? "Move ready"
+                            : "Select a card"}
                         </strong>
                         {state.room.drawRule ? (
                           <span>
@@ -1133,6 +1093,69 @@ function PlayerRow({
   );
 }
 
+function PlayerPalette({
+  player,
+  hostUserId,
+  currentPlayerId,
+  currentWinnerId,
+  isOnline,
+  canKick,
+  onKick,
+}: {
+  player: Red7Player;
+  hostUserId: string;
+  currentPlayerId: string | null;
+  currentWinnerId: string | null;
+  isOnline: boolean;
+  canKick: boolean;
+  onKick: (playerId: string) => void;
+}) {
+  return (
+    <section
+      className={[
+        styles.playerPalette,
+        player.id === currentWinnerId ? styles.winningPalette : "",
+        player.eliminated ? styles.eliminatedPalette : "",
+      ].join(" ")}
+    >
+      <div className={styles.playerPaletteHeading}>
+        <span className={isOnline ? styles.onlineDot : styles.offlineDot} />
+        <div>
+          <h3>{player.displayName}</h3>
+          <small>
+            {player.handCount} card{player.handCount === 1 ? "" : "s"} ·{" "}
+            {player.id === currentPlayerId
+              ? "Playing"
+              : player.eliminated
+                ? "Eliminated"
+                : isOnline
+                  ? "Online"
+                  : "Reconnecting"}
+            {player.userId === hostUserId ? " · Host" : ""}
+          </small>
+        </div>
+        {canKick ? (
+          <button
+            type="button"
+            className={styles.kickButton}
+            onClick={() => onKick(player.id)}
+          >
+            Remove
+          </button>
+        ) : null}
+      </div>
+      <div className={styles.cardRow}>
+        {player.palette.map((card) => (
+          <Card key={cardKey(card)} card={card} compact />
+        ))}
+        {player.palette.length === 0 ? (
+          <span className={styles.emptyPalette}>Empty</span>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 function Card({
   card,
   compact = false,
@@ -1220,12 +1243,6 @@ function StatusPanel({
 
 function cardKey(card: Red7Card) {
   return `${card.color}-${card.value}`;
-}
-
-function extractRoomCode(value: string) {
-  const clean = value.trim().toLowerCase();
-  const match = clean.match(/\/room\/([a-z0-9]{20})/);
-  return match?.[1] ?? (/^[a-z0-9]{20}$/.test(clean) ? clean : "");
 }
 
 function readableError(message: string) {
