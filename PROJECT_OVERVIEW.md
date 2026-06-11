@@ -238,6 +238,7 @@ The latest UI verification on June 8, 2026 passed all eight Red7 engine tests an
 ## Cryptic Crossword Archive
 
 Cryptic Crossword Archive is a gated client-side Next.js game/subapp backed by Supabase auth and progress storage.
+The bundled archive currently contains 145 barred 10x8 puzzles.
 
 For detailed status, data shape, test checklist, limitations, and future work, read:
 
@@ -262,6 +263,23 @@ Important files:
 - `frontend/scripts/import-crosswords.mjs`: converts the schema `1.0` puzzle directory into the normalized archive shape.
 - `frontend/scripts/validate-crosswords.mjs`: validates ids, bars, bounds, clue starts, lengths, and crossings.
 - `frontend/app/admin/crosswords/`: admin UI for approving users and creating invite links.
+
+The import script accepts only directories containing schema `1.0` puzzle JSON
+files. Each normalized archive/progress id comes directly from the source
+`puzzle.id`. The frontend reads only the generated
+`frontend/content/crosswords/archive.json` at runtime; `crosswords/puzzles/` is
+needed only when regenerating that archive.
+
+Grid keyboard navigation:
+
+- Typing fills the active cell and advances within the active clue.
+- Backspace on a filled cell clears it without moving.
+- Backspace on an empty cell moves to the previous cell in the active clue and clears that cell.
+- Backspace at the first clue cell clears it without moving.
+- Arrow keys parallel to the active clue move within that clue.
+- A perpendicular arrow first switches the active clue direction without moving; subsequent arrows in that direction move through the newly active clue.
+- Delete clears the active cell without moving.
+- Space toggles direction and Tab moves between clues.
 
 Crossword API routes:
 

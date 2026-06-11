@@ -135,6 +135,10 @@
 }
 
 @media (max-width: 760px) {
+  .homeLink {
+    position: absolute;
+  }
+
   .page {
     align-items: flex-start;
   }

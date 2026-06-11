@@ -479,6 +479,10 @@
 }
 
 @media (max-width: 720px) {
+	.homeLink {
+		position: absolute;
+	}
+
 	.page {
 		padding: 32px 12px;
 	}

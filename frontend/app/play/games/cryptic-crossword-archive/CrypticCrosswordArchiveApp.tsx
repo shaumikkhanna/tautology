@@ -30,13 +30,13 @@ type ProgressRow = {
 
 const devProgressStorageKey = "tautology.crosswords.devProgress";
 const isDevelopmentMode = process.env.NODE_ENV !== "production";
-const keyboardRows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
 export function CrypticCrosswordArchiveApp() {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const checkedAccessUserIdRef = useRef<string | null>(null);
   const redeemedInviteRef = useRef("");
   const skipNextAutosaveRef = useRef(false);
+  const mobileCellScrollYRef = useRef<number | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -282,6 +282,15 @@ export function CrypticCrosswordArchiveApp() {
     }
 
     return findClueForCell(puzzleModel, selectedCell, activeDirection);
+  }, [activeDirection, puzzleModel, selectedCell]);
+  const orthogonalClue = useMemo(() => {
+    if (!puzzleModel || !selectedCell) {
+      return null;
+    }
+
+    const orthogonalDirection =
+      activeDirection === "across" ? "down" : "across";
+    return findClueForCell(puzzleModel, selectedCell, orthogonalDirection);
   }, [activeDirection, puzzleModel, selectedCell]);
   const activeEntryKeys = useMemo(() => {
     if (!activeClue || !puzzleModel) {
@@ -722,7 +731,33 @@ export function CrypticCrosswordArchiveApp() {
       );
     } else {
       setSelectedKey(key);
+      const clues = puzzleModel.clueCells.get(key) ?? [];
+      const hasActiveDirection = clues.some(
+        (clue) => clue.direction === activeDirection,
+      );
+
+      if (!hasActiveDirection && clues[0]) {
+        setActiveDirection(clues[0].direction);
+      }
     }
+  }
+
+  function rememberMobileCellScrollPosition() {
+    if (window.matchMedia("(max-width: 820px)").matches) {
+      mobileCellScrollYRef.current = window.scrollY;
+    }
+  }
+
+  function restoreMobileCellScrollPosition() {
+    const scrollY = mobileCellScrollYRef.current;
+    if (scrollY === null) {
+      return;
+    }
+
+    mobileCellScrollYRef.current = null;
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: scrollY, behavior: "auto" });
+    });
   }
 
   function selectClue(clue: CrosswordClue) {
@@ -1053,7 +1088,11 @@ export function CrypticCrosswordArchiveApp() {
                         ].join(" ")}
                         disabled={isBlack}
                         key={key}
-                        onClick={() => selectCell(row, col)}
+                        onClick={() => {
+                          selectCell(row, col);
+                          restoreMobileCellScrollPosition();
+                        }}
+                        onPointerDown={rememberMobileCellScrollPosition}
                         style={getDividerStyle(key, puzzleModel.dividerKeys)}
                         type="button"
                       >
@@ -1065,6 +1104,15 @@ export function CrypticCrosswordArchiveApp() {
                     );
                   })}
                 </div>
+
+                {activeClue ? (
+                  <div className={styles.mobileClueCard} aria-live="polite">
+                    <MobileClue clue={activeClue} isActive />
+                    {orthogonalClue ? (
+                      <MobileClue clue={orthogonalClue} />
+                    ) : null}
+                  </div>
+                ) : null}
 
                 <div className={styles.controls}>
                   <button className={styles.secondaryButton} disabled={Boolean(completedAt)} onClick={checkLetter} type="button">
@@ -1088,41 +1136,6 @@ export function CrypticCrosswordArchiveApp() {
                   <button className={styles.dangerButton} onClick={resetPuzzle} type="button">
                     Reset puzzle
                   </button>
-                </div>
-                <div className={styles.mobileKeyboard}>
-                  {keyboardRows.map((row) => (
-                    <div className={styles.keyboardRow} key={row}>
-                      {row.split("").map((letter) => (
-                        <button
-                          className={styles.keyboardButton}
-                          disabled={Boolean(completedAt)}
-                          key={letter}
-                          onClick={() => setLetter(letter)}
-                          type="button"
-                        >
-                          {letter}
-                        </button>
-                      ))}
-                    </div>
-                  ))}
-                  <div className={styles.keyboardRow}>
-                    <button
-                      className={styles.keyboardWideButton}
-                      disabled={Boolean(completedAt)}
-                      onClick={toggleActiveDirection}
-                      type="button"
-                    >
-                      {activeDirection === "across" ? "Across" : "Down"}
-                    </button>
-                    <button
-                      className={styles.keyboardWideButton}
-                      disabled={Boolean(completedAt)}
-                      onClick={clearLetter}
-                      type="button"
-                    >
-                      Clear
-                    </button>
-                  </div>
                 </div>
                 <p className={styles.message}>
                   {statusMessage || (isSaving ? "Saving..." : "Autosave ready.")}
@@ -1282,6 +1295,10 @@ function ClueList({
   const activeButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
+    if (window.matchMedia("(max-width: 820px)").matches) {
+      return;
+    }
+
     activeButtonRef.current?.scrollIntoView({
       block: "nearest",
       inline: "nearest",
@@ -1310,6 +1327,28 @@ function ClueList({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+function MobileClue({
+  clue,
+  isActive = false,
+}: {
+  clue: CrosswordClue;
+  isActive?: boolean;
+}) {
+  return (
+    <div
+      className={[
+        styles.mobileClue,
+        isActive ? styles.mobileActiveClue : "",
+      ].join(" ")}
+    >
+      <span className={styles.mobileClueLabel}>
+        {clue.number} {clue.direction}
+      </span>
+      <span>{clue.clue}</span>
     </div>
   );
 }
