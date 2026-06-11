@@ -7,6 +7,8 @@ export function getCrosswordSummaries(): CrosswordSummary[] {
   return puzzles.map((puzzle) => ({
     id: puzzle.id,
     title: puzzle.title,
+    author: puzzle.author,
+    publishedDate: puzzle.publishedDate,
     rows: puzzle.rows,
     cols: puzzle.cols,
     clueCount: puzzle.clues.across.length + puzzle.clues.down.length,

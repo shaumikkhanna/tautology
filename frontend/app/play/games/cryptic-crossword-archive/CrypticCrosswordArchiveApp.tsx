@@ -543,12 +543,16 @@ export function CrypticCrosswordArchiveApp() {
       return;
     }
 
+    clearLetterAt(selectedKey);
+  }
+
+  function clearLetterAt(key: string) {
     setGridState((current) => {
       const next = { ...current };
-      delete next[selectedKey];
+      delete next[key];
       return next;
     });
-    clearCheckedWrongKeys([selectedKey]);
+    clearCheckedWrongKeys([key]);
   }
 
   function clearCheckedWrongKeys(keys: string[]) {
@@ -573,7 +577,11 @@ export function CrypticCrosswordArchiveApp() {
       return;
     }
 
-    const keys = getClueKeys(activeClue);
+    moveWithinClue(activeClue, delta);
+  }
+
+  function moveWithinClue(clue: CrosswordClue, delta: number) {
+    const keys = getClueKeys(clue);
     const index = keys.indexOf(selectedKey);
     const nextKey = keys[index + delta];
 
@@ -593,12 +601,34 @@ export function CrypticCrosswordArchiveApp() {
       return;
     }
 
-    if (event.key === "Backspace" || event.key === "Delete") {
+    if (event.key === "Backspace") {
       event.preventDefault();
+
+      if (completedAt) {
+        return;
+      }
+
       if (gridState[selectedKey]) {
         clearLetter();
       } else {
-        moveWithinEntry(-1);
+        const keys = activeClue ? getClueKeys(activeClue) : [];
+        const currentIndex = keys.indexOf(selectedKey);
+        const previousKey = currentIndex > 0 ? keys[currentIndex - 1] : null;
+
+        if (previousKey) {
+          setSelectedKey(previousKey);
+          clearLetterAt(previousKey);
+        } else {
+          clearLetter();
+        }
+      }
+      return;
+    }
+
+    if (event.key === "Delete") {
+      event.preventDefault();
+      if (!completedAt) {
+        clearLetter();
       }
       return;
     }
@@ -617,16 +647,38 @@ export function CrypticCrosswordArchiveApp() {
 
     if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
       event.preventDefault();
-      setActiveDirection("across");
-      moveByDelta(0, event.key === "ArrowRight" ? 1 : -1);
+      navigateWithArrow(
+        "across",
+        event.key === "ArrowRight" ? 1 : -1,
+      );
       return;
     }
 
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
-      setActiveDirection("down");
-      moveByDelta(event.key === "ArrowDown" ? 1 : -1, 0);
+      navigateWithArrow("down", event.key === "ArrowDown" ? 1 : -1);
     }
+  }
+
+  function navigateWithArrow(direction: CrosswordDirection, delta: number) {
+    if (!puzzleModel || !selectedCell) {
+      return;
+    }
+
+    const clue = (
+      puzzleModel.clueCells.get(keyFor(selectedCell.row, selectedCell.col)) ?? []
+    ).find((candidate) => candidate.direction === direction);
+
+    if (!clue) {
+      return;
+    }
+
+    if (activeDirection !== direction) {
+      setActiveDirection(direction);
+      return;
+    }
+
+    moveWithinClue(clue, delta);
   }
 
   function toggleActiveDirection() {
@@ -656,38 +708,6 @@ export function CrypticCrosswordArchiveApp() {
         : (currentIndex + delta + clues.length) % clues.length;
 
     selectClue(clues[nextIndex]);
-  }
-
-  function moveByDelta(rowDelta: number, colDelta: number) {
-    if (!puzzle || !puzzleModel || !selectedCell) {
-      return;
-    }
-
-    let previous = selectedCell;
-    let row = previous.row + rowDelta;
-    let col = previous.col + colDelta;
-
-    while (row >= 0 && row < puzzle.rows && col >= 0 && col < puzzle.cols) {
-      if (
-        hasDividerBetween(
-          keyFor(previous.row, previous.col),
-          keyFor(row, col),
-          puzzleModel.dividerKeys,
-        )
-      ) {
-        return;
-      }
-
-      const key = keyFor(row, col);
-      if (puzzleModel.openKeys.has(key)) {
-        setSelectedKey(key);
-        return;
-      }
-
-      previous = { row, col };
-      row += rowDelta;
-      col += colDelta;
-    }
   }
 
   function selectCell(row: number, col: number) {
@@ -983,6 +1003,13 @@ export function CrypticCrosswordArchiveApp() {
               <div>
                 <p className={styles.metaLabel}>Solving</p>
                 <h2>{puzzle.title}</h2>
+                {puzzle.author || puzzle.publishedDate ? (
+                  <p className={styles.message}>
+                    {[puzzle.author, formatPublishedDate(puzzle.publishedDate)]
+                      .filter(Boolean)
+                      .join(" | ")}
+                  </p>
+                ) : null}
               </div>
               <div className={styles.timer}>{formatSeconds(elapsedSeconds)}</div>
               <button
@@ -1213,6 +1240,13 @@ export function CrypticCrosswordArchiveApp() {
                         />
                       ) : null}
                     </span>
+                    {item.author || item.publishedDate ? (
+                      <span>
+                        {[item.author, formatPublishedDate(item.publishedDate)]
+                          .filter(Boolean)
+                          .join(" | ")}
+                      </span>
+                    ) : null}
                     <span>
                       {progress?.completed_at
                         ? `Solved in ${formatSeconds(progress.elapsed_seconds)}`
@@ -1446,6 +1480,25 @@ function answerLetters(answer: string) {
   return answer.toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
+function formatPublishedDate(value?: string) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(`${value}T00:00:00Z`);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
+
 function getSolvedFlagTone(progress?: ProgressRow) {
   if (!progress?.completed_at) {
     return null;
@@ -1496,12 +1549,6 @@ function getDividerStyle(key: string, dividerKeys: Set<string>) {
   };
 }
 
-function hasDividerBetween(fromKey: string, toKey: string, dividerKeys: Set<string>) {
-  return (
-    dividerKeys.has(`${fromKey}|${toKey}`) ||
-    dividerKeys.has(`${toKey}|${fromKey}`)
-  );
-}
 
 function keyFor(row: number, col: number) {
   return `${row},${col}`;

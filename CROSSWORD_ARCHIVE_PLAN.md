@@ -4,7 +4,7 @@
 
 Cryptic Crossword Archive is now a working first version inside the Next.js frontend. It is a gated `/play/...` game/subapp, listed from the normal Games section card flow, with Supabase auth, admin/invite approval, a repo-backed crossword archive, a playable barred crossword grid, autosaved progress, solve stats, and post-solve answer reasonings.
 
-Status: working v1 with real archive entries. The core path is in place; future work is mostly mobile QA, save-failure UX, puzzle-authoring scale, and richer solve analytics.
+Status: working v1 with 145 real archive entries. The core path is in place; future work is mostly mobile QA, save-failure UX, puzzle-authoring scale, and richer solve analytics.
 
 ## Current User Flow
 
@@ -172,10 +172,20 @@ Archive file:
 frontend/content/crosswords/archive.json
 ```
 
+The canonical sources are the individual schema `1.0` files in:
+
+```txt
+crosswords/puzzles/*.json
+```
+
+Run `npm run import:crosswords` from `frontend/` to convert those source files
+into the bundled archive.
+
 Each puzzle contains:
 
 - `id`: stable string id used by progress rows.
 - `title`.
+- `author` and `publishedDate`.
 - `rows`, `cols`.
 - `blackCells`: `{ row, col }`.
 - `numberedCells`: `{ row, col, number }`.
@@ -194,6 +204,7 @@ Each clue contains:
 
 Important authoring rules:
 
+- The archive/progress `id` is taken directly from `puzzle.id`.
 - Coordinates are zero-based.
 - Answers must agree at all crossing cells.
 - A clue answer length determines the occupied cells from its start coordinate.
@@ -202,7 +213,7 @@ Important authoring rules:
 
 ## Current Limitations
 
-- The archive currently has three real 10x8 barred crossword entries imported from `all_crosswords.json`.
+- The archive currently has 145 real 10x8 barred crossword entries imported from `crosswords/puzzles/`.
 - There is no admin UI for adding puzzles.
 - The player does not yet support rebus/multi-character cells.
 - Check/reveal counts are puzzle-level, not per-cell or per-clue audit trails.
@@ -213,7 +224,7 @@ Important authoring rules:
 
 ## Future Work
 
-- Add a compact authoring guide if puzzle sources expand beyond `all_crosswords.json`.
+- Add a compact authoring guide if puzzle sources expand beyond the current schema.
 - Add save failure/retry UI for autosave.
 - Mobile viewport QA and polish.
 - Add richer stats:

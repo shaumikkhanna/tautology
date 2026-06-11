@@ -27,6 +27,8 @@ export type CrosswordClue = {
 export type CrosswordPuzzle = {
   id: string;
   title: string;
+  author?: string;
+  publishedDate?: string;
   rows: number;
   cols: number;
   blackCells: CrosswordCellRef[];
@@ -40,7 +42,7 @@ export type CrosswordPuzzle = {
 
 export type CrosswordSummary = Pick<
   CrosswordPuzzle,
-  "id" | "title" | "rows" | "cols"
+  "id" | "title" | "author" | "publishedDate" | "rows" | "cols"
 > & {
   clueCount: number;
 };

@@ -257,9 +257,9 @@ Important files:
 - `frontend/app/play/games/cryptic-crossword-archive/crypticCrossword.module.css`: game-local styling.
 - `frontend/content/games/cryptic-crossword-archive/meta.json`: Games card entry.
 - `frontend/content/crosswords/archive.json`: bundled crossword archive data.
-- `all_crosswords.json`: raw crossword source file used by the import script.
+- `crosswords/puzzles/*.json`: canonical per-puzzle source files used by the import script.
 - `frontend/lib/crosswords/`: archive/types/server helpers.
-- `frontend/scripts/import-crosswords.mjs`: converts `all_crosswords.json` into the normalized archive shape.
+- `frontend/scripts/import-crosswords.mjs`: converts the schema `1.0` puzzle directory into the normalized archive shape.
 - `frontend/scripts/validate-crosswords.mjs`: validates ids, bars, bounds, clue starts, lengths, and crossings.
 - `frontend/app/admin/crosswords/`: admin UI for approving users and creating invite links.
 

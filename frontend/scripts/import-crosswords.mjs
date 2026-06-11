@@ -6,18 +6,23 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(scriptDir, "..", "..");
 const sourcePath = process.argv[2]
   ? path.resolve(process.argv[2])
-  : path.join(repoRoot, "all_crosswords.json");
+  : path.join(repoRoot, "crosswords", "puzzles");
 const destinationPath = process.argv[3]
   ? path.resolve(process.argv[3])
   : path.join(scriptDir, "..", "content", "crosswords", "archive.json");
 
-const sourcePuzzles = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+const sourcePuzzles = readSourcePuzzles(sourcePath);
+const usedIds = new Set();
+const archive = sourcePuzzles.map((puzzle, index) => {
+  const normalized = normalizePuzzle(puzzle, index);
 
-if (!Array.isArray(sourcePuzzles)) {
-  throw new Error("Source crossword file must be a JSON array.");
-}
+  if (usedIds.has(normalized.id)) {
+    throw new Error(`${normalized.id}: duplicate puzzle id.`);
+  }
 
-const archive = sourcePuzzles.map((puzzle, index) => normalizePuzzle(puzzle, index));
+  usedIds.add(normalized.id);
+  return normalized;
+});
 
 validateCrossings(archive);
 fs.writeFileSync(destinationPath, `${JSON.stringify(archive, null, 2)}\n`);
@@ -29,93 +34,153 @@ console.log(
   )} to ${path.relative(repoRoot, destinationPath)}.`,
 );
 
-function normalizePuzzle(puzzle, index) {
+function readSourcePuzzles(inputPath) {
+  const stat = fs.statSync(inputPath);
+
+  if (!stat.isDirectory()) {
+    throw new Error("Crossword source must be a directory of JSON puzzle files.");
+  }
+
+  return fs
+    .readdirSync(inputPath)
+    .filter((fileName) => fileName.endsWith(".json"))
+    .sort(comparePuzzleFileNames)
+    .map((fileName) =>
+      JSON.parse(fs.readFileSync(path.join(inputPath, fileName), "utf8")),
+    );
+}
+
+function comparePuzzleFileNames(left, right) {
+  const leftNumber = Number.parseInt(left, 10);
+  const rightNumber = Number.parseInt(right, 10);
+
+  if (Number.isFinite(leftNumber) && Number.isFinite(rightNumber)) {
+    return leftNumber - rightNumber;
+  }
+
+  return left.localeCompare(right);
+}
+
+function normalizePuzzle(source, index) {
+  if (
+    source?.schemaVersion !== "1.0" ||
+    !source.puzzle ||
+    !source.grid ||
+    !Array.isArray(source.entries)
+  ) {
+    throw new Error(
+      `Puzzle file ${index + 1}: expected crossword schema version 1.0.`,
+    );
+  }
+
+  if (source.puzzle.variant !== "barred") {
+    throw new Error(
+      `${source.puzzle.id ?? index + 1}: unsupported variant ${source.puzzle.variant}.`,
+    );
+  }
+
   const clues = { across: [], down: [] };
-  const numberedCells = new Map();
+  const blackCells = [];
+  const numberedCells = [];
 
-  for (const direction of ["across", "down"]) {
-    const segments = getSegments(puzzle, direction);
-    const sourceClues = puzzle.clues?.[direction] ?? [];
-
-    if (segments.length !== sourceClues.length) {
+  for (const cell of source.grid.cells ?? []) {
+    if (cell.type === "block") {
+      blackCells.push({ row: cell.row, col: cell.column });
+    } else if (cell.type !== "letter") {
       throw new Error(
-        `${puzzle.title} ${direction}: found ${segments.length} grid segment(s) for ${sourceClues.length} clue(s).`,
+        `${source.puzzle.id}: unsupported cell type ${cell.type}.`,
       );
     }
 
-    clues[direction] = sourceClues.map((clue, clueIndex) => {
-      const segment = segments[clueIndex];
-      const start = { row: segment.row, col: segment.col };
-      numberedCells.set(keyFor(start), { ...start, number: clue.number });
+    if (cell.rebus !== null && cell.rebus !== undefined) {
+      throw new Error(`${source.puzzle.id}: rebus cells are not supported.`);
+    }
 
-      return {
-        id: `${clue.number}${direction[0]}`,
-        number: clue.number,
-        direction,
-        start,
-        clue: clue.enumeration ? `${clue.clue} (${clue.enumeration})` : clue.clue,
-        answer: clue.answer,
-        reasoning: clue.explanation || "",
-      };
+    if (Number.isInteger(cell.number)) {
+      numberedCells.push({
+        row: cell.row,
+        col: cell.column,
+        number: cell.number,
+      });
+    }
+  }
+
+  for (const entry of source.entries) {
+    if (entry.direction !== "across" && entry.direction !== "down") {
+      throw new Error(
+        `${source.puzzle.id} ${entry.id}: unsupported direction ${entry.direction}.`,
+      );
+    }
+
+    const answer = entry.answer?.normalized || entry.answer?.display || "";
+    const cells = entry.cells ?? [];
+
+    if (cells.length !== answerLetters(answer).length) {
+      throw new Error(
+        `${source.puzzle.id} ${entry.id}: answer length does not match its cells.`,
+      );
+    }
+
+    assertStraightEntry(source.puzzle.id, entry);
+    clues[entry.direction].push({
+      id: String(entry.id).toLowerCase(),
+      number: entry.number,
+      direction: entry.direction,
+      start: {
+        row: entry.start.row,
+        col: entry.start.column,
+      },
+      clue: entry.clue?.text || "",
+      answer,
+      reasoning: entry.explanation?.raw || "",
     });
   }
 
   return {
-    id: slugFromTitle(puzzle.title, index),
-    title: puzzle.title,
-    rows: puzzle.rows,
-    cols: puzzle.cols,
-    blackCells: [],
-    numberedCells: Array.from(numberedCells.values()).sort(
+    id: requiredId(source.puzzle.id, index),
+    title: source.puzzle.title || `Crossword #${source.puzzle.id}`,
+    author: source.puzzle.author || undefined,
+    publishedDate: source.puzzle.publishedDate || undefined,
+    rows: source.grid.rows,
+    cols: source.grid.columns,
+    blackCells,
+    numberedCells: numberedCells.sort(
       (a, b) => a.row - b.row || a.col - b.col || a.number - b.number,
     ),
-    dividers: (puzzle.bars ?? []).map(([from, to]) => ({
-      from: { row: from[0], col: from[1] },
-      to: { row: to[0], col: to[1] },
-    })),
+    dividers: (source.grid.bars ?? []).map((bar) => dividerFromBar(source, bar)),
     clues,
   };
 }
 
-function getSegments(puzzle, direction) {
-  const bars = new Set((puzzle.bars ?? []).map(([from, to]) => edgeKey(from, to)));
-  const segments = [];
+function dividerFromBar(source, bar) {
+  const from = { row: bar.row, col: bar.column };
 
-  for (let row = 0; row < puzzle.rows; row += 1) {
-    for (let col = 0; col < puzzle.cols; col += 1) {
-      const previous = direction === "across" ? [row, col - 1] : [row - 1, col];
-      const hasPrevious = previous[0] >= 0 && previous[1] >= 0;
-      const startsSegment =
-        !hasPrevious || bars.has(edgeKey(previous, [row, col]));
-
-      let endRow = row;
-      let endCol = col;
-      let length = 1;
-
-      while (true) {
-        const next =
-          direction === "across" ? [endRow, endCol + 1] : [endRow + 1, endCol];
-
-        if (next[0] >= puzzle.rows || next[1] >= puzzle.cols) {
-          break;
-        }
-
-        if (bars.has(edgeKey([endRow, endCol], next))) {
-          break;
-        }
-
-        length += 1;
-        endRow = next[0];
-        endCol = next[1];
-      }
-
-      if (startsSegment && length > 1) {
-        segments.push({ row, col, length });
-      }
-    }
+  if (bar.edge === "right") {
+    return { from, to: { row: bar.row, col: bar.column + 1 } };
   }
 
-  return segments;
+  if (bar.edge === "bottom") {
+    return { from, to: { row: bar.row + 1, col: bar.column } };
+  }
+
+  throw new Error(
+    `${source.puzzle.id}: unsupported bar edge ${String(bar.edge)}.`,
+  );
+}
+
+function assertStraightEntry(puzzleId, entry) {
+  entry.cells.forEach((cell, index) => {
+    const expectedRow =
+      entry.start.row + (entry.direction === "down" ? index : 0);
+    const expectedColumn =
+      entry.start.column + (entry.direction === "across" ? index : 0);
+
+    if (cell.row !== expectedRow || cell.column !== expectedColumn) {
+      throw new Error(
+        `${puzzleId} ${entry.id}: entry cells must be straight and contiguous.`,
+      );
+    }
+  });
 }
 
 function validateCrossings(archive) {
@@ -148,43 +213,14 @@ function validateCrossings(archive) {
   }
 }
 
-function slugFromTitle(title, index) {
-  const match = String(title).match(/([A-Za-z]+) (\d{1,2}), (\d{4})/);
+function requiredId(value, index) {
+  const id = String(value ?? "").trim();
 
-  if (!match) {
-    return `cryptic-crossword-${index + 1}`;
+  if (!id) {
+    throw new Error(`Puzzle file ${index + 1}: puzzle.id is required.`);
   }
 
-  const months = {
-    january: "01",
-    february: "02",
-    march: "03",
-    april: "04",
-    may: "05",
-    june: "06",
-    july: "07",
-    august: "08",
-    september: "09",
-    october: "10",
-    november: "11",
-    december: "12",
-  };
-
-  return `cryptic-crossword-${match[3]}-${
-    months[match[1].toLowerCase()]
-  }-${String(match[2]).padStart(2, "0")}`;
-}
-
-function edgeKey(from, to) {
-  return [arrayKey(from), arrayKey(to)].sort().join("|");
-}
-
-function arrayKey(cell) {
-  return `${cell[0]},${cell[1]}`;
-}
-
-function keyFor(cell) {
-  return `${cell.row},${cell.col}`;
+  return id;
 }
 
 function answerLetters(answer) {
