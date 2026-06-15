@@ -76,6 +76,19 @@ type ChartRow = {
   className?: string;
 };
 
+const ratingBarClasses = [
+  "bg-[#ef4444]",
+  "bg-[#f97316]",
+  "bg-[#f59e0b]",
+  "bg-[#eab308]",
+  "bg-[#84cc16]",
+  "bg-[#22c55e]",
+  "bg-[#14b8a6]",
+  "bg-[#06b6d4]",
+  "bg-[#3b82f6]",
+  "bg-[#8b5cf6]",
+];
+
 export function StageSelectApp() {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const [session, setSession] = useState<Session | null>(null);
@@ -83,6 +96,9 @@ export function StageSelectApp() {
   const [library, setLibrary] = useState<LibraryItem[]>([]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<
     StageSelectGameSearchResult[]
@@ -245,6 +261,11 @@ export function StageSelectApp() {
       (_event, nextSession) => {
         setSession(nextSession);
         setAuthMessage(nextSession ? "Signed in." : "Sign up or log in.");
+        if (!nextSession) {
+          setNewPassword("");
+          setConfirmNewPassword("");
+          setIsChangePasswordOpen(false);
+        }
         loadUserData(nextSession);
       },
     );
@@ -371,6 +392,18 @@ export function StageSelectApp() {
 
   const libraryStats = useMemo(() => {
     const ratedGames = library.filter((item) => getSortableRating(item.rating) > 0);
+    const finishedGames = library.filter((item) => item.status === "finished");
+    const leftGames = library.filter((item) => item.status === "left");
+    const queueGames = library.filter(
+      (item) => item.status === "backlogged" || item.status === "wishlisted",
+    );
+    const fiveStarGames = library.filter(
+      (item) => getSortableRating(item.rating) === 5,
+    );
+    const platformRows = getCountRows(
+      library.map((item) => item.platform).filter((platform) => platform !== "-"),
+    );
+    const decidedGames = finishedGames.length + leftGames.length;
     const averageRating =
       ratedGames.length > 0
         ? ratedGames.reduce(
@@ -384,55 +417,43 @@ export function StageSelectApp() {
       reviewedGames: library.filter((item) => Boolean(item.review)).length,
       ratedGames: ratedGames.length,
       averageRating,
+      finishedGames: finishedGames.length,
+      queueGames: queueGames.length,
+      fiveStarGames: fiveStarGames.length,
+      decidedGames,
+      finishRate:
+        decidedGames > 0
+          ? Math.round((finishedGames.length / decidedGames) * 100)
+          : 0,
+      favoritePlatform: platformRows[0]?.label ?? "-",
+      topRatedTitles: [...ratedGames]
+        .sort(
+          (a, b) =>
+            getSortableRating(b.rating) - getSortableRating(a.rating) ||
+            a.title.localeCompare(b.title),
+        )
+        .slice(0, 3),
       statusRows: statuses.map((status) => ({
         label: status.label,
         value: library.filter((item) => item.status === status.value).length,
         className: getStatusBarClass(status.value),
       })),
-      platformRows: getCountRows(
-        library.map((item) => item.platform).filter((platform) => platform !== "-"),
-      ).slice(0, 8),
-      ratingRows: [
-        {
-          label: "5 stars",
-          value: library.filter((item) => getSortableRating(item.rating) === 5)
-            .length,
-          className: "bg-[#f59e0b]",
-        },
-        {
-          label: "4-4.5",
-          value: library.filter((item) => {
-            const rating = getSortableRating(item.rating);
-
-            return rating >= 4 && rating < 5;
-          }).length,
-          className: "bg-[#22c55e]",
-        },
-        {
-          label: "3-3.5",
-          value: library.filter((item) => {
-            const rating = getSortableRating(item.rating);
-
-            return rating >= 3 && rating < 4;
-          }).length,
-          className: "bg-[#3b82f6]",
-        },
-        {
-          label: "0.5-2.5",
-          value: library.filter((item) => {
-            const rating = getSortableRating(item.rating);
-
-            return rating > 0 && rating < 3;
-          }).length,
-          className: "bg-[#f97316]",
-        },
-        {
+      platformRows: platformRows.slice(0, 8),
+      ratingRows: ratingOptions
+        .map((rating, index) => ({
+          label: `${rating} stars`,
+          value: library.filter(
+            (item) => getSortableRating(item.rating) === Number(rating),
+          ).length,
+          className: ratingBarClasses[index],
+        }))
+        .reverse()
+        .concat({
           label: "Unrated",
           value: library.filter((item) => getSortableRating(item.rating) < 0)
             .length,
           className: "bg-[#94a3b8]",
-        },
-      ],
+        }),
     };
   }, [library]);
 
@@ -511,6 +532,43 @@ export function StageSelectApp() {
     const { error } = await supabase.auth.signOut();
 
     setAuthMessage(error ? error.message : "Signed out.");
+    setIsAuthLoading(false);
+  }
+
+  async function changePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!supabase || !session) {
+      setAuthMessage("Log in before changing your password.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setAuthMessage("New password must be at least 6 characters.");
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setAuthMessage("New passwords do not match.");
+      return;
+    }
+
+    setIsAuthLoading(true);
+    setAuthMessage("Changing password...");
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      setAuthMessage(error.message);
+    } else {
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setIsChangePasswordOpen(false);
+      setAuthMessage("Password changed.");
+    }
+
     setIsAuthLoading(false);
   }
 
@@ -798,6 +856,75 @@ export function StageSelectApp() {
                 >
                   {isExportingData ? "Preparing" : "Download JSON"}
                 </button>
+                {isChangePasswordOpen ? (
+                  <form
+                    className="grid gap-3 border-t border-[#e5e7eb] pt-4"
+                    onSubmit={changePassword}
+                  >
+                    <input
+                      aria-label="New password"
+                      autoComplete="new-password"
+                      className="w-full rounded-md border border-[#cfd6e0] bg-white px-3 py-2 text-sm text-[#20242c] outline-none transition focus:border-[#7c8ca5] focus:ring-2 focus:ring-[#dce3ee]"
+                      disabled={isAuthLoading}
+                      minLength={6}
+                      onChange={(event) => setNewPassword(event.target.value)}
+                      placeholder="new password"
+                      type="password"
+                      value={newPassword}
+                    />
+                    <input
+                      aria-label="Confirm new password"
+                      autoComplete="new-password"
+                      className="w-full rounded-md border border-[#cfd6e0] bg-white px-3 py-2 text-sm text-[#20242c] outline-none transition focus:border-[#7c8ca5] focus:ring-2 focus:ring-[#dce3ee]"
+                      disabled={isAuthLoading}
+                      minLength={6}
+                      onChange={(event) =>
+                        setConfirmNewPassword(event.target.value)
+                      }
+                      placeholder="confirm new password"
+                      type="password"
+                      value={confirmNewPassword}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        className="rounded-md bg-[#20242c] px-3 py-2 font-mono text-xs font-bold uppercase text-white shadow-sm transition hover:bg-[#394150] disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={
+                          isAuthLoading ||
+                          !newPassword ||
+                          !confirmNewPassword
+                        }
+                        type="submit"
+                      >
+                        {isAuthLoading ? "Changing" : "Save password"}
+                      </button>
+                      <button
+                        className="rounded-md border border-[#cfd6e0] bg-white px-3 py-2 font-mono text-xs font-bold uppercase text-[#20242c] transition hover:bg-[#f0f3f7] disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={isAuthLoading}
+                        onClick={() => {
+                          setNewPassword("");
+                          setConfirmNewPassword("");
+                          setIsChangePasswordOpen(false);
+                          setAuthMessage("Signed in.");
+                        }}
+                        type="button"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <button
+                    className="rounded-md border border-[#cfd6e0] bg-white px-3 py-2 font-mono text-xs font-bold uppercase text-[#20242c] transition hover:bg-[#f0f3f7] disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isAuthLoading || isExportingData}
+                    onClick={() => {
+                      setIsChangePasswordOpen(true);
+                      setAuthMessage("Enter and confirm your new password.");
+                    }}
+                    type="button"
+                  >
+                    Change password
+                  </button>
+                )}
                 <button
                   className="rounded-md border border-[#cfd6e0] bg-white px-3 py-2 font-mono text-xs font-bold uppercase text-[#20242c] transition hover:bg-[#f0f3f7] disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={isAuthLoading || isExportingData}
@@ -1228,7 +1355,7 @@ export function StageSelectApp() {
 
               {libraryStats.totalGames > 0 ? (
                 <>
-                  <div className="mt-5 grid gap-3 sm:grid-cols-4">
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <StatTile
                       label="Games"
                       value={String(libraryStats.totalGames)}
@@ -1249,17 +1376,82 @@ export function StageSelectApp() {
                           : "-"
                       }
                     />
+                    <StatTile
+                      label="Finished"
+                      value={String(libraryStats.finishedGames)}
+                    />
+                    <StatTile
+                      label="The queue"
+                      value={String(libraryStats.queueGames)}
+                    />
+                    <StatTile
+                      label="Finish rate"
+                      value={
+                        libraryStats.decidedGames > 0
+                          ? `${libraryStats.finishRate}%`
+                          : "-"
+                      }
+                    />
+                    <StatTile
+                      label="Five-star club"
+                      value={String(libraryStats.fiveStarGames)}
+                    />
                   </div>
 
-                  <div className="mt-5 grid gap-4 lg:grid-cols-3">
+                  <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                     <ChartPanel title="By status">
                       <BarChart rows={libraryStats.statusRows} />
                     </ChartPanel>
                     <ChartPanel title="By platform">
                       <BarChart rows={libraryStats.platformRows} />
                     </ChartPanel>
-                    <ChartPanel title="By rating">
-                      <BarChart rows={libraryStats.ratingRows} />
+                    <div className="lg:col-span-2">
+                      <ChartPanel title="Every rating">
+                        <BarChart rows={libraryStats.ratingRows} />
+                      </ChartPanel>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                    <ChartPanel title="Your home turf">
+                      <div className="rounded-lg bg-white p-4">
+                        <p className="text-xs uppercase text-[#667085]">
+                          Most-played platform
+                        </p>
+                        <p className="mt-2 font-mono text-2xl font-bold uppercase text-[#111827]">
+                          {libraryStats.favoritePlatform}
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-[#667085]">
+                          The platform showing up most often across your saved
+                          games.
+                        </p>
+                      </div>
+                    </ChartPanel>
+                    <ChartPanel title="Top shelf">
+                      {libraryStats.topRatedTitles.length > 0 ? (
+                        <div className="grid gap-2">
+                          {libraryStats.topRatedTitles.map((game, index) => (
+                            <div
+                              className="flex items-center justify-between gap-4 rounded-lg bg-white px-4 py-3"
+                              key={game.id}
+                            >
+                              <div className="min-w-0">
+                                <p className="font-mono text-[10px] font-bold uppercase text-[#98a2b3]">
+                                  #{index + 1}
+                                </p>
+                                <p className="truncate text-sm font-medium text-[#111827]">
+                                  {game.title}
+                                </p>
+                              </div>
+                              <StarRating rating={game.rating} />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-[#667085]">
+                          Rate a game to start your top shelf.
+                        </p>
+                      )}
                     </ChartPanel>
                   </div>
                 </>
@@ -1661,35 +1853,66 @@ function StarRating({ rating }: { rating: string }) {
   return (
     <span
       aria-label={`${roundedValue} out of 5 stars`}
-      className="flex items-center gap-0.5 text-[#f59e0b]"
+      className="inline-flex items-center gap-1.5"
       title={`${roundedValue} / 5`}
     >
-      {Array.from({ length: 5 }, (_item, index) => {
-        const fill = Math.max(0, Math.min(1, roundedValue - index));
+      <span className="flex items-center gap-0.5">
+        {Array.from({ length: 5 }, (_item, index) => {
+          const fill = Math.max(0, Math.min(1, roundedValue - index));
 
-        return <StarIcon fill={fill} key={index} />;
-      })}
+          return <StarIcon fill={fill} key={index} />;
+        })}
+      </span>
+      <span className="rounded bg-[#fff7df] px-1.5 py-0.5 font-mono text-[10px] font-bold text-[#9a6700]">
+        {formatRating(roundedValue)}
+      </span>
     </span>
   );
 }
 
 function StarIcon({ fill }: { fill: number }) {
-  const percentage = `${fill * 100}%`;
+  const clippedPercentage = `${(1 - fill) * 100}%`;
 
   return (
-    <span
+    <svg
       aria-hidden="true"
-      className="relative inline-block h-3.5 w-3.5 text-[#d0d5dd]"
+      className="h-4 w-4 shrink-0"
+      viewBox="0 0 16 16"
     >
-      <span className="absolute inset-0">★</span>
-      <span
-        className="absolute inset-0 overflow-hidden text-[#f59e0b]"
-        style={{ width: percentage }}
-      >
-        ★
-      </span>
-    </span>
+      <path
+        d="M8 1.4 10 5.5l4.5.7-3.2 3.2.8 4.5L8 11.8l-4.1 2.1.8-4.5-3.2-3.2 4.5-.7L8 1.4Z"
+        fill="#eef0f3"
+        stroke="#98a2b3"
+        strokeLinejoin="round"
+        strokeWidth="1"
+      />
+      {fill > 0 ? (
+        <path
+          d="M8 1.4 10 5.5l4.5.7-3.2 3.2.8 4.5L8 11.8l-4.1 2.1.8-4.5-3.2-3.2 4.5-.7L8 1.4Z"
+          fill="#f7b731"
+          stroke="#b77900"
+          strokeLinejoin="round"
+          strokeWidth="1"
+          style={{ clipPath: `inset(0 ${clippedPercentage} 0 0)` }}
+        />
+      ) : null}
+      {fill === 0.5 ? (
+        <line
+          stroke="#8a5a00"
+          strokeLinecap="round"
+          strokeWidth="1"
+          x1="8"
+          x2="8"
+          y1="3.2"
+          y2="12.2"
+        />
+      ) : null}
+    </svg>
   );
+}
+
+function formatRating(rating: number) {
+  return Number.isInteger(rating) ? rating.toFixed(1) : String(rating);
 }
 
 function getLibraryPlatformOptions(

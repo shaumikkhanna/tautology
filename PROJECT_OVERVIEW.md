@@ -254,8 +254,8 @@ frontend/app/play/games/cryptic-crossword-archive/
 
 Important files:
 
-- `frontend/app/play/games/cryptic-crossword-archive/CrypticCrosswordArchiveApp.tsx`: auth/access states, archive list, player UI, timer, checks/reveals, autosave, and completion reasonings.
-- `frontend/app/play/games/cryptic-crossword-archive/crypticCrossword.module.css`: game-local styling.
+- `frontend/app/play/games/cryptic-crossword-archive/CrypticCrosswordArchiveApp.tsx`: auth/access states, archive list, responsive player UI, keyboard/focus behavior, timer, checks/reveals, autosave, inline completion reasonings, and solve celebration.
+- `frontend/app/play/games/cryptic-crossword-archive/crypticCrossword.module.css`: game-local desktop/mobile styling and completion animation.
 - `frontend/content/games/cryptic-crossword-archive/meta.json`: Games card entry.
 - `frontend/content/crosswords/archive.json`: bundled crossword archive data.
 - `crosswords/puzzles/*.json`: canonical per-puzzle source files used by the import script.
@@ -272,14 +272,40 @@ needed only when regenerating that archive.
 
 Grid keyboard navigation:
 
-- Typing fills the active cell and advances within the active clue.
+- Typing fills the active cell and advances to the next empty cell in the active clue, skipping letters already supplied by crossings.
+- Selecting a clue lands on its first empty cell; a filled clue lands on its first cell.
+- Clicking a clue restores grid typing focus on desktop.
 - Backspace on a filled cell clears it without moving.
 - Backspace on an empty cell moves to the previous cell in the active clue and clears that cell.
 - Backspace at the first clue cell clears it without moving.
 - Arrow keys parallel to the active clue move within that clue.
 - A perpendicular arrow first switches the active clue direction without moving; subsequent arrows in that direction move through the newly active clue.
 - Delete clears the active cell without moving.
-- Space toggles direction and Tab moves between clues.
+- Space toggles direction.
+- Tab and Shift+Tab move to the next/previous unsolved clue. Once every clue is filled, they move sequentially.
+
+Mobile player behavior:
+
+- The 10x8 grid shrinks to the available viewport width without horizontal scrolling.
+- There is no custom on-screen keyboard. Tapping a cell or clue focuses a hidden text input so the device's native keyboard opens.
+- Cell taps preserve the current page scroll position instead of jumping to the full clue list.
+- A compact box beneath the grid shows the active clue and, when present, the orthogonal clue crossing the active cell.
+- The compact clue rows are tappable and switch direction while keeping keyboard input active.
+- The top-left `TOOMUCHMATHS` play-page link is not fixed on mobile, so it scrolls away instead of overlapping game content. This rule also applies to the other native and standalone games.
+
+Completion behavior:
+
+- Correctly finishing the grid triggers a short cascading cell wave and grid pulse. The effect is suppressed for `prefers-reduced-motion`.
+- Revealing the grid completes it without playing the solve celebration.
+- After completion, each clue shows its answer and reasoning directly beneath the clue instead of using a separate reasonings panel.
+- Check/reveal controls remain disabled after completion so the saved perfect status cannot change afterward.
+
+Latest verification on June 15, 2026:
+
+- `npx tsc --noEmit`
+- `npm run validate:crosswords` validated all 145 puzzles.
+- `npx next build --webpack`
+- Desktop and 320px mobile browser checks covered clue focus, native mobile input focus, empty-cell skipping, unsolved-clue Tab navigation, inline reasonings, grid width, and mobile scroll behavior.
 
 Crossword API routes:
 
