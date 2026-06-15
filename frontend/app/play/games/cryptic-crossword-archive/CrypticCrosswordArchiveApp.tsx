@@ -37,6 +37,9 @@ export function CrypticCrosswordArchiveApp() {
   const redeemedInviteRef = useRef("");
   const skipNextAutosaveRef = useRef(false);
   const mobileCellScrollYRef = useRef<number | null>(null);
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const mobileEntryInputRef = useRef<HTMLInputElement | null>(null);
+  const [isCelebrating, setIsCelebrating] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -324,8 +327,21 @@ export function CrypticCrosswordArchiveApp() {
 
     const solvedAt = new Date().toISOString();
     setCompletedAt(solvedAt);
+    setIsCelebrating(true);
     setStatusMessage("Solved. Reasonings unlocked.");
   }, [completedAt, gridState, puzzle, puzzleModel]);
+
+  useEffect(() => {
+    if (!isCelebrating) {
+      return;
+    }
+
+    const celebrationTimeout = window.setTimeout(() => {
+      setIsCelebrating(false);
+    }, 1300);
+
+    return () => window.clearTimeout(celebrationTimeout);
+  }, [isCelebrating]);
 
   useEffect(() => {
     if (!puzzle || !isApproved || (!session && !isDevBypass)) {
@@ -528,6 +544,7 @@ export function CrypticCrosswordArchiveApp() {
     setCheckedCount(progress?.checked_count ?? 0);
     setRevealedCount(progress?.revealed_count ?? 0);
     setCompletedAt(progress?.completed_at ?? null);
+    setIsCelebrating(false);
     setSelectedKey(firstCell ? keyFor(firstCell.row, firstCell.col) : "");
     setActiveDirection("across");
     setStatusMessage("");
@@ -544,7 +561,17 @@ export function CrypticCrosswordArchiveApp() {
     }));
     clearCheckedWrongKeys([selectedKey]);
 
-    moveWithinEntry(1);
+    if (activeClue) {
+      const nextEmptyKey = findNextEmptyClueKey(
+        activeClue,
+        selectedKey,
+        gridState,
+        1,
+      );
+      if (nextEmptyKey) {
+        setSelectedKey(nextEmptyKey);
+      }
+    }
   }
 
   function clearLetter() {
@@ -581,14 +608,6 @@ export function CrypticCrosswordArchiveApp() {
     });
   }
 
-  function moveWithinEntry(delta: number) {
-    if (!activeClue || !selectedKey) {
-      return;
-    }
-
-    moveWithinClue(activeClue, delta);
-  }
-
   function moveWithinClue(clue: CrosswordClue, delta: number) {
     const keys = getClueKeys(clue);
     const index = keys.indexOf(selectedKey);
@@ -599,7 +618,7 @@ export function CrypticCrosswordArchiveApp() {
     }
   }
 
-  function handleGridKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+  function handleGridKeyDown(event: KeyboardEvent<HTMLElement>) {
     if (!puzzle || !selectedCell || !puzzleModel) {
       return;
     }
@@ -709,12 +728,21 @@ export function CrypticCrosswordArchiveApp() {
     const currentIndex = activeClue
       ? clues.findIndex((clue) => clue.id === activeClue.id)
       : -1;
-    const nextIndex =
+    const allCluesFilled = clues.every((clue) =>
+      isClueFilled(clue, gridState),
+    );
+    let nextIndex =
       currentIndex === -1
         ? delta > 0
           ? 0
           : clues.length - 1
         : (currentIndex + delta + clues.length) % clues.length;
+
+    if (!allCluesFilled) {
+      while (isClueFilled(clues[nextIndex], gridState)) {
+        nextIndex = (nextIndex + delta + clues.length) % clues.length;
+      }
+    }
 
     selectClue(clues[nextIndex]);
   }
@@ -762,7 +790,32 @@ export function CrypticCrosswordArchiveApp() {
 
   function selectClue(clue: CrosswordClue) {
     setActiveDirection(clue.direction);
-    setSelectedKey(keyFor(clue.start.row, clue.start.col));
+    setSelectedKey(getClueSelectionKey(clue, gridState));
+    focusEntry();
+  }
+
+  function focusEntry() {
+    if (window.matchMedia("(max-width: 820px)").matches) {
+      mobileEntryInputRef.current?.focus({ preventScroll: true });
+      return;
+    }
+
+    gridRef.current?.focus({ preventScroll: true });
+  }
+
+  function handleMobileEntryChange(value: string) {
+    const letter = value.toUpperCase().match(/[A-Z]/g)?.at(-1);
+    if (letter) {
+      setLetter(letter);
+    }
+  }
+
+  function handleMobileEntryKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (/^[a-z]$/i.test(event.key)) {
+      return;
+    }
+
+    handleGridKeyDown(event);
   }
 
   function checkLetter() {
@@ -1059,8 +1112,12 @@ export function CrypticCrosswordArchiveApp() {
             <div className={styles.playerLayout}>
               <div className={styles.boardColumn}>
                 <div
-                  className={styles.grid}
+                  className={[
+                    styles.grid,
+                    isCelebrating ? styles.solvedGrid : "",
+                  ].join(" ")}
                   onKeyDown={handleGridKeyDown}
+                  ref={gridRef}
                   style={{
                     aspectRatio: `${puzzle.cols} / ${puzzle.rows}`,
                     gridTemplateColumns: `repeat(${puzzle.cols}, minmax(0, 1fr))`,
@@ -1091,9 +1148,13 @@ export function CrypticCrosswordArchiveApp() {
                         onClick={() => {
                           selectCell(row, col);
                           restoreMobileCellScrollPosition();
+                          focusEntry();
                         }}
                         onPointerDown={rememberMobileCellScrollPosition}
-                        style={getDividerStyle(key, puzzleModel.dividerKeys)}
+                        style={{
+                          ...getDividerStyle(key, puzzleModel.dividerKeys),
+                          "--cell-index": index,
+                        } as React.CSSProperties}
                         type="button"
                       >
                         {number ? (
@@ -1105,11 +1166,34 @@ export function CrypticCrosswordArchiveApp() {
                   })}
                 </div>
 
+                <input
+                  aria-label="Crossword entry"
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  className={styles.mobileEntryInput}
+                  inputMode="text"
+                  onChange={(event) =>
+                    handleMobileEntryChange(event.currentTarget.value)
+                  }
+                  onKeyDown={handleMobileEntryKeyDown}
+                  ref={mobileEntryInputRef}
+                  spellCheck={false}
+                  type="text"
+                  value=""
+                />
+
                 {activeClue ? (
                   <div className={styles.mobileClueCard} aria-live="polite">
-                    <MobileClue clue={activeClue} isActive />
+                    <MobileClue
+                      clue={activeClue}
+                      isActive
+                      onSelect={selectClue}
+                    />
                     {orthogonalClue ? (
-                      <MobileClue clue={orthogonalClue} />
+                      <MobileClue
+                        clue={orthogonalClue}
+                        onSelect={selectClue}
+                      />
                     ) : null}
                   </div>
                 ) : null}
@@ -1147,6 +1231,7 @@ export function CrypticCrosswordArchiveApp() {
                   activeClue={activeClue}
                   clues={puzzle.clues.across}
                   gridState={gridState}
+                  showReasonings={Boolean(completedAt)}
                   title="Across"
                   onSelect={selectClue}
                 />
@@ -1154,6 +1239,7 @@ export function CrypticCrosswordArchiveApp() {
                   activeClue={activeClue}
                   clues={puzzle.clues.down}
                   gridState={gridState}
+                  showReasonings={Boolean(completedAt)}
                   title="Down"
                   onSelect={selectClue}
                 />
@@ -1183,18 +1269,6 @@ export function CrypticCrosswordArchiveApp() {
                     <span className={styles.metaLabel}>Reveals</span>
                     <strong>{revealedCount}</strong>
                   </div>
-                </div>
-                <div className={styles.reasonings}>
-                  <h3>Reasonings</h3>
-                  {[...puzzle.clues.across, ...puzzle.clues.down].map((clue) => (
-                    <div className={styles.reasoningItem} key={clue.id}>
-                      <strong>
-                        {clue.number}
-                        {clue.direction === "across" ? "A" : "D"} {clue.answer}
-                      </strong>
-                      <p>{clue.reasoning}</p>
-                    </div>
-                  ))}
                 </div>
               </>
             ) : null}
@@ -1284,12 +1358,14 @@ function ClueList({
   clues,
   gridState,
   onSelect,
+  showReasonings,
   title,
 }: {
   activeClue: CrosswordClue | null;
   clues: CrosswordClue[];
   gridState: Record<string, string>;
   onSelect: (clue: CrosswordClue) => void;
+  showReasonings: boolean;
   title: string;
 }) {
   const activeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -1323,7 +1399,15 @@ function ClueList({
             ref={isActive ? activeButtonRef : null}
             type="button"
           >
-            <strong>{clue.number}.</strong> {clue.clue}
+            <span>
+              <strong>{clue.number}.</strong> {clue.clue}
+            </span>
+            {showReasonings ? (
+              <span className={styles.clueReasoning}>
+                <strong>{clue.answer}</strong>
+                {clue.reasoning ? ` — ${clue.reasoning}` : ""}
+              </span>
+            ) : null}
           </button>
         );
       })}
@@ -1334,27 +1418,61 @@ function ClueList({
 function MobileClue({
   clue,
   isActive = false,
+  onSelect,
 }: {
   clue: CrosswordClue;
   isActive?: boolean;
+  onSelect: (clue: CrosswordClue) => void;
 }) {
   return (
-    <div
+    <button
       className={[
         styles.mobileClue,
         isActive ? styles.mobileActiveClue : "",
       ].join(" ")}
+      onClick={() => onSelect(clue)}
+      type="button"
     >
       <span className={styles.mobileClueLabel}>
         {clue.number} {clue.direction}
       </span>
       <span>{clue.clue}</span>
-    </div>
+    </button>
   );
 }
 
 function isClueFilled(clue: CrosswordClue, gridState: Record<string, string>) {
   return getClueKeys(clue).every((key) => Boolean(gridState[key]));
+}
+
+function getClueSelectionKey(
+  clue: CrosswordClue,
+  gridState: Record<string, string>,
+) {
+  const keys = getClueKeys(clue);
+  return keys.find((key) => !gridState[key]) ?? keys[0] ?? "";
+}
+
+function findNextEmptyClueKey(
+  clue: CrosswordClue,
+  selectedKey: string,
+  gridState: Record<string, string>,
+  delta: number,
+) {
+  const keys = getClueKeys(clue);
+  const selectedIndex = keys.indexOf(selectedKey);
+
+  for (
+    let index = selectedIndex + delta;
+    index >= 0 && index < keys.length;
+    index += delta
+  ) {
+    if (!gridState[keys[index]]) {
+      return keys[index];
+    }
+  }
+
+  return null;
 }
 
 function getWrongFilledKeys(
