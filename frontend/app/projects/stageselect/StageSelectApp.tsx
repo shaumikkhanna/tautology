@@ -1268,11 +1268,11 @@ export function StageSelectApp() {
                             </div>
                           )}
                           <div className="p-3">
-                          <div className="flex items-start justify-between gap-3">
+                          <div className="grid gap-2">
                             <h3 className="font-mono text-sm font-bold uppercase tracking-normal text-[#111827]">
                               {game.title}
                             </h3>
-                            <span className="rounded-full border border-[#d8dde5] bg-white px-2 py-1 text-xs text-[#394150]">
+                            <span className="w-fit rounded-full border border-[#d8dde5] bg-white px-2 py-1 text-xs text-[#394150]">
                               <StarRating rating={game.rating} />
                             </span>
                           </div>
