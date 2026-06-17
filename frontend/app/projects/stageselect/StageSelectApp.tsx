@@ -1255,15 +1255,15 @@ export function StageSelectApp() {
                         onClick={() => openLibraryModal(game)}
                         type="button"
                       >
-                        <div className="grid grid-cols-[88px_minmax(0,1fr)]">
+                        <div className="grid grid-cols-[96px_minmax(0,1fr)] items-start">
                           {game.coverUrl ? (
                             <img
                               alt=""
-                              className="h-full min-h-32 w-full bg-[#e8ecf2] object-cover"
+                              className="aspect-[3/4] w-full bg-[#e8ecf2] object-contain p-1"
                               src={game.coverUrl}
                             />
                           ) : (
-                            <div className="flex h-full min-h-32 w-full items-center justify-center bg-[#e8ecf2] font-mono text-xs uppercase text-[#667085]">
+                            <div className="flex aspect-[3/4] w-full items-center justify-center bg-[#e8ecf2] font-mono text-xs uppercase text-[#667085]">
                               Cover
                             </div>
                           )}
@@ -1585,7 +1585,7 @@ export function StageSelectApp() {
               {libraryModal.game.coverUrl ? (
                 <img
                   alt=""
-                  className="aspect-[3/4] w-full rounded-lg bg-[#e8ecf2] object-cover"
+                  className="aspect-[3/4] w-full rounded-lg bg-[#e8ecf2] object-contain p-2"
                   src={libraryModal.game.coverUrl}
                 />
               ) : (
