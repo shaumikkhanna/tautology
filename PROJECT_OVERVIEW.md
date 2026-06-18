@@ -516,7 +516,7 @@ StageSelect intentionally uses a cleaner modern neutral app style rather than th
 
 Current behavior:
 
-- Supabase Auth signup, login, logout, and session detection work in the StageSelect account panel.
+- Supabase Auth signup, login, logout, password changes, and session detection work in the StageSelect account panel.
 - Supabase uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; prefer publishable keys over legacy anon JWT keys.
 - Supabase clients are typed with `frontend/lib/supabase/database.types.ts`, derived from the current StageSelect migrations.
 - Signup sends `emailRedirectTo` to `/projects/stageselect` on the current origin so confirmation links do not fall back to localhost.
@@ -530,11 +530,12 @@ Current behavior:
 - Save, update, and remove writes run through Next API routes under `/api/projects/stageselect/library`.
 - The save route caches cover images in Supabase Object Storage when `SUPABASE_SECRET_KEY` and the bucket are configured, then stores `cover_storage_path` plus the cached public `cover_url`.
 - If cover upload is unavailable, the save route preserves any existing cached cover before falling back to the IGDB URL.
-- Library reads from Supabase and shows compact cover cards with colored status/platform chips.
+- Library reads from Supabase and shows compact cover cards with non-cropping portrait artwork plus colored status/platform chips.
 - Library rendering is paginated client-side in chunks so large libraries do not render every visible card at once.
 - Clicking a library card opens an edit modal where the user can update status/platform/rating/review or remove the game; platform edits use a dropdown from cached IGDB platform data.
-- Library ratings render as 5-star displays with half-star clipping; unrated games show a dash.
+- Library ratings render as outlined 5-star displays with clearer half-star treatment and an explicit numeric score; unrated games show a dash.
 - Library filters currently include platform, status, release year, rating bucket, and review presence; sorts include title, rating high/low, newest/oldest, status, and platform.
+- Stats include core totals, finished/queue/five-star counts, finish rate, favorite platform, top-rated games, and bar charts for status, platform, and each individual half-star rating.
 - StageSelect uses Supabase Object Storage, not Cloudflare/R2, for cached game images/covers.
 
 Supabase migrations live under:
