@@ -27,6 +27,10 @@ const tabs = [
 ];
 
 const libraryPageSize = 24;
+const defaultRatingMin = 0;
+const defaultRatingMax = 5;
+const defaultReleaseMin = 0;
+const defaultReleaseMax = 9999;
 
 type Profile = Pick<Tables<"profiles">, "display_name">;
 
@@ -135,8 +139,12 @@ export function StageSelectApp() {
 	const [librarySearchQuery, setLibrarySearchQuery] = useState("");
 	const [statusFilter, setStatusFilter] = useState("all");
 	const [platformFilter, setPlatformFilter] = useState("all");
-	const [ratingFilter, setRatingFilter] = useState("all");
-	const [releaseFilter, setReleaseFilter] = useState("all");
+	const [ratingMinFilter, setRatingMinFilter] = useState(defaultRatingMin);
+	const [ratingMaxFilter, setRatingMaxFilter] = useState(defaultRatingMax);
+	const [releaseMinFilter, setReleaseMinFilter] =
+		useState(defaultReleaseMin);
+	const [releaseMaxFilter, setReleaseMaxFilter] =
+		useState(defaultReleaseMax);
 	const [reviewFilter, setReviewFilter] = useState("all");
 	const [sortMode, setSortMode] = useState("title");
 	const [libraryVisibleCount, setLibraryVisibleCount] =
@@ -289,14 +297,21 @@ export function StageSelectApp() {
 		return Array.from(new Set(library.map((item) => item.platform))).sort();
 	}, [library]);
 
-	const releaseYearOptions = useMemo(() => {
-		return Array.from(
-			new Set(
-				library
-					.map((item) => item.releaseYear)
-					.filter((year) => year !== "-"),
-			),
-		).sort((a, b) => Number(b) - Number(a));
+	const releaseYearBounds = useMemo(() => {
+		const years = library
+			.map((item) => getSortableYear(item.releaseYear))
+			.filter((year) => year > 0);
+
+		if (years.length === 0) {
+			const fallbackYear = new Date().getFullYear();
+
+			return { min: 1970, max: fallbackYear };
+		}
+
+		return {
+			min: Math.min(...years),
+			max: Math.max(...years),
+		};
 	}, [library]);
 
 	const libraryByIgdbId = useMemo(() => {
@@ -332,28 +347,29 @@ export function StageSelectApp() {
 					platformFilter === "all" ||
 					item.platform === platformFilter,
 			)
-			.filter(
-				(item) =>
-					releaseFilter === "all" ||
-					item.releaseYear === releaseFilter,
-			)
 			.filter((item) => {
-				if (ratingFilter === "rated") {
-					return getSortableRating(item.rating) > 0;
-				}
+				const releaseYear = getSortableYear(item.releaseYear);
 
-				if (ratingFilter === "unrated") {
-					return getSortableRating(item.rating) < 0;
-				}
-
-				if (ratingFilter.startsWith("min-")) {
+				if (releaseYear < 0) {
 					return (
-						getSortableRating(item.rating) >=
-						Number(ratingFilter.slice(4))
+						releaseMinFilter === defaultReleaseMin &&
+						releaseMaxFilter === defaultReleaseMax
 					);
 				}
 
-				return true;
+				return (
+					releaseYear >= releaseMinFilter &&
+					releaseYear <= releaseMaxFilter
+				);
+			})
+			.filter((item) => {
+				const rating = getSortableRating(item.rating);
+
+				if (rating < 0) {
+					return ratingMinFilter === defaultRatingMin;
+				}
+
+				return rating >= ratingMinFilter && rating <= ratingMaxFilter;
 			})
 			.filter((item) => {
 				if (reviewFilter === "reviewed") {
@@ -409,8 +425,10 @@ export function StageSelectApp() {
 		library,
 		librarySearchQuery,
 		platformFilter,
-		ratingFilter,
-		releaseFilter,
+		ratingMaxFilter,
+		ratingMinFilter,
+		releaseMaxFilter,
+		releaseMinFilter,
 		reviewFilter,
 		sortMode,
 		statusFilter,
@@ -479,6 +497,20 @@ export function StageSelectApp() {
 				className: getStatusBarClass(status.value),
 			})),
 			platformRows: platformRows.slice(0, 8),
+			ratingByPlatformRows: getAverageRatingRows(
+				ratedGames,
+				(item) => item.platform,
+				getPlatformBarClass,
+			).slice(0, 8),
+			ratingByStatusRows: getAverageRatingRows(
+				ratedGames,
+				(item) => getStatusLabel(item.status),
+				(label) =>
+					getStatusBarClass(
+						statuses.find((status) => status.label === label)
+							?.value ?? "",
+					),
+			),
 			ratingRows: ratingOptions
 				.map((rating, index) => ({
 					label: `${rating} stars`,
@@ -504,8 +536,10 @@ export function StageSelectApp() {
 	}, [
 		librarySearchQuery,
 		platformFilter,
-		ratingFilter,
-		releaseFilter,
+		ratingMaxFilter,
+		ratingMinFilter,
+		releaseMaxFilter,
+		releaseMinFilter,
 		reviewFilter,
 		sortMode,
 		statusFilter,
@@ -1268,18 +1302,6 @@ export function StageSelectApp() {
 										</h2>
 									</div>
 									<div className="flex flex-wrap gap-2">
-										<input
-											aria-label="Search library"
-											className="min-w-48 rounded-md border border-[#cfd6e0] bg-white px-3 py-2 text-xs font-medium text-[#394150] outline-none transition placeholder:text-[#98a2b3] focus:border-[#7c8ca5] focus:ring-2 focus:ring-[#dce3ee]"
-											onChange={(event) =>
-												setLibrarySearchQuery(
-													event.target.value,
-												)
-											}
-											placeholder="Search library"
-											type="search"
-											value={librarySearchQuery}
-										/>
 										<select
 											aria-label="Filter library by platform"
 											className="rounded-md border border-[#cfd6e0] bg-white px-3 py-2 text-xs font-medium text-[#394150]"
@@ -1323,49 +1345,6 @@ export function StageSelectApp() {
 													{status.label}
 												</option>
 											))}
-										</select>
-										<select
-											aria-label="Filter library by release year"
-											className="rounded-md border border-[#cfd6e0] bg-white px-3 py-2 text-xs font-medium text-[#394150]"
-											onChange={(event) =>
-												setReleaseFilter(
-													event.target.value,
-												)
-											}
-											value={releaseFilter}
-										>
-											<option value="all">
-												All years
-											</option>
-											{releaseYearOptions.map((year) => (
-												<option key={year} value={year}>
-													{year}
-												</option>
-											))}
-										</select>
-										<select
-											aria-label="Filter library by rating"
-											className="rounded-md border border-[#cfd6e0] bg-white px-3 py-2 text-xs font-medium text-[#394150]"
-											onChange={(event) =>
-												setRatingFilter(
-													event.target.value,
-												)
-											}
-											value={ratingFilter}
-										>
-											<option value="all">
-												All ratings
-											</option>
-											<option value="rated">Rated</option>
-											<option value="unrated">
-												Unrated
-											</option>
-											<option value="min-4">
-												4+ stars
-											</option>
-											<option value="min-3">
-												3+ stars
-											</option>
 										</select>
 										<select
 											aria-label="Filter library by review"
@@ -1418,9 +1397,92 @@ export function StageSelectApp() {
 									</div>
 								</div>
 
-								<p className="mt-3 text-sm text-[#667085]">
+								<div className="mt-2 flex flex-col gap-3 sm:flex-row sm:justify-end sm:gap-5">
+									<RangeFilter
+										label="Rating"
+										max={defaultRatingMax}
+										min={defaultRatingMin}
+										onMaxChange={(value) =>
+											setRatingMaxFilter(
+												Math.max(value, ratingMinFilter),
+											)
+										}
+										onMinChange={(value) =>
+											setRatingMinFilter(
+												Math.min(value, ratingMaxFilter),
+											)
+										}
+										step={0.5}
+										tickStep={0.5}
+										valueMax={ratingMaxFilter}
+										valueMin={ratingMinFilter}
+										valueText={`${formatRatingFilter(ratingMinFilter)} to ${formatRatingFilter(ratingMaxFilter)}`}
+									/>
+
+									<RangeFilter
+										label="Year"
+										max={releaseYearBounds.max}
+										min={releaseYearBounds.min}
+										onMaxChange={(value) =>
+											setReleaseMaxFilter(
+												Math.max(
+													value,
+													getVisibleReleaseMin(
+														releaseMinFilter,
+														releaseYearBounds.min,
+													),
+												),
+											)
+										}
+										onMinChange={(value) =>
+											setReleaseMinFilter(
+												Math.min(
+													value,
+													getVisibleReleaseMax(
+														releaseMaxFilter,
+														releaseYearBounds.max,
+													),
+												),
+											)
+										}
+										step={1}
+										tickStep={getYearTickStep(
+											releaseYearBounds.min,
+											releaseYearBounds.max,
+										)}
+										valueMax={getVisibleReleaseMax(
+											releaseMaxFilter,
+											releaseYearBounds.max,
+										)}
+										valueMin={getVisibleReleaseMin(
+											releaseMinFilter,
+											releaseYearBounds.min,
+										)}
+										valueText={`${getVisibleReleaseMin(releaseMinFilter, releaseYearBounds.min)} to ${getVisibleReleaseMax(releaseMaxFilter, releaseYearBounds.max)}`}
+									/>
+								</div>
+
+								<p className="mt-4 text-sm text-[#667085]">
 									{libraryMessage}
 								</p>
+
+								<label className="mt-3 block w-full">
+									<span className="font-mono text-xs uppercase text-[#667085]">
+										Search library
+									</span>
+									<input
+										aria-label="Search library"
+										className="mt-2 w-full rounded-md border border-[#cfd6e0] bg-white px-3 py-2 text-sm font-medium text-[#394150] outline-none transition placeholder:text-[#98a2b3] focus:border-[#7c8ca5] focus:ring-2 focus:ring-[#dce3ee]"
+										onChange={(event) =>
+											setLibrarySearchQuery(
+												event.target.value,
+											)
+										}
+										placeholder="Search title, platform, status, year, review"
+										type="search"
+										value={librarySearchQuery}
+									/>
+								</label>
 
 								<div className="mt-5">
 									{visibleLibrary.length > 0 ? (
@@ -1483,6 +1545,11 @@ export function StageSelectApp() {
 																			game.title
 																		}
 																	</h3>
+																	<p className="font-mono text-[10px] font-bold uppercase text-[#98a2b3]">
+																		{
+																			game.releaseYear
+																		}
+																	</p>
 																	<span className="w-fit rounded-full border border-[#d8dde5] bg-white px-2 py-1 text-xs text-[#394150]">
 																		<StarRating
 																			rating={
@@ -1518,11 +1585,6 @@ export function StageSelectApp() {
 																	>
 																		{
 																			game.platform
-																		}
-																	</span>
-																	<span className="rounded-full bg-white px-2 py-1 text-[#667085]">
-																		{
-																			game.releaseYear
 																		}
 																	</span>
 																</div>
@@ -1672,6 +1734,24 @@ export function StageSelectApp() {
 													/>
 												</ChartPanel>
 											</div>
+											<ChartPanel title="Rating by platform">
+												<BarChart
+													maxValue={5}
+													rows={
+														libraryStats.ratingByPlatformRows
+													}
+													valueSuffix="/5"
+												/>
+											</ChartPanel>
+											<ChartPanel title="Rating by status">
+												<BarChart
+													maxValue={5}
+													rows={
+														libraryStats.ratingByStatusRows
+													}
+													valueSuffix="/5"
+												/>
+											</ChartPanel>
 										</div>
 
 										<div className="mt-4 grid gap-4 lg:grid-cols-2">
@@ -2097,8 +2177,148 @@ function ChartPanel({
 	);
 }
 
-function BarChart({ rows }: { rows: ChartRow[] }) {
-	const maxValue = Math.max(1, ...rows.map((row) => row.value));
+function RangeFilter({
+	label,
+	max,
+	min,
+	onMaxChange,
+	onMinChange,
+	step,
+	tickStep,
+	valueMax,
+	valueMin,
+	valueText,
+}: {
+	label: string;
+	max: number;
+	min: number;
+	onMaxChange: (value: number) => void;
+	onMinChange: (value: number) => void;
+	step: number;
+	tickStep: number;
+	valueMax: number;
+	valueMin: number;
+	valueText: string;
+}) {
+	const ticks = getRangeTicks(min, max, tickStep);
+	const inputListId = `stageselect-${label.toLowerCase()}-ticks`;
+	const rangeStart = getRangePercent(valueMin, min, max);
+	const rangeEnd = getRangePercent(valueMax, min, max);
+
+	return (
+		<div className="w-full sm:w-64">
+			<div className="flex items-center justify-between gap-3">
+				<p className="font-mono text-[10px] font-bold uppercase text-[#667085]">
+					{label}
+				</p>
+				<p className="font-mono text-[10px] font-bold uppercase text-[#394150]">
+					{valueText}
+				</p>
+			</div>
+			<div className="relative mt-2 h-7">
+				<div className="absolute left-0 right-0 top-3 h-1 rounded-full bg-[#dde3ec]" />
+				<div
+					className="absolute top-3 h-1 rounded-full bg-[#7c8ca5]"
+					style={{
+						left: `${rangeStart}%`,
+						right: `${100 - rangeEnd}%`,
+					}}
+				/>
+				<div className="absolute left-0 right-0 top-2.5 flex justify-between">
+					{ticks.map((tick) => (
+						<span
+							aria-hidden="true"
+							className="h-2 w-px bg-[#b8c2d1]"
+							key={tick}
+						/>
+					))}
+				</div>
+				<input
+					aria-label={`${label} minimum`}
+					className="pointer-events-none absolute inset-x-0 top-0 z-20 h-7 w-full appearance-none bg-transparent accent-[#20242c] [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-20"
+					list={inputListId}
+					max={max}
+					min={min}
+					onChange={(event) =>
+						onMinChange(Number(event.target.value))
+					}
+					step={step}
+					type="range"
+					value={valueMin}
+				/>
+				<input
+					aria-label={`${label} maximum`}
+					className="pointer-events-none absolute inset-x-0 top-0 z-30 h-7 w-full appearance-none bg-transparent accent-[#20242c] [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-30"
+					list={inputListId}
+					max={max}
+					min={min}
+					onChange={(event) =>
+						onMaxChange(Number(event.target.value))
+					}
+					step={step}
+					type="range"
+					value={valueMax}
+				/>
+				<datalist id={inputListId}>
+					{ticks.map((tick) => (
+						<option
+							key={tick}
+							value={tick}
+						/>
+					))}
+				</datalist>
+			</div>
+		</div>
+	);
+}
+
+function getRangePercent(value: number, min: number, max: number) {
+	if (max <= min) {
+		return 0;
+	}
+
+	return ((value - min) / (max - min)) * 100;
+}
+
+function getRangeTicks(min: number, max: number, step: number) {
+	const ticks: number[] = [];
+
+	for (let tick = min; tick <= max; tick += step) {
+		ticks.push(Number(tick.toFixed(2)));
+	}
+
+	if (ticks[ticks.length - 1] !== max) {
+		ticks.push(max);
+	}
+
+	return ticks;
+}
+
+function getYearTickStep(min: number, max: number) {
+	const range = max - min;
+
+	if (range <= 12) {
+		return 1;
+	}
+
+	if (range <= 40) {
+		return 5;
+	}
+
+	return 10;
+}
+
+function BarChart({
+	maxValue: maxValueOverride,
+	rows,
+	valueSuffix = "",
+}: {
+	maxValue?: number;
+	rows: ChartRow[];
+	valueSuffix?: string;
+}) {
+	const maxValue =
+		maxValueOverride ?? Math.max(1, ...rows.map((row) => row.value));
 
 	return (
 		<div className="grid gap-3">
@@ -2110,7 +2330,8 @@ function BarChart({ rows }: { rows: ChartRow[] }) {
 								{row.label}
 							</span>
 							<span className="font-mono font-bold text-[#111827]">
-								{row.value}
+								{formatChartValue(row.value)}
+								{valueSuffix}
 							</span>
 						</div>
 						<div className="h-2 overflow-hidden rounded-full bg-[#e8ecf2]">
@@ -2131,6 +2352,35 @@ function BarChart({ rows }: { rows: ChartRow[] }) {
 			)}
 		</div>
 	);
+}
+
+function getAverageRatingRows(
+	items: LibraryItem[],
+	getLabel: (item: LibraryItem) => string,
+	getClassName: (label: string, index: number) => string,
+) {
+	const groups = new Map<string, { count: number; total: number }>();
+
+	items.forEach((item) => {
+		const label = getLabel(item);
+		const rating = getSortableRating(item.rating);
+
+		if (!label || label === "-" || rating <= 0) {
+			return;
+		}
+
+		const group = groups.get(label) ?? { count: 0, total: 0 };
+
+		group.count += 1;
+		group.total += rating;
+		groups.set(label, group);
+	});
+
+	return Array.from(groups, ([label, group], index) => ({
+		label,
+		value: Number((group.total / group.count).toFixed(1)),
+		className: getClassName(label, index),
+	})).sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
 }
 
 function getCountRows(values: string[]) {
@@ -2233,6 +2483,22 @@ function formatRating(rating: number) {
 	return Number.isInteger(rating) ? rating.toFixed(1) : String(rating);
 }
 
+function formatRatingFilter(rating: number) {
+	return rating === 0 ? "Unrated" : `${formatRating(rating)} stars`;
+}
+
+function formatChartValue(value: number) {
+	return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function getVisibleReleaseMin(value: number, fallback: number) {
+	return value === defaultReleaseMin ? fallback : value;
+}
+
+function getVisibleReleaseMax(value: number, fallback: number) {
+	return value === defaultReleaseMax ? fallback : value;
+}
+
 function getLibraryPlatformOptions(
 	platforms: string[],
 	selectedPlatform: string | null,
@@ -2326,6 +2592,40 @@ function getPlatformChipClass(platform: string) {
 	}
 
 	return "bg-[#f6f7f9] text-[#4b5563]";
+}
+
+function getPlatformBarClass(platform: string, index: number) {
+	const chipClass = getPlatformChipClass(platform);
+
+	if (chipClass.includes("047857")) {
+		return "bg-[#10b981]";
+	}
+
+	if (chipClass.includes("1d4ed8")) {
+		return "bg-[#3b82f6]";
+	}
+
+	if (chipClass.includes("be123c")) {
+		return "bg-[#f43f5e]";
+	}
+
+	if (chipClass.includes("475569")) {
+		return "bg-[#64748b]";
+	}
+
+	if (chipClass.includes("a16207")) {
+		return "bg-[#eab308]";
+	}
+
+	const fallbackClasses = [
+		"bg-[#14b8a6]",
+		"bg-[#8b5cf6]",
+		"bg-[#f97316]",
+		"bg-[#06b6d4]",
+		"bg-[#84cc16]",
+	];
+
+	return fallbackClasses[index % fallbackClasses.length];
 }
 
 function formatGameMeta(game: StageSelectGameSearchResult) {
