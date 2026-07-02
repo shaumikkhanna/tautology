@@ -458,6 +458,11 @@ export function StageSelectApp() {
 				.map((item) => item.platform)
 				.filter((platform) => platform !== "-"),
 		);
+		const ratingPlatformLabels = new Set(
+			platformRows
+				.filter((row) => row.value >= 5)
+				.map((row) => row.label),
+		);
 		const decidedGames = finishedGames.length + leftGames.length;
 		const averageRating =
 			ratedGames.length > 0
@@ -498,10 +503,12 @@ export function StageSelectApp() {
 			})),
 			platformRows: platformRows.slice(0, 8),
 			ratingByPlatformRows: getAverageRatingRows(
-				ratedGames,
+				ratedGames.filter((item) =>
+					ratingPlatformLabels.has(item.platform),
+				),
 				(item) => item.platform,
 				getPlatformBarClass,
-			).slice(0, 8),
+			),
 			ratingByStatusRows: getAverageRatingRows(
 				ratedGames,
 				(item) => getStatusLabel(item.status),

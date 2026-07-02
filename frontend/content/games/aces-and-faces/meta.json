@@ -3,5 +3,6 @@
 	"description": "A card game from the old static collection.",
 	"body": "A card game from the old static collection.",
 	"image": "",
-	"playHref": "/play/games/aces-and-faces/index.html"
+	"playHref": "/play/games/aces-and-faces/index.html",
+	"group": "legacy-games"
 }

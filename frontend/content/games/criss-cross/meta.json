@@ -3,5 +3,6 @@
 	"description": "A dice game on graph paper.",
 	"body": "A dice game on graph paper.",
 	"image": "",
-	"playHref": "/play/games/criss-cross/index.html"
+	"playHref": "/play/games/criss-cross/index.html",
+	"group": "legacy-games"
 }

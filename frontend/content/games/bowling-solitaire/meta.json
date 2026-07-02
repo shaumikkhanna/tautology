@@ -3,5 +3,6 @@
 	"description": "A bowling-inspired solitaire card game.",
 	"body": "A bowling-inspired solitaire card game.",
 	"image": "",
-	"playHref": "/play/games/bowling-solitaire/index.html"
+	"playHref": "/play/games/bowling-solitaire/index.html",
+	"group": "legacy-games"
 }

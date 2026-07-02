@@ -4,5 +4,6 @@
 	"body": "A star-shaped impartial nim game",
 	"image": "",
 	"playHref": "/play/games/starnim",
-	"requiresBackend": true
+	"requiresBackend": true,
+	"group": "legacy-games"
 }

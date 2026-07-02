@@ -3,5 +3,6 @@
 	"description": "A quiet asymmetric strategy game.",
 	"body": "A quiet asymmetric strategy game.",
 	"image": "",
-	"playHref": "/play/games/flower-and-the-wind/index.html"
+	"playHref": "/play/games/flower-and-the-wind/index.html",
+	"group": "legacy-games"
 }

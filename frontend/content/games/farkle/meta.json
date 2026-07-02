@@ -3,5 +3,6 @@
 	"description": "A compact Farkle implementation.",
 	"body": "A compact Farkle implementation.",
 	"image": "",
-	"playHref": "/play/games/farkle/index.html"
+	"playHref": "/play/games/farkle/index.html",
+	"group": "legacy-games"
 }

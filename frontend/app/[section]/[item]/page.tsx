@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { BackendLaunchButton } from "@/components/BackendLaunchButton";
+import { SectionCard } from "@/components/SectionCard";
 import {
   getSection,
   getSectionItem,
@@ -16,7 +17,7 @@ type ItemPageProps = {
 
 export function generateStaticParams() {
   return sections.flatMap((section) =>
-    getSectionItems(section.slug)
+    getSectionItems(section.slug, { includeGrouped: true })
       .filter((item) => item.href === `/${section.slug}/${item.slug}`)
       .map((item) => ({ section: section.slug, item: item.slug })),
   );
@@ -38,6 +39,37 @@ export default async function ItemPage({ params }: ItemPageProps) {
 
   if (!section || !item) {
     notFound();
+  }
+
+  const childItems =
+    item.children?.map((childSlug) => getSectionItem(section.slug, childSlug)) ??
+    [];
+  const visibleChildItems = childItems.filter(
+    (childItem) => childItem !== null,
+  );
+
+  if (item.children?.length) {
+    return (
+      <section className="mx-auto w-full max-w-5xl px-4 py-10">
+        <div className="border-b-2 border-ink pb-5">
+          <p className="font-mono text-xs uppercase text-rule">
+            /{section.slug}/{item.slug}
+          </p>
+          <h1 className="mt-2 font-mono text-4xl font-bold uppercase tracking-normal text-ink">
+            {item.title}
+          </h1>
+          <p className="mt-3 max-w-2xl text-base leading-7 text-ink">
+            {item.body ?? item.description}
+          </p>
+        </div>
+
+        <div className="mt-8 grid gap-5 sm:grid-cols-2">
+          {visibleChildItems.map((childItem) => (
+            <SectionCard key={childItem.slug} item={childItem} />
+          ))}
+        </div>
+      </section>
+    );
   }
 
   return (

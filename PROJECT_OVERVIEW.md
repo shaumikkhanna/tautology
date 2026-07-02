@@ -98,6 +98,15 @@ Example:
 
 `image` is optional. If empty or omitted, no image placeholder renders. Put images under `frontend/public/`, usually `frontend/public/game-images/`, and reference them with a leading slash.
 
+Cards can be grouped under another card by adding `group` to child metadata and
+`children` to the parent metadata. Grouped children stay reachable at their
+normal detail routes, but they are hidden from the top-level section listing.
+
+The Games section uses this for `Legacy Games`, which contains Bowling
+Solitaire, Aces & Faces, Criss Cross, Dicey Dice, Farkle Frenzy, Flower and the
+Wind, Starnim, and Lines of Action. Their existing `/games/<slug>` detail
+routes and `/play/games/...` play targets are intentionally preserved.
+
 ## Static Games
 
 Static games copied from old folders live under:

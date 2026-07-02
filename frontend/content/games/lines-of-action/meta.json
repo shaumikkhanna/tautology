@@ -3,5 +3,6 @@
 	"description": "A board game with pass-and-play and computer modes.",
 	"body": "A board game with pass-and-play and computer modes.",
 	"image": "",
-	"playHref": "/play/games/lines-of-action/index.html"
+	"playHref": "/play/games/lines-of-action/index.html",
+	"group": "legacy-games"
 }

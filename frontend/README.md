@@ -56,3 +56,16 @@ Set `requiresBackend` to `true` when the Play button should first wait for the s
 ```txt
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 ```
+
+## Group Items
+
+To hide an item from a section listing while keeping its detail route available,
+add a `group` field to the child item's `meta.json`. Add a parent card with a
+matching slug and a `children` array:
+
+```json
+{
+  "title": "Legacy Games",
+  "children": ["bowling-solitaire", "starnim"]
+}
+```

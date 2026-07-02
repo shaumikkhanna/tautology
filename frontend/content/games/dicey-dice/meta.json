@@ -3,5 +3,6 @@
 	"description": "Like a casino for kids.",
 	"body": "Like a casino for kids.",
 	"image": "",
-	"playHref": "/play/games/dicey-dice/index.html"
+	"playHref": "/play/games/dicey-dice/index.html",
+	"group": "legacy-games"
 }

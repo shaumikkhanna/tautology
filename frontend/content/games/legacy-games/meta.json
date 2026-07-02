@@ -1,0 +1,15 @@
+{
+	"title": "Legacy Games",
+	"description": "The original static and early legacy games.",
+	"body": "A collection of earlier Tautology games preserved in their original isolated play pages.",
+	"children": [
+		"bowling-solitaire",
+		"aces-and-faces",
+		"criss-cross",
+		"dicey-dice",
+		"farkle",
+		"flower-and-the-wind",
+		"starnim",
+		"lines-of-action"
+	]
+}

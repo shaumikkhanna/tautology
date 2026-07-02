@@ -16,6 +16,8 @@ export type SectionItem = {
 	playHref?: string;
 	requiresBackend?: boolean;
 	status?: string;
+	group?: string;
+	children?: string[];
 	href: string;
 };
 
@@ -47,6 +49,8 @@ type ItemMeta = {
 	playHref?: string;
 	requiresBackend?: boolean;
 	status?: string;
+	group?: string;
+	children?: string[];
 	href?: string;
 };
 
@@ -54,7 +58,14 @@ export function getSection(slug: string) {
 	return sections.find((section) => section.slug === slug);
 }
 
-export function getSectionItems(sectionSlug: string): SectionItem[] {
+type GetSectionItemsOptions = {
+	includeGrouped?: boolean;
+};
+
+export function getSectionItems(
+	sectionSlug: string,
+	options: GetSectionItemsOptions = {},
+): SectionItem[] {
 	const sectionPath = path.join(contentRoot, sectionSlug);
 
 	if (!fs.existsSync(sectionPath)) {
@@ -66,6 +77,7 @@ export function getSectionItems(sectionSlug: string): SectionItem[] {
 		.filter((entry) => entry.isDirectory())
 		.map((entry) => readItem(sectionSlug, entry.name))
 		.filter((item): item is SectionItem => item !== null)
+		.filter((item) => options.includeGrouped || !item.group)
 		.sort((a, b) => a.title.localeCompare(b.title));
 }
 
@@ -93,6 +105,8 @@ function readItem(sectionSlug: string, itemSlug: string): SectionItem | null {
 		playHref: meta.playHref,
 		requiresBackend: meta.requiresBackend,
 		status: meta.status,
+		group: meta.group,
+		children: meta.children,
 		href: meta.href ?? `/${sectionSlug}/${itemSlug}`,
 	};
 }
