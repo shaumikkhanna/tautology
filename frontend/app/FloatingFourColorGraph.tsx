@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import {
+  createSeededRandom,
   generateFourColorGraph,
   isProperColoring,
   nextVertexColor,
@@ -27,6 +28,7 @@ export function FloatingFourColorGraph() {
   const [graph, setGraph] = useState<FourColorGraph | null>(null);
   const [positions, setPositions] = useState<GraphPoint[]>([]);
   const [colors, setColors] = useState<number[]>([]);
+  const [colorCycleStarts, setColorCycleStarts] = useState<number[]>([]);
   const [phase, setPhase] = useState<Phase>("active");
   const [pulse, setPulse] = useState<{ id: number; nonce: number } | null>(
     null,
@@ -57,11 +59,16 @@ export function FloatingFourColorGraph() {
         velocityY: 0,
       };
     });
+    const cycleRandom = createSeededRandom(generatedGraph.seed ^ 0x9e3779b9);
+    const cycleStarts = generatedGraph.vertices.map(() =>
+      Math.floor(cycleRandom() * 4),
+    );
 
     motionNodes.current = initialNodes;
     setGraph(generatedGraph);
     setPositions(initialNodes.map(({ x, y }) => ({ x, y })));
     setColors(Array(generatedGraph.vertices.length).fill(-1));
+    setColorCycleStarts(cycleStarts);
   }, []);
 
   useEffect(() => {
@@ -259,7 +266,10 @@ export function FloatingFourColorGraph() {
 
     setColors((currentColors) => {
       const nextColors = [...currentColors];
-      nextColors[vertexId] = nextVertexColor(nextColors[vertexId]);
+      nextColors[vertexId] = nextVertexColor(
+        nextColors[vertexId],
+        colorCycleStarts[vertexId] ?? 0,
+      );
 
       return nextColors;
     });

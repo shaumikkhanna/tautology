@@ -195,8 +195,15 @@ export function isProperColoring(
   });
 }
 
-export function nextVertexColor(color: number) {
-  return color >= 3 ? -1 : color + 1;
+export function nextVertexColor(color: number, startColor = 0) {
+  const normalizedStart = ((startColor % 4) + 4) % 4;
+
+  if (color < 0) {
+    return normalizedStart;
+  }
+
+  const nextColor = (color + 1) % 4;
+  return nextColor === normalizedStart ? -1 : nextColor;
 }
 
 export function isThreeColorable(

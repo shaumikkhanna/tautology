@@ -78,3 +78,15 @@ test("vertex colors cycle through four colors and back to uncolored", () => {
 
   assert.deepEqual(cycle, [0, 1, 2, 3, -1]);
 });
+
+test("vertex color cycle can start from a per-vertex offset", () => {
+  const cycle = [];
+  let color = -1;
+
+  for (let step = 0; step < 5; step += 1) {
+    color = nextVertexColor(color, 1);
+    cycle.push(color);
+  }
+
+  assert.deepEqual(cycle, [1, 2, 3, 0, -1]);
+});
