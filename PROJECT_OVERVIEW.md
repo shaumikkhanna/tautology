@@ -537,6 +537,71 @@ Current UX notes:
 - Entity aliases render as chips but are not currently clickable.
 - Source links use subdued text-link styling rather than button styling.
 
+## Flashcards
+
+Flashcards is a signed-in project app for manually creating study card sets and
+reviewing one or more sets with weighted repetition. It is currently manual
+entry only; PDF upload, OCR, and AI card generation are future work.
+
+Project card:
+
+```txt
+frontend/content/projects/flashcards/meta.json
+```
+
+Frontend route and modules:
+
+```txt
+frontend/app/projects/flashcards/page.tsx
+frontend/app/projects/flashcards/FlashcardsApp.tsx
+frontend/app/projects/flashcards/flashcards.module.css
+```
+
+Supabase migration:
+
+```txt
+supabase/migrations/20260713000000_flashcards.sql
+```
+
+Tables:
+
+- `flashcard_sets`: user-owned sets with title and description.
+- `flashcards`: user-owned cards with `question`, `answer`, and `set_id`.
+
+Both tables use RLS so authenticated users can only read/write their own sets
+and cards. The generated client types in
+`frontend/lib/supabase/database.types.ts` include both tables.
+
+Current UX:
+
+- Uses the shared `/login` flow via `/login?next=/projects/flashcards`.
+- The app has `Sets`, `Cards`, and `Play` tabs.
+- Users can create/delete sets, add/edit/delete cards, and choose one or more
+  sets for play.
+- Text entry auto-capitalizes the first typed letter in set titles, notes,
+  questions, and answers.
+- Card previews in the Cards tab are rendered as two independent masonry-like
+  column stacks at desktop/tablet widths. Each card takes only the height its
+  own content needs, so left/right card tops and bottoms intentionally do not
+  align by row.
+- Card preview labels such as `Question` and `Answer` are intentionally hidden;
+  the question is the main text and the answer appears in a muted sage panel.
+- The visual language follows Lookup rather than the harder beige shell style:
+  soft warm-white page background, 1px borders, 8px panels/cards, quiet shadows,
+  and muted sage/clay accents.
+
+Current play behavior:
+
+- A play session is client-side only and does not persist review history yet.
+- The student sees one random card question, clicks `Show Answer`, then marks
+  the card right or wrong.
+- Each card has a per-session `weight` and `cooldown`.
+- Correct answers lower the card weight and give it a longer cooldown.
+- Wrong answers raise the card weight and give it a short cooldown.
+- The just-seen card is avoided when possible so it does not immediately repeat
+  unless the selected deck is too small.
+- Play card question/answer text is centered.
+
 ## Anagram Solver
 
 The Anagram Solver is a normal shell-styled tool, not an isolated `/play/...` app.
