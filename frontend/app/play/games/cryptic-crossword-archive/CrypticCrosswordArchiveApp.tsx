@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { getLoginPath } from "@/lib/auth/redirects";
 import type {
   CrosswordClue,
   CrosswordDirection,
@@ -41,8 +42,6 @@ export function CrypticCrosswordArchiveApp() {
   const mobileEntryInputRef = useRef<HTMLInputElement | null>(null);
   const [isCelebrating, setIsCelebrating] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [authMessage, setAuthMessage] = useState("Checking account...");
   const [isAuthLoading, setIsAuthLoading] = useState(false);
@@ -67,6 +66,10 @@ export function CrypticCrosswordArchiveApp() {
   const [completedAt, setCompletedAt] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const loginPath = getLoginPath(
+    "/play/games/cryptic-crossword-archive",
+    inviteCode,
+  );
 
   useEffect(() => {
     setCanUseLocalDevBypass(isLocalBrowserHost());
@@ -424,57 +427,6 @@ export function CrypticCrosswordArchiveApp() {
     saveTick,
     session,
   ]);
-
-  async function signUp() {
-    if (!supabase) {
-      setAuthMessage("Supabase is not configured yet.");
-      return;
-    }
-
-    setIsAuthLoading(true);
-    setAuthMessage("Creating account...");
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/play/games/cryptic-crossword-archive${
-          inviteCode ? `?invite=${encodeURIComponent(inviteCode)}` : ""
-        }`,
-      },
-    });
-
-    setAuthMessage(
-      error
-        ? error.message
-        : "Check your email, then ask to be approved for crosswords.",
-    );
-    setIsAuthLoading(false);
-  }
-
-  async function logIn() {
-    if (!supabase) {
-      setAuthMessage("Supabase is not configured yet.");
-      return;
-    }
-
-    setIsAuthLoading(true);
-    setAuthMessage("Logging in...");
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setAuthMessage(error.message);
-    } else {
-      setEmail("");
-      setPassword("");
-    }
-
-    setIsAuthLoading(false);
-  }
 
   async function logOut() {
     if (!supabase) {
@@ -1013,39 +965,14 @@ export function CrypticCrosswordArchiveApp() {
           <section className={styles.panel}>
             <p className={styles.metaLabel}>Private archive</p>
             <h2>Sign up or log in</h2>
+            <p>
+              Use a TOOMUCHMATHS account to request access, redeem invites, and
+              save crossword progress.
+            </p>
             <div className={styles.authGrid}>
-              <input
-                aria-label="Email"
-                className={styles.input}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="email@example.com"
-                type="email"
-                value={email}
-              />
-              <input
-                aria-label="Password"
-                className={styles.input}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="password"
-                type="password"
-                value={password}
-              />
-              <button
-                className={styles.button}
-                disabled={isAuthLoading || !email || !password}
-                onClick={logIn}
-                type="button"
-              >
-                Log in
-              </button>
-              <button
-                className={styles.secondaryButton}
-                disabled={isAuthLoading || !email || !password}
-                onClick={signUp}
-                type="button"
-              >
-                Sign up
-              </button>
+              <a className={styles.button} href={loginPath}>
+                Log in or sign up
+              </a>
               {canUseLocalDevBypass ? (
                 <button
                   className={styles.secondaryButton}

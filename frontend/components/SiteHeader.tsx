@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AccountNavLink } from "@/components/AccountNavLink";
 import { sections } from "@/lib/sections";
 
 export function SiteHeader() {
@@ -23,6 +24,9 @@ export function SiteHeader() {
                 </Link>
               </li>
             ))}
+            <li>
+              <AccountNavLink />
+            </li>
           </ul>
         </nav>
       </div>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { StageSelectGameSearchResult } from "@/lib/igdb/types";
+import { getLoginPath } from "@/lib/auth/redirects";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { Json, Tables } from "@/lib/supabase/database.types";
 import { stageselectReviewStatuses } from "@/lib/stageselect/api";
@@ -202,11 +203,6 @@ export function StageSelectApp() {
 	const [session, setSession] = useState<Session | null>(null);
 	const [profile, setProfile] = useState<Profile | null>(null);
 	const [library, setLibrary] = useState<LibraryItem[]>([]);
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
-	const [newPassword, setNewPassword] = useState("");
-	const [confirmNewPassword, setConfirmNewPassword] = useState("");
-	const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [searchResults, setSearchResults] = useState<
 		StageSelectGameSearchResult[]
@@ -253,6 +249,7 @@ export function StageSelectApp() {
 	const [sortMode, setSortMode] = useState("title");
 	const [libraryVisibleCount, setLibraryVisibleCount] =
 		useState(libraryPageSize);
+	const loginPath = getLoginPath("/projects/stageselect");
 
 	useEffect(() => {
 		const savedTheme = window.localStorage.getItem("stageselect-theme");
@@ -394,11 +391,6 @@ export function StageSelectApp() {
 				setAuthMessage(
 					nextSession ? "Signed in." : "Sign up or log in.",
 				);
-				if (!nextSession) {
-					setNewPassword("");
-					setConfirmNewPassword("");
-					setIsChangePasswordOpen(false);
-				}
 				loadUserData(nextSession);
 			},
 		);
@@ -668,57 +660,6 @@ export function StageSelectApp() {
 		statusFilter,
 	]);
 
-	async function signUp() {
-		if (!supabase) {
-			setAuthMessage("Supabase is not configured yet.");
-			return;
-		}
-
-		setIsAuthLoading(true);
-		setAuthMessage("Creating account...");
-
-		const { error } = await supabase.auth.signUp({
-			email,
-			password,
-			options: {
-				emailRedirectTo: `${window.location.origin}/projects/stageselect`,
-			},
-		});
-
-		if (error) {
-			setAuthMessage(error.message);
-		} else {
-			setAuthMessage("Check your email to confirm your account.");
-		}
-
-		setIsAuthLoading(false);
-	}
-
-	async function logIn() {
-		if (!supabase) {
-			setAuthMessage("Supabase is not configured yet.");
-			return;
-		}
-
-		setIsAuthLoading(true);
-		setAuthMessage("Logging in...");
-
-		const { error } = await supabase.auth.signInWithPassword({
-			email,
-			password,
-		});
-
-		if (error) {
-			setAuthMessage(error.message);
-		} else {
-			setAuthMessage("Signed in.");
-			setEmail("");
-			setPassword("");
-		}
-
-		setIsAuthLoading(false);
-	}
-
 	async function logOut() {
 		if (!supabase) {
 			setAuthMessage("Supabase is not configured yet.");
@@ -731,43 +672,6 @@ export function StageSelectApp() {
 		const { error } = await supabase.auth.signOut();
 
 		setAuthMessage(error ? error.message : "Signed out.");
-		setIsAuthLoading(false);
-	}
-
-	async function changePassword(event: FormEvent<HTMLFormElement>) {
-		event.preventDefault();
-
-		if (!supabase || !session) {
-			setAuthMessage("Log in before changing your password.");
-			return;
-		}
-
-		if (newPassword.length < 6) {
-			setAuthMessage("New password must be at least 6 characters.");
-			return;
-		}
-
-		if (newPassword !== confirmNewPassword) {
-			setAuthMessage("New passwords do not match.");
-			return;
-		}
-
-		setIsAuthLoading(true);
-		setAuthMessage("Changing password...");
-
-		const { error } = await supabase.auth.updateUser({
-			password: newPassword,
-		});
-
-		if (error) {
-			setAuthMessage(error.message);
-		} else {
-			setNewPassword("");
-			setConfirmNewPassword("");
-			setIsChangePasswordOpen(false);
-			setAuthMessage("Password changed.");
-		}
-
 		setIsAuthLoading(false);
 	}
 
@@ -1075,176 +979,66 @@ export function StageSelectApp() {
 								Account
 							</p>
 							{session ? (
-								<span className="rounded-full border border-[var(--stage-success-border)] bg-[var(--stage-success-bg)] px-3 py-1 text-xs font-medium text-[var(--stage-success-text)]">
-									Signed in
+								<span className="font-mono text-[10px] font-bold uppercase text-[var(--stage-muted)]">
+									Active
 								</span>
 							) : null}
 						</div>
 
 						{session ? (
-							<div className="mt-4 grid gap-4">
-								<div>
-									<p className="text-sm text-[var(--stage-muted)]">
-										Logged in as
-									</p>
-									<p className="mt-1 break-all text-sm font-medium text-[var(--stage-heading)]">
+							<div className="mt-4 grid gap-3">
+								<p className="break-all text-sm text-[var(--stage-muted)]">
+									<span className="text-[var(--stage-subtle)]">
+										Logged in as{" "}
+									</span>
+									<span className="font-medium text-[var(--stage-heading)]">
 										{profile?.display_name ??
 											session.user.email}
-									</p>
-									{profile?.display_name ? (
-										<p className="mt-1 break-all text-xs text-[var(--stage-muted)]">
-											{session.user.email}
-										</p>
-									) : null}
-								</div>
-								<button
-									className="rounded-md border border-[var(--stage-control-border)] bg-[var(--stage-panel)] px-3 py-2 font-mono text-xs font-bold uppercase text-[var(--stage-text)] transition hover:bg-[var(--stage-hover)] disabled:cursor-not-allowed disabled:opacity-60"
-									disabled={isAuthLoading || isExportingData}
-									onClick={downloadUserData}
-									type="button"
-								>
-									{isExportingData
-										? "Preparing"
-										: "Download JSON"}
-								</button>
-								{isChangePasswordOpen ? (
-									<form
-										className="grid gap-3 border-t border-[var(--stage-divider)] pt-4"
-										onSubmit={changePassword}
+									</span>
+								</p>
+								<div className="flex flex-wrap gap-2">
+									<a
+										className="rounded-md border border-[var(--stage-control-border)] bg-[var(--stage-panel)] px-3 py-2 text-center font-mono text-[11px] font-bold uppercase text-[var(--stage-text)] transition hover:bg-[var(--stage-hover)]"
+										href={loginPath}
 									>
-										<input
-											aria-label="New password"
-											autoComplete="new-password"
-											className="w-full rounded-md border border-[var(--stage-control-border)] bg-[var(--stage-panel)] px-3 py-2 text-sm text-[var(--stage-text)] outline-none transition focus:border-[var(--stage-accent)] focus:ring-2 focus:ring-[var(--stage-focus-ring)]"
-											disabled={isAuthLoading}
-											minLength={6}
-											onChange={(event) =>
-												setNewPassword(
-													event.target.value,
-												)
-											}
-											placeholder="new password"
-											type="password"
-											value={newPassword}
-										/>
-										<input
-											aria-label="Confirm new password"
-											autoComplete="new-password"
-											className="w-full rounded-md border border-[var(--stage-control-border)] bg-[var(--stage-panel)] px-3 py-2 text-sm text-[var(--stage-text)] outline-none transition focus:border-[var(--stage-accent)] focus:ring-2 focus:ring-[var(--stage-focus-ring)]"
-											disabled={isAuthLoading}
-											minLength={6}
-											onChange={(event) =>
-												setConfirmNewPassword(
-													event.target.value,
-												)
-											}
-											placeholder="confirm new password"
-											type="password"
-											value={confirmNewPassword}
-										/>
-										<div className="grid grid-cols-2 gap-3">
-											<button
-												className="rounded-md bg-[var(--stage-accent)] px-3 py-2 font-mono text-xs font-bold uppercase text-[var(--stage-accent-text)] shadow-sm transition hover:bg-[var(--stage-accent-hover)] disabled:cursor-not-allowed disabled:opacity-60"
-												disabled={
-													isAuthLoading ||
-													!newPassword ||
-													!confirmNewPassword
-												}
-												type="submit"
-											>
-												{isAuthLoading
-													? "Changing"
-													: "Save password"}
-											</button>
-											<button
-												className="rounded-md border border-[var(--stage-control-border)] bg-[var(--stage-panel)] px-3 py-2 font-mono text-xs font-bold uppercase text-[var(--stage-text)] transition hover:bg-[var(--stage-hover)] disabled:cursor-not-allowed disabled:opacity-60"
-												disabled={isAuthLoading}
-												onClick={() => {
-													setNewPassword("");
-													setConfirmNewPassword("");
-													setIsChangePasswordOpen(
-														false,
-													);
-													setAuthMessage(
-														"Signed in.",
-													);
-												}}
-												type="button"
-											>
-												Cancel
-											</button>
-										</div>
-									</form>
-								) : (
+										Account
+									</a>
 									<button
-										className="rounded-md border border-[var(--stage-control-border)] bg-[var(--stage-panel)] px-3 py-2 font-mono text-xs font-bold uppercase text-[var(--stage-text)] transition hover:bg-[var(--stage-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+										className="rounded-md border border-[var(--stage-control-border)] bg-[var(--stage-panel)] px-3 py-2 font-mono text-[11px] font-bold uppercase text-[var(--stage-text)] transition hover:bg-[var(--stage-hover)] disabled:cursor-not-allowed disabled:opacity-60"
 										disabled={
 											isAuthLoading || isExportingData
 										}
-										onClick={() => {
-											setIsChangePasswordOpen(true);
-											setAuthMessage(
-												"Enter and confirm your new password.",
-											);
-										}}
+										onClick={downloadUserData}
 										type="button"
 									>
-										Change password
+										{isExportingData
+											? "Preparing"
+											: "Export JSON"}
 									</button>
-								)}
-								<button
-									className="rounded-md border border-[var(--stage-control-border)] bg-[var(--stage-panel)] px-3 py-2 font-mono text-xs font-bold uppercase text-[var(--stage-text)] transition hover:bg-[var(--stage-hover)] disabled:cursor-not-allowed disabled:opacity-60"
-									disabled={isAuthLoading || isExportingData}
-									onClick={logOut}
-									type="button"
-								>
-									Log out
-								</button>
+									<button
+										className="rounded-md border border-[var(--stage-control-border)] bg-[var(--stage-panel)] px-3 py-2 font-mono text-[11px] font-bold uppercase text-[var(--stage-text)] transition hover:bg-[var(--stage-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+										disabled={
+											isAuthLoading || isExportingData
+										}
+										onClick={logOut}
+										type="button"
+									>
+										Log out
+									</button>
+								</div>
 							</div>
 						) : (
 							<div className="mt-4 grid gap-3">
-								<input
-									aria-label="Email"
-									className="w-full rounded-md border border-[var(--stage-control-border)] bg-[var(--stage-panel)] px-3 py-2 text-sm text-[var(--stage-text)] outline-none transition focus:border-[var(--stage-accent)] focus:ring-2 focus:ring-[var(--stage-focus-ring)]"
-									onChange={(event) =>
-										setEmail(event.target.value)
-									}
-									placeholder="email@example.com"
-									type="email"
-									value={email}
-								/>
-								<input
-									aria-label="Password"
-									className="w-full rounded-md border border-[var(--stage-control-border)] bg-[var(--stage-panel)] px-3 py-2 text-sm text-[var(--stage-text)] outline-none transition focus:border-[var(--stage-accent)] focus:ring-2 focus:ring-[var(--stage-focus-ring)]"
-									onChange={(event) =>
-										setPassword(event.target.value)
-									}
-									placeholder="password"
-									type="password"
-									value={password}
-								/>
-								<div className="grid grid-cols-2 gap-3">
-									<button
-										className="rounded-md bg-[var(--stage-accent)] px-3 py-2 font-mono text-xs font-bold uppercase text-[var(--stage-accent-text)] shadow-sm transition hover:bg-[var(--stage-accent-hover)] disabled:cursor-not-allowed disabled:opacity-60"
-										disabled={
-											isAuthLoading || !email || !password
-										}
-										onClick={signUp}
-										type="button"
-									>
-										Sign up
-									</button>
-									<button
-										className="rounded-md border border-[var(--stage-control-border)] bg-[var(--stage-panel)] px-3 py-2 font-mono text-xs font-bold uppercase text-[var(--stage-text)] transition hover:bg-[var(--stage-hover)] disabled:cursor-not-allowed disabled:opacity-60"
-										disabled={
-											isAuthLoading || !email || !password
-										}
-										onClick={logIn}
-										type="button"
-									>
-										Log in
-									</button>
-								</div>
+								<p className="text-sm leading-6 text-[var(--stage-muted)]">
+									Log in to save games, edit your library, and
+									export your data.
+								</p>
+								<a
+									className="rounded-md bg-[var(--stage-accent)] px-3 py-2 text-center font-mono text-xs font-bold uppercase text-[var(--stage-accent-text)] shadow-sm transition hover:bg-[var(--stage-accent-hover)]"
+									href={loginPath}
+								>
+									Log in or sign up
+								</a>
 							</div>
 						)}
 

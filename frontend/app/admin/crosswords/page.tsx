@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { getLoginPath } from "@/lib/auth/redirects";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import styles from "./crosswordAdmin.module.css";
 
@@ -28,14 +29,13 @@ type AdminPayload = {
 export default function CrosswordAdminPage() {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const [session, setSession] = useState<Session | null>(null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [approveEmail, setApproveEmail] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteUrl, setInviteUrl] = useState("");
   const [payload, setPayload] = useState<AdminPayload | null>(null);
   const [message, setMessage] = useState("Checking admin session...");
   const [isLoading, setIsLoading] = useState(false);
+  const loginPath = getLoginPath("/admin/crosswords");
 
   useEffect(() => {
     if (!supabase) {
@@ -66,27 +66,6 @@ export default function CrosswordAdminPage() {
 
     return () => listener.subscription.unsubscribe();
   }, [supabase]);
-
-  async function logIn() {
-    if (!supabase) {
-      return;
-    }
-
-    setIsLoading(true);
-    setMessage("Logging in...");
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setMessage(error.message);
-    } else {
-      setEmail("");
-      setPassword("");
-    }
-    setIsLoading(false);
-  }
 
   async function logOut() {
     if (!supabase) {
@@ -190,29 +169,14 @@ export default function CrosswordAdminPage() {
         {!session ? (
           <section className={styles.panel}>
             <p className={styles.label}>Admin login</p>
+            <p className={styles.muted}>
+              Use the shared TOOMUCHMATHS login, then return here with a
+              crossword admin account.
+            </p>
             <div className={styles.form}>
-              <input
-                className={styles.input}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="email@example.com"
-                type="email"
-                value={email}
-              />
-              <input
-                className={styles.input}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="password"
-                type="password"
-                value={password}
-              />
-              <button
-                className={styles.button}
-                disabled={isLoading || !email || !password}
-                onClick={logIn}
-                type="button"
-              >
-                Log in
-              </button>
+              <a className={styles.button} href={loginPath}>
+                Log in or sign up
+              </a>
             </div>
             <p className={styles.message}>{message}</p>
           </section>
