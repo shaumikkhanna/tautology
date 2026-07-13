@@ -38,6 +38,7 @@ Important files:
 - `frontend/app/[section]/page.tsx`: section listing page, such as `/games`.
 - `frontend/app/[section]/[item]/page.tsx`: item detail card with title/body/image/play button.
 - `frontend/components/SiteHeader.tsx`: top navigation generated from registered sections.
+- `frontend/components/AccountNavLink.tsx`: right-side account icon in the site header; switches icon based on Supabase session state and links to `/login`.
 - `frontend/components/SectionCard.tsx`: retro card used on section pages.
 - `frontend/lib/sections.ts`: section registry plus filesystem discovery of `content/<section>/<item>/meta.json`.
 - `frontend/lib/api.ts`: API base URL helper using `NEXT_PUBLIC_API_BASE_URL`.
@@ -53,6 +54,34 @@ For local development:
 ```txt
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 ```
+
+## Shared Account Flow
+
+The normal site shell has a small account icon at the far right of the header, after Tools. It links to:
+
+```txt
+/login
+```
+
+Important files:
+
+- `frontend/app/login/page.tsx`: Suspense wrapper for the account/login client.
+- `frontend/app/login/LoginClient.tsx`: shared email/password signup, login, signed-in account view, password changes, logout, and post-login redirect handling.
+- `frontend/lib/auth/redirects.ts`: sanitizes `next` paths and preserves crossword invite codes across login/signup.
+- `frontend/components/AccountNavLink.tsx`: listens to Supabase session state and renders different account icons for signed-in vs signed-out users.
+
+Use `/login?next=/target/path` when a feature needs the user to return after authentication. Crossword invite flows can also pass:
+
+```txt
+/login?next=/play/games/cryptic-crossword-archive&invite=<code>
+```
+
+The shared login page handles authentication only. Feature-specific authorization still lives in the feature:
+
+- StageSelect: any logged-in user can use personal library features.
+- Cryptic Crossword Archive: logged-in users still need crossword approval or a valid invite.
+- Crossword Admin: logged-in users still need an email listed in `CROSSWORD_ADMIN_EMAILS`.
+- Red7 keeps using invisible Supabase anonymous auth and does not use this visible login flow.
 
 ## Homepage Graph
 
@@ -340,6 +369,8 @@ POST /api/admin/crosswords/invites
 
 All crossword API routes require a Supabase bearer token. Archive/progress routes also require a row in `crossword_approvals` with `approved_at` set. Users can be approved from `/admin/crosswords` by an admin email listed in `CROSSWORD_ADMIN_EMAILS`, or by redeeming an invite link. Users cannot approve themselves without a valid invite.
 
+The crossword archive and crossword admin screens do not render their own email/password forms. They link to the shared `/login` route with a `next` target, then enforce crossword approval or admin authorization after the user returns. Invite links preserve their code through `/login?next=/play/games/cryptic-crossword-archive&invite=<code>`.
+
 The local development bypass button appears only when running in development on `localhost`, `127.0.0.1`, or `::1`; the matching API bypass also requires a local host and the internal `x-crossword-dev-bypass` header.
 
 Admin env:
@@ -462,6 +493,50 @@ frontend/components/ClickSound.tsx
 
 It uses Web Audio for low-latency repeated clicks and a fallback audio pool. Sound plays only for primary mouse-button pointer events; touch and pen interactions stay silent. The click sound is not mounted under `/play/...`, so games/apps do not inherit it.
 
+## Lookup
+
+Lookup is a normal shell-styled tool for searching both dictionary words and proper nouns/entities. It should keep the site's mono typography and restrained retro influence, but its current visual direction is more modern/fresh than the beige default shell: soft warm-white page background, subtle rounded panels, light borders, muted sage/clay/blue accents, and no graph-paper beige page gaps.
+
+Frontend route:
+
+```txt
+frontend/app/tools/lookup/
+```
+
+Card metadata:
+
+```txt
+frontend/content/tools/lookup/meta.json
+```
+
+API route:
+
+```txt
+frontend/app/api/tools/lookup/route.ts
+```
+
+Styling:
+
+```txt
+frontend/app/tools/lookup/lookup.module.css
+```
+
+The client calls `GET /api/tools/lookup?q=...`. The API route performs two live lookups in parallel:
+
+- dictionary definitions/synonyms from `api.dictionaryapi.dev`
+- entity matches from Wikidata `wbsearchentities`, plus Wikipedia search for clue-like phrases that raw Wikidata search misses
+
+Results are returned separately as `dictionary` and `entities`; this first version does not use embeddings or LLM ranking.
+
+Current UX notes:
+
+- Dictionary definitions are grouped by part of speech. Parts of speech render as stronger section labels; synonyms, antonyms, aliases, and sentence labels render as lower-level metadata.
+- Individual definitions are explicitly numbered within each part-of-speech group so separate meanings are visually clear.
+- Dictionary examples render under `Use it in a sentence`.
+- Synonym and antonym chips are clickable. Clicking a chip replaces the search input value, immediately runs a new lookup for that word, and scrolls smoothly back to the top/search area.
+- Entity aliases render as chips but are not currently clickable.
+- Source links use subdued text-link styling rather than button styling.
+
 ## Anagram Solver
 
 The Anagram Solver is a normal shell-styled tool, not an isolated `/play/...` app.
@@ -532,10 +607,12 @@ StageSelect intentionally uses a cleaner modern app style rather than the beige 
 
 Current behavior:
 
-- Supabase Auth signup, login, logout, password changes, and session detection work in the StageSelect account panel.
+- StageSelect uses the shared `/login` account flow for signup, login, password changes, and general account management.
+- The StageSelect account panel is intentionally quiet: when signed in it shows a small active state, the current email/display name, and compact Account, Export JSON, and Log out actions.
+- Logged-out users can still search IGDB, but saving games, loading personal library/stats, editing/removing saved games, and JSON export require login.
 - Supabase uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; prefer publishable keys over legacy anon JWT keys.
 - Supabase clients are typed with `frontend/lib/supabase/database.types.ts`, derived from the current StageSelect migrations.
-- Signup sends `emailRedirectTo` to `/projects/stageselect` on the current origin so confirmation links do not fall back to localhost.
+- Signup from the shared login page sends `emailRedirectTo` to the sanitized `next` path on the current origin, so StageSelect confirmation links return to `/projects/stageselect`.
 - IGDB search runs through the Next route `GET /api/projects/stageselect/search?q=...`; IGDB client id/secret stay server-side.
 - IGDB access tokens are requested with Twitch client credentials and cached in memory until shortly before expiry.
 - Search results are normalized and locally ranked by relevance/popularity signals so obvious major games rise higher.

@@ -1,0 +1,6 @@
+{
+  "title": "Lookup",
+  "description": "Search words and names across dictionary entries and Wikidata entities.",
+  "body": "Search words, acronyms, names, characters, organizations, and other proper nouns with a simple dictionary plus Wikidata lookup.",
+  "href": "/tools/lookup"
+}
