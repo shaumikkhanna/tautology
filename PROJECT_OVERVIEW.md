@@ -62,7 +62,14 @@ The homepage renders a dependency-free interactive SVG graph toy:
 - `frontend/app/homeGraph.ts`: seeded planar graph generation and pure coloring helpers.
 - `frontend/app/homeGraph.test.mjs`: generation, four-chromaticity, density, connectivity, coloring, and color-cycle tests.
 
-Each graph has 12–16 vertices and 30–35% density. Generation preserves an odd-wheel core, so the graph is planar and exactly four-chromatic. Clicking a vertex cycles through four muted colors and adds a physical impulse; clicking an edge sends a perpendicular jiggle through its spring-connected endpoints. Edges use enlarged invisible hit targets, become bolder on hover, and use a brass edge highlight for keyboard focus. Nodes and edges support keyboard activation, mobile layouts use larger touch targets, and `prefers-reduced-motion` suppresses ambient drift and shortens effects. A valid coloring brightens, celebrates, and then freezes until reload.
+Each graph has 12–16 vertices and 30–35% density. Generation preserves an odd-wheel core, so the graph is planar and exactly four-chromatic. Clicking a vertex cycles through four muted colors and adds a physical impulse; clicking an edge sends a perpendicular jiggle through its spring-connected endpoints. The color order is always cyclic, but each vertex receives a seeded random cycle start so one node may go `2 -> 3 -> 4 -> 1 -> uncolored` while another goes `1 -> 2 -> 3 -> 4 -> uncolored`. Edges use enlarged invisible hit targets, become bolder on hover, and use a brass edge highlight for keyboard focus. Nodes and edges support keyboard activation, mobile layouts use larger touch targets, and `prefers-reduced-motion` suppresses ambient drift and shortens effects. A valid coloring brightens, celebrates, and then freezes until reload.
+
+Run homepage graph checks from `frontend/`:
+
+```bash
+npm run test:home-graph
+npx tsc --noEmit
+```
 
 ## Sections And Cards
 
@@ -521,7 +528,7 @@ Planning/handoff file:
 STAGESELECT_PLAN.md
 ```
 
-StageSelect intentionally uses a cleaner modern neutral app style rather than the beige retro shell aesthetic, so game covers and library cards get visual priority.
+StageSelect intentionally uses a cleaner modern app style rather than the beige retro shell aesthetic, so game covers and library cards get visual priority. It supports a small two-symbol theme toggle under the subtitle: `☼` for the original light neutral look and `☾` for the newer sleek dark mode. The selected theme is stored in `localStorage` under `stageselect-theme`. Light mode should preserve the original neutral buttons, focus rings, status pills, platform pills, and rating display; dark mode uses warm charcoal surfaces with restrained brass accents.
 
 Current behavior:
 
@@ -699,4 +706,4 @@ Use the shared `BackendLaunchButton` and health endpoint unless the feature need
 
 ## Current Working Tree Notes
 
-As of June 8, 2026, the Red7 UI redesign and this overview update are uncommitted. The user has asked not to commit unless explicitly requested.
+Do not commit unless the user explicitly asks.

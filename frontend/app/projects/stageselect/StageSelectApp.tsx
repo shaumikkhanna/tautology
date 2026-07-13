@@ -126,6 +126,17 @@ const stageSelectThemes: Record<StageSelectThemeMode, StageSelectThemeVars> = {
 		"--stage-star-fill": "#ffcc00",
 		"--stage-star-stroke": "#ffe08a",
 		"--stage-star-half-stroke": "#151310",
+		"--stage-info-bg": "#2f2448",
+		"--stage-info-border": "#5b3f8a",
+		"--stage-info-text": "#d8b4fe",
+		"--stage-success-bg": "#153b2c",
+		"--stage-success-border": "#1f6f4a",
+		"--stage-success-text": "#86efac",
+		"--stage-danger-bg": "#3b1212",
+		"--stage-danger-border": "#7f1d1d",
+		"--stage-danger-text": "#fecaca",
+		"--stage-danger-hover": "#551b1b",
+		"--stage-danger-message": "#ff9b8f",
 	},
 	light: {
 		"--stage-bg": "#f6f7f9",
@@ -155,6 +166,17 @@ const stageSelectThemes: Record<StageSelectThemeMode, StageSelectThemeVars> = {
 		"--stage-star-fill": "#f7b731",
 		"--stage-star-stroke": "#b77900",
 		"--stage-star-half-stroke": "#8a5a00",
+		"--stage-info-bg": "#eef2ff",
+		"--stage-info-border": "#c7d2fe",
+		"--stage-info-text": "#3730a3",
+		"--stage-success-bg": "#ecfdf3",
+		"--stage-success-border": "#abefc6",
+		"--stage-success-text": "#027a48",
+		"--stage-danger-bg": "#fff1f3",
+		"--stage-danger-border": "#fecdd3",
+		"--stage-danger-text": "#be123c",
+		"--stage-danger-hover": "#ffe4e6",
+		"--stage-danger-message": "#be123c",
 	},
 };
 
@@ -1053,7 +1075,7 @@ export function StageSelectApp() {
 								Account
 							</p>
 							{session ? (
-								<span className="rounded-full bg-[#173522] px-3 py-1 text-xs font-medium text-[#a7f3d0]">
+								<span className="rounded-full border border-[var(--stage-success-border)] bg-[var(--stage-success-bg)] px-3 py-1 text-xs font-medium text-[var(--stage-success-text)]">
 									Signed in
 								</span>
 							) : null}
@@ -1368,7 +1390,7 @@ export function StageSelectApp() {
 																</p>
 															</div>
 															{game.genres[0] ? (
-																<span className="rounded-full bg-[#2f2448] px-3 py-1 font-mono text-xs uppercase text-[#d8b4fe]">
+																<span className="rounded-full border border-[var(--stage-info-border)] bg-[var(--stage-info-bg)] px-3 py-1 font-mono text-xs uppercase text-[var(--stage-info-text)]">
 																	{
 																		game
 																			.genres[0]
@@ -1376,7 +1398,7 @@ export function StageSelectApp() {
 																</span>
 															) : null}
 															{libraryGame ? (
-																<span className="rounded-full bg-[#153b2c] px-3 py-1 font-mono text-xs uppercase text-[#86efac]">
+																<span className="rounded-full border border-[var(--stage-success-border)] bg-[var(--stage-success-bg)] px-3 py-1 font-mono text-xs uppercase text-[var(--stage-success-text)]">
 																	In library
 																</span>
 															) : null}
@@ -2059,7 +2081,7 @@ export function StageSelectApp() {
 						) : null}
 
 						{reviewMessage ? (
-							<p className="mt-3 text-sm text-[#ff9b8f]">
+							<p className="mt-3 text-sm text-[var(--stage-danger-message)]">
 								{reviewMessage}
 							</p>
 						) : null}
@@ -2248,14 +2270,14 @@ export function StageSelectApp() {
 						</div>
 
 						{libraryActionMessage ? (
-							<p className="mt-3 text-sm text-[#ff9b8f]">
+							<p className="mt-3 text-sm text-[var(--stage-danger-message)]">
 								{libraryActionMessage}
 							</p>
 						) : null}
 
 						<div className="mt-5 flex flex-wrap justify-between gap-3">
 							<button
-								className="rounded-md border border-[#7f1d1d] bg-[#3b1212] px-4 py-2 font-mono text-xs font-bold uppercase text-[#fecaca] transition hover:bg-[#551b1b]"
+								className="rounded-md border border-[var(--stage-danger-border)] bg-[var(--stage-danger-bg)] px-4 py-2 font-mono text-xs font-bold uppercase text-[var(--stage-danger-text)] transition hover:bg-[var(--stage-danger-hover)] disabled:cursor-not-allowed disabled:opacity-60"
 								disabled={isSavingGame}
 								onClick={removeLibraryGame}
 								type="button"
@@ -2271,7 +2293,7 @@ export function StageSelectApp() {
 									Cancel
 								</button>
 								<button
-									className="rounded-md bg-[var(--stage-accent)] px-4 py-2 font-mono text-xs font-bold uppercase text-[var(--stage-accent-text)] shadow-sm transition hover:bg-[var(--stage-accent-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+									className="rounded-md border border-[var(--stage-success-border)] bg-[var(--stage-success-bg)] px-4 py-2 font-mono text-xs font-bold uppercase text-[var(--stage-success-text)] shadow-sm transition hover:bg-[var(--stage-hover)] disabled:cursor-not-allowed disabled:opacity-60"
 									disabled={isSavingGame}
 									onClick={updateLibraryGame}
 									type="button"
