@@ -73,7 +73,8 @@
   margin-top: 0.6rem;
 }
 
-.input {
+.input,
+.select {
   min-height: 3.25rem;
   width: 100%;
   border: 1px solid var(--lookup-line);
@@ -87,7 +88,8 @@
     box-shadow 150ms ease;
 }
 
-.input:focus {
+.input:focus,
+.select:focus {
   border-color: var(--lookup-faint);
   box-shadow: 0 0 0 4px rgba(223, 233, 223, 0.75);
 }
@@ -350,9 +352,85 @@
   color: var(--lookup-ink);
 }
 
+.sourceButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
 .entitySourceLink {
   display: inline-block;
   margin-top: 0.8rem;
+}
+
+.savePanel {
+  margin-top: 1rem;
+  border: 1px solid var(--lookup-line);
+  border-radius: 8px;
+  background: var(--lookup-surface-soft);
+  padding: 0.9rem;
+}
+
+.savePanelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.saveField {
+  display: block;
+  margin-top: 0.85rem;
+}
+
+.select {
+  margin-top: 0.4rem;
+  background: #ffffff;
+  padding: 0 0.85rem;
+}
+
+.definitionChoices {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+}
+
+.definitionChoice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  border: 1px solid var(--lookup-line);
+  border-radius: 8px;
+  background: var(--lookup-surface);
+  color: var(--lookup-ink);
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.definitionChoice input {
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.2rem;
+  accent-color: #9fb6a5;
+}
+
+.saveActions {
+  margin-top: 0.85rem;
+}
+
+.saveNote {
+  margin-top: 0.55rem;
+  color: var(--lookup-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.saveMessage {
+  margin-top: 0.75rem;
+  color: var(--lookup-muted);
 }
 
 .noResults {

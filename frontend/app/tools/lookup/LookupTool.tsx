@@ -1,6 +1,10 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { getLoginPath } from "@/lib/auth/redirects";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import type { Tables } from "@/lib/supabase/database.types";
 import styles from "./lookup.module.css";
 
 type LookupPayload = {
@@ -41,14 +45,95 @@ type EntityResult = {
 	source: "Wikidata" | "Wikipedia";
 };
 
+type FlashcardSet = Pick<Tables<"flashcard_sets">, "id" | "title">;
+
+type DefinitionOption = {
+	id: string;
+	label: string;
+	text: string;
+};
+
 const sourceLinkClassName =
 	`${styles.sourceLink} font-mono text-xs font-bold uppercase`;
 
 export function LookupTool() {
+	const supabase = useMemo(() => createBrowserSupabaseClient(), []);
 	const [query, setQuery] = useState("");
 	const [payload, setPayload] = useState<LookupPayload | null>(null);
 	const [message, setMessage] = useState("Search a word, name, acronym, or clue.");
 	const [isSearching, setIsSearching] = useState(false);
+	const [session, setSession] = useState<Session | null>(null);
+	const [cardSets, setCardSets] = useState<FlashcardSet[]>([]);
+	const [activeSaveKey, setActiveSaveKey] = useState<string | null>(null);
+	const [selectedDefinitionIds, setSelectedDefinitionIds] = useState<string[]>([]);
+	const [selectedSaveSetId, setSelectedSaveSetId] = useState("");
+	const [saveMessage, setSaveMessage] = useState("");
+	const [isSavingCard, setIsSavingCard] = useState(false);
+	const loginPath = getLoginPath("/tools/lookup");
+
+	const loadFlashcardSets = useCallback(
+		async (nextSession: Session | null) => {
+			if (!supabase || !nextSession) {
+				setCardSets([]);
+				setSelectedSaveSetId("");
+				return;
+			}
+
+			const { data, error } = await supabase
+				.from("flashcard_sets")
+				.select("id, title")
+				.eq("user_id", nextSession.user.id)
+				.order("updated_at", { ascending: false });
+
+			if (error) {
+				setCardSets([]);
+				setSelectedSaveSetId("");
+				setSaveMessage("Flashcard sets could not be loaded.");
+				return;
+			}
+
+			const nextSets = (data ?? []) as FlashcardSet[];
+
+			setCardSets(nextSets);
+			setSelectedSaveSetId((currentSetId) => {
+				if (nextSets.some((set) => set.id === currentSetId)) {
+					return currentSetId;
+				}
+
+				return nextSets[0]?.id ?? "";
+			});
+		},
+		[supabase],
+	);
+
+	useEffect(() => {
+		if (!supabase) {
+			return;
+		}
+
+		let isMounted = true;
+
+		supabase.auth.getSession().then(({ data }) => {
+			if (!isMounted) {
+				return;
+			}
+
+			setSession(data.session);
+			void loadFlashcardSets(data.session);
+		});
+
+		const { data: listener } = supabase.auth.onAuthStateChange(
+			(_event, nextSession) => {
+				setSession(nextSession);
+				void loadFlashcardSets(nextSession);
+			},
+		);
+
+		return () => {
+			isMounted = false;
+			listener.subscription.unsubscribe();
+		};
+	}, [loadFlashcardSets, supabase]);
 
 	async function searchLookup(event?: FormEvent<HTMLFormElement>, nextQuery = query) {
 		event?.preventDefault();
@@ -79,6 +164,8 @@ export function LookupTool() {
 			}
 
 			setPayload(data as LookupPayload);
+			setActiveSaveKey(null);
+			setSaveMessage("");
 			setMessage(`Results for "${trimmedQuery}".`);
 		} catch (error) {
 			setPayload(null);
@@ -94,6 +181,71 @@ export function LookupTool() {
 		setQuery(nextQuery);
 		window.scrollTo({ top: 0, behavior: "smooth" });
 		void searchLookup(undefined, nextQuery);
+	}
+
+	function openSavePanel(entry: DictionaryResult, entryKey: string) {
+		const definitionOptions = getDefinitionOptions(entry);
+
+		setActiveSaveKey(entryKey);
+		setSelectedDefinitionIds(
+			definitionOptions[0] ? [definitionOptions[0].id] : [],
+		);
+		setSaveMessage(
+			session
+				? "Pick the meanings to save as the answer."
+				: "Log in to save Lookup results into Flashcards.",
+		);
+	}
+
+	function toggleDefinition(definitionId: string) {
+		setSelectedDefinitionIds((currentIds) => {
+			if (currentIds.includes(definitionId)) {
+				return currentIds.filter((currentId) => currentId !== definitionId);
+			}
+
+			return [...currentIds, definitionId];
+		});
+	}
+
+	async function saveEntryToFlashcards(entry: DictionaryResult) {
+		if (!supabase || !session) {
+			setSaveMessage("Log in first, then you can save words to Flashcards.");
+			return;
+		}
+
+		if (!selectedSaveSetId) {
+			setSaveMessage("Choose a card set first.");
+			return;
+		}
+
+		const definitionOptions = getDefinitionOptions(entry);
+		const selectedDefinitions = definitionOptions.filter((option) =>
+			selectedDefinitionIds.includes(option.id),
+		);
+
+		if (selectedDefinitions.length === 0) {
+			setSaveMessage("Choose at least one meaning.");
+			return;
+		}
+
+		setIsSavingCard(true);
+
+		const { error } = await supabase.from("flashcards").insert({
+			set_id: selectedSaveSetId,
+			user_id: session.user.id,
+			question: capitalizeFirstLetter(entry.word),
+			answer: selectedDefinitions
+				.map((definition) => `${definition.label}: ${definition.text}`)
+				.join("\n\n"),
+		});
+
+		if (error) {
+			setSaveMessage("Could not save that flashcard.");
+		} else {
+			setSaveMessage("Saved to Flashcards.");
+		}
+
+		setIsSavingCard(false);
 	}
 
 	const dictionaryResults = payload?.dictionary.results ?? [];
@@ -158,7 +310,21 @@ export function LookupTool() {
 								<DictionaryCard
 									key={`${entry.word}-${index}`}
 									entry={entry}
+									entryKey={`${entry.word}-${index}`}
 									onSearchWord={searchWord}
+									onOpenSave={openSavePanel}
+									onToggleDefinition={toggleDefinition}
+									onSave={saveEntryToFlashcards}
+									onCancelSave={() => setActiveSaveKey(null)}
+									isSaveOpen={activeSaveKey === `${entry.word}-${index}`}
+									session={session}
+									cardSets={cardSets}
+									selectedDefinitionIds={selectedDefinitionIds}
+									selectedSetId={selectedSaveSetId}
+									onSelectedSetChange={setSelectedSaveSetId}
+									saveMessage={saveMessage}
+									isSaving={isSavingCard}
+									loginPath={loginPath}
 								/>
 							))}
 						</ResultPanel>
@@ -228,11 +394,41 @@ function ResultPanel({
 
 function DictionaryCard({
 	entry,
+	entryKey,
 	onSearchWord,
+	onOpenSave,
+	onToggleDefinition,
+	onSave,
+	onCancelSave,
+	isSaveOpen,
+	session,
+	cardSets,
+	selectedDefinitionIds,
+	selectedSetId,
+	onSelectedSetChange,
+	saveMessage,
+	isSaving,
+	loginPath,
 }: {
 	entry: DictionaryResult;
+	entryKey: string;
 	onSearchWord: (word: string) => void;
+	onOpenSave: (entry: DictionaryResult, entryKey: string) => void;
+	onToggleDefinition: (definitionId: string) => void;
+	onSave: (entry: DictionaryResult) => void;
+	onCancelSave: () => void;
+	isSaveOpen: boolean;
+	session: Session | null;
+	cardSets: FlashcardSet[];
+	selectedDefinitionIds: string[];
+	selectedSetId: string;
+	onSelectedSetChange: (setId: string) => void;
+	saveMessage: string;
+	isSaving: boolean;
+	loginPath: string;
 }) {
+	const definitionOptions = getDefinitionOptions(entry);
+
 	return (
 		<article className={styles.card}>
 			<div className={styles.termHeader}>
@@ -297,7 +493,109 @@ function DictionaryCard({
 				))}
 			</div>
 
-			<SourceLinks urls={entry.sourceUrls} />
+			<SourceLinks
+				urls={entry.sourceUrls}
+				onSave={() => onOpenSave(entry, entryKey)}
+			/>
+
+			{isSaveOpen ? (
+				<div className={styles.savePanel}>
+					{session ? (
+						<>
+							<div className={styles.savePanelHeader}>
+								<div>
+									<p className={`${styles.eyebrow} font-mono text-xs uppercase`}>
+										Flashcards
+									</p>
+									<h4 className={`${styles.cardTitle} font-mono text-base font-bold uppercase tracking-normal`}>
+										Save {entry.word}
+									</h4>
+								</div>
+								<button
+									type="button"
+									onClick={onCancelSave}
+									className={`${sourceLinkClassName} ${styles.sourceButton}`}
+								>
+									Close
+								</button>
+							</div>
+							{cardSets.length > 0 ? (
+								<>
+									<label className={`${styles.saveField} ${styles.label} font-mono text-xs font-bold uppercase`}>
+										Card Set
+										<select
+											value={selectedSetId}
+											onChange={(event) =>
+												onSelectedSetChange(event.target.value)
+											}
+											className={`${styles.select} text-base`}
+										>
+											{cardSets.map((set) => (
+												<option key={set.id} value={set.id}>
+													{set.title}
+												</option>
+											))}
+										</select>
+									</label>
+									<div className={styles.definitionChoices}>
+										{definitionOptions.map((definition) => (
+											<label
+												key={definition.id}
+												className={styles.definitionChoice}
+											>
+												<input
+													type="checkbox"
+													checked={selectedDefinitionIds.includes(
+														definition.id,
+													)}
+													onChange={() => onToggleDefinition(definition.id)}
+												/>
+												<span>
+													<span className={`${styles.metaLabel} block font-mono text-xs font-bold uppercase`}>
+														{definition.label}
+													</span>
+													<span>{definition.text}</span>
+												</span>
+											</label>
+										))}
+									</div>
+									<div className={styles.saveActions}>
+										<button
+											type="button"
+											onClick={() => onSave(entry)}
+											disabled={isSaving}
+											className={`${styles.button} font-mono text-sm font-bold uppercase`}
+										>
+											{isSaving ? "Saving" : "Save Card"}
+										</button>
+									</div>
+								</>
+							) : (
+								<p className={styles.saveNote}>
+									Create a card set in Flashcards first, then come back here to save definitions into it.
+								</p>
+							)}
+						</>
+					) : (
+						<div>
+							<p className={`${styles.eyebrow} font-mono text-xs uppercase`}>
+								Flashcards
+							</p>
+							<p className={styles.saveNote}>
+								Save lets you choose one or more meanings and turn this word into a flashcard. Log in first so the card can be saved to one of your sets.
+							</p>
+							<a href={loginPath} className={sourceLinkClassName}>
+								Log In
+							</a>
+						</div>
+					)}
+					{saveMessage ? (
+						<p className={`${styles.saveMessage} font-mono text-xs`}>
+							{saveMessage}
+						</p>
+					) : null}
+				</div>
+			) : null}
 		</article>
 	);
 }
@@ -369,8 +667,14 @@ function WordList({
 	);
 }
 
-function SourceLinks({ urls }: { urls: string[] }) {
-	if (urls.length === 0) {
+function SourceLinks({
+	urls,
+	onSave,
+}: {
+	urls: string[];
+	onSave?: () => void;
+}) {
+	if (urls.length === 0 && !onSave) {
 		return null;
 	}
 
@@ -387,6 +691,31 @@ function SourceLinks({ urls }: { urls: string[] }) {
 					Source {index + 1}
 				</a>
 			))}
+			{onSave ? (
+				<button
+					type="button"
+					onClick={onSave}
+					className={`${sourceLinkClassName} ${styles.sourceButton}`}
+				>
+					Save
+				</button>
+			) : null}
 		</div>
+	);
+}
+
+function getDefinitionOptions(entry: DictionaryResult): DefinitionOption[] {
+	return entry.meanings.flatMap((meaning, meaningIndex) =>
+		meaning.definitions.map((definition, definitionIndex) => ({
+			id: `${meaningIndex}-${definitionIndex}`,
+			label: `${meaning.partOfSpeech} ${definitionIndex + 1}`,
+			text: definition.text,
+		})),
+	);
+}
+
+function capitalizeFirstLetter(value: string) {
+	return value.replace(/^(\s*)([a-z])/, (_match, prefix: string, letter: string) =>
+		`${prefix}${letter.toUpperCase()}`,
 	);
 }

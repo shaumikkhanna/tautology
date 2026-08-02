@@ -63,6 +63,7 @@ export function FlashcardsApp() {
   const [setDescription, setSetDescription] = useState("");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  const [editingSetId, setEditingSetId] = useState<string | null>(null);
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [message, setMessage] = useState("Sign in to load your flashcards.");
   const [isLoading, setIsLoading] = useState(false);
@@ -203,6 +204,9 @@ export function FlashcardsApp() {
   const editingCard = editingCardId
     ? (cards.find((card) => card.id === editingCardId) ?? null)
     : null;
+  const editingSet = editingSetId
+    ? (sets.find((set) => set.id === editingSetId) ?? null)
+    : null;
 
   const playableCards = useMemo<PlayCard[]>(() => {
     const selectedIds = new Set(selectedPlaySetIds);
@@ -253,6 +257,43 @@ export function FlashcardsApp() {
       setSetTitle("");
       setSetDescription("");
       setMessage("Set created.");
+      await loadFlashcards(session);
+    }
+
+    setIsSaving(false);
+  }
+
+  async function handleSaveEditedSet(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!supabase || !session || !editingSetId) {
+      return;
+    }
+
+    const trimmedTitle = setTitle.trim();
+
+    if (!trimmedTitle) {
+      setMessage("Give the set a title first.");
+      return;
+    }
+
+    setIsSaving(true);
+    const { error } = await supabase
+      .from("flashcard_sets")
+      .update({
+        title: trimmedTitle,
+        description: setDescription.trim(),
+      })
+      .eq("id", editingSetId)
+      .eq("user_id", session.user.id);
+
+    if (error) {
+      setMessage("Could not save that set.");
+    } else {
+      setEditingSetId(null);
+      setSetTitle("");
+      setSetDescription("");
+      setMessage("Set updated.");
       await loadFlashcards(session);
     }
 
@@ -347,6 +388,20 @@ export function FlashcardsApp() {
     setMessage("Edit cancelled.");
   }
 
+  function startEditingSet(set: FlashcardSet) {
+    setEditingSetId(set.id);
+    setSetTitle(set.title);
+    setSetDescription(set.description);
+    setMessage("Editing set.");
+  }
+
+  function cancelEditingSet() {
+    setEditingSetId(null);
+    setSetTitle("");
+    setSetDescription("");
+    setMessage("Edit cancelled.");
+  }
+
   async function handleDeleteCard(cardId: string) {
     if (!supabase || !session) {
       return;
@@ -381,6 +436,12 @@ export function FlashcardsApp() {
       .delete()
       .eq("id", setId)
       .eq("user_id", session.user.id);
+
+    if (!error && editingSetId === setId) {
+      setEditingSetId(null);
+      setSetTitle("");
+      setSetDescription("");
+    }
 
     setMessage(error ? "Could not delete that set." : "Set deleted.");
     await loadFlashcards(session);
@@ -502,14 +563,17 @@ export function FlashcardsApp() {
 
             {activeTab === "sets" ? (
               <section className={styles.sectionGrid}>
-                <form onSubmit={handleCreateSet} className={styles.formPanel}>
+                <form
+                  onSubmit={editingSetId ? handleSaveEditedSet : handleCreateSet}
+                  className={styles.formPanel}
+                >
                   <div className={styles.panelHeader}>
                     <div>
                       <p className={`${styles.eyebrow} font-mono text-xs uppercase`}>
-                        Build
+                        {editingSetId ? "Revise" : "Build"}
                       </p>
                       <h2 className={`${styles.panelTitle} font-mono text-2xl font-bold uppercase tracking-normal`}>
-                        New Set
+                        {editingSetId ? "Edit Set" : "New Set"}
                       </h2>
                     </div>
                   </div>
@@ -545,9 +609,24 @@ export function FlashcardsApp() {
                       disabled={isSaving}
                       className={`${styles.button} font-mono text-sm font-bold uppercase`}
                     >
-                      Create Set
+                      {editingSetId ? "Save Set" : "Create Set"}
                     </button>
+                    {editingSetId ? (
+                      <button
+                        type="button"
+                        onClick={cancelEditingSet}
+                        disabled={isSaving}
+                        className={`${styles.secondaryButton} font-mono text-sm font-bold uppercase`}
+                      >
+                        Cancel
+                      </button>
+                    ) : null}
                   </div>
+                  {editingSet ? (
+                    <p className={styles.formNote}>
+                      Editing {editingSet.title}.
+                    </p>
+                  ) : null}
                 </form>
 
                 <section className={styles.panel}>
@@ -576,6 +655,14 @@ export function FlashcardsApp() {
                           <p className={styles.cardText}>{set.description}</p>
                         ) : null}
                         <div className={styles.actions}>
+                          <button
+                            type="button"
+                            onClick={() => startEditingSet(set)}
+                            disabled={isSaving}
+                            className={`${styles.secondaryButton} font-mono text-xs font-bold uppercase`}
+                          >
+                            Edit
+                          </button>
                           <button
                             type="button"
                             onClick={() => {

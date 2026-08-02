@@ -535,7 +535,8 @@ Current UX notes:
 - Dictionary examples render under `Use it in a sentence`.
 - Synonym and antonym chips are clickable. Clicking a chip replaces the search input value, immediately runs a new lookup for that word, and scrolls smoothly back to the top/search area.
 - Entity aliases render as chips but are not currently clickable.
-- Source links use subdued text-link styling rather than button styling.
+- Source links use subdued text-link styling rather than button styling. Dictionary cards include a matching `Save` text control next to the source links.
+- `Save` opens an inline Flashcards panel. Logged-in users can choose one or more definitions and a card set; confirming inserts a flashcard with the word as the question and the selected definitions as the answer. Logged-out users see a short explanation and login link instead.
 
 ## Flashcards
 
