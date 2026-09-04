@@ -222,6 +222,15 @@
     box-shadow 150ms ease;
 }
 
+.fileInput {
+  width: 100%;
+  border: 1px dashed var(--flash-line);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--flash-ink);
+  padding: 0.75rem 0.85rem;
+}
+
 .input::placeholder,
 .textarea::placeholder {
   font-weight: 400;
@@ -361,6 +370,48 @@
   font-size: 0.875rem;
   line-height: 1.6;
   padding: 1rem;
+}
+
+.generationMessage {
+  margin-top: 1rem;
+  color: var(--flash-muted);
+  line-height: 1.6;
+}
+
+.draftList {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.draftCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border: 1px solid var(--flash-line);
+  border-radius: 8px;
+  background: var(--flash-surface);
+  padding: 1rem;
+}
+
+.draftCheck {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--flash-muted);
+}
+
+.draftCheck input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #9fb6a5;
+}
+
+.draftContent {
+  display: grid;
+  min-width: 0;
+  width: 100%;
+  gap: 0.75rem;
 }
 
 .setPicker {

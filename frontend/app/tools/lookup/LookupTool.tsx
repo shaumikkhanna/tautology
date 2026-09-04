@@ -163,10 +163,12 @@ export function LookupTool() {
 				);
 			}
 
-			setPayload(data as LookupPayload);
+			const nextPayload = data as LookupPayload;
+
+			setPayload(nextPayload);
 			setActiveSaveKey(null);
 			setSaveMessage("");
-			setMessage(`Results for "${trimmedQuery}".`);
+			setMessage(getLookupMessage(trimmedQuery, nextPayload));
 		} catch (error) {
 			setPayload(null);
 			setMessage(
@@ -390,6 +392,39 @@ function ResultPanel({
 			</div>
 		</section>
 	);
+}
+
+function getLookupMessage(query: string, payload: LookupPayload) {
+	const dictionaryCount = payload.dictionary.results.length;
+	const entityCount = payload.entities.results.length;
+	const dictionaryError = payload.dictionary.error;
+	const entityError = payload.entities.error;
+
+	if (dictionaryCount > 0 || entityCount > 0) {
+		if (dictionaryError && entityCount > 0) {
+			return `Dictionary is having trouble; showing entity results for "${query}".`;
+		}
+
+		if (entityError && dictionaryCount > 0) {
+			return `Entity search is having trouble; showing dictionary results for "${query}".`;
+		}
+
+		return `Results for "${query}".`;
+	}
+
+	if (dictionaryError && entityError) {
+		return "Lookup sources are temporarily unavailable. Try again in a moment.";
+	}
+
+	if (dictionaryError) {
+		return dictionaryError;
+	}
+
+	if (entityError) {
+		return entityError;
+	}
+
+	return `No results for "${query}".`;
 }
 
 function DictionaryCard({

@@ -112,7 +112,10 @@ async function fetchDictionaryResults(query: string) {
 		}
 
 		if (!response.ok) {
-			throw new Error(`Dictionary lookup failed with ${response.status}.`);
+			return {
+				results: [] as DictionaryResult[],
+				error: getDictionaryStatusMessage(response.status),
+			};
 		}
 
 		const payload = (await response.json()) as DictionaryApiEntry[];
@@ -130,6 +133,18 @@ async function fetchDictionaryResults(query: string) {
 					: "Dictionary lookup failed.",
 		};
 	}
+}
+
+function getDictionaryStatusMessage(status: number) {
+	if (status === 522) {
+		return "The dictionary source timed out. Try again in a moment.";
+	}
+
+	if (status >= 500) {
+		return "The dictionary source is temporarily unavailable. Try again in a moment.";
+	}
+
+	return `Dictionary lookup failed with ${status}.`;
 }
 
 async function fetchWikidataResults(query: string) {

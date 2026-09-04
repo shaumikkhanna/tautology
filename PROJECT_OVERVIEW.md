@@ -527,6 +527,7 @@ The client calls `GET /api/tools/lookup?q=...`. The API route performs two live 
 - entity matches from Wikidata `wbsearchentities`, plus Wikipedia search for clue-like phrases that raw Wikidata search misses
 
 Results are returned separately as `dictionary` and `entities`; this first version does not use embeddings or LLM ranking.
+Dictionary upstream failures such as Cloudflare 522 timeouts are treated as partial source outages with friendly messages; entity search can still render independently.
 
 Current UX notes:
 
@@ -540,9 +541,9 @@ Current UX notes:
 
 ## Flashcards
 
-Flashcards is a signed-in project app for manually creating study card sets and
-reviewing one or more sets with weighted repetition. It is currently manual
-entry only; PDF upload, OCR, and AI card generation are future work.
+Flashcards is a signed-in project app for manually creating study card sets,
+reviewing one or more sets with weighted repetition, and drafting new cards from
+uploaded study PDFs.
 
 Project card:
 
@@ -556,6 +557,18 @@ Frontend route and modules:
 frontend/app/projects/flashcards/page.tsx
 frontend/app/projects/flashcards/FlashcardsApp.tsx
 frontend/app/projects/flashcards/flashcards.module.css
+```
+
+AI generation API route:
+
+```txt
+frontend/app/api/projects/flashcards/generate/route.ts
+```
+
+AI/PDF support code:
+
+```txt
+frontend/lib/flashcards/gemini.ts
 ```
 
 Supabase migration:
@@ -576,11 +589,23 @@ and cards. The generated client types in
 Current UX:
 
 - Uses the shared `/login` flow via `/login?next=/projects/flashcards`.
-- The app has `Sets`, `Cards`, and `Play` tabs.
+- The app has `Sets`, `Cards`, `Generate`, and `Play` tabs.
 - Users can create/delete sets, add/edit/delete cards, and choose one or more
   sets for play.
+- Users can edit card set names and notes from the `Sets` tab.
 - Text entry auto-capitalizes the first typed letter in set titles, notes,
   questions, and answers.
+- `Generate` is the AI/PDF entry point. Logged-in users select a target set,
+  choose source type (`Handwritten Notes` or `Typed Notes`), upload a PDF,
+  receive generated draft cards, edit/review/select drafts, and import selected
+  cards into the chosen set. The API route validates auth, target set ownership,
+  PDF MIME type, and an 8 MB upload cap. Actual draft generation requires
+  `GEMINI_API_KEY` on the Next.js server. The route sends the PDF to Gemini and
+  asks for strict JSON draft cards. `GEMINI_MODEL` can override the default
+  model, currently `gemini-3.6-flash`. If Gemini is missing, fails, or returns
+  no usable cards, the route returns a clear error and no importable drafts. Do
+  not fall back to raw embedded PDF text snippets as cards; that produced
+  mangled spacing and poor questions.
 - Card previews in the Cards tab are rendered as two independent masonry-like
   column stacks at desktop/tablet widths. Each card takes only the height its
   own content needs, so left/right card tops and bottoms intentionally do not
@@ -602,6 +627,56 @@ Current play behavior:
 - The just-seen card is avoided when possible so it does not immediately repeat
   unless the selected deck is too small.
 - Play card question/answer text is centered.
+
+Planned AI PDF generation behavior:
+
+- The feature should optimize for quality at low volume, especially handwritten
+  notes PDFs. The current Gemini path is the first vision-capable path. Raw text
+  extraction may be useful later as supporting context for typed PDFs, but it
+  must not directly produce user-facing draft cards.
+- The intended production pipeline is:
+  1. accept a logged-in user's PDF under strict page/size/daily limits;
+  2. render pages to high-resolution images;
+  3. extract embedded PDF text when useful, but use a vision/OCR transcription
+     pass for scanned or handwritten pages;
+  4. preserve page numbers and mark uncertain handwriting as `[unclear]`;
+  5. ask an LLM for grounded draft flashcards in strict JSON;
+  6. run a validation pass that discards vague, speculative, or unsupported
+     cards;
+  7. show editable draft cards with source page references;
+  8. save only user-selected drafts.
+- Initial quotas should be deliberately small: logged-in only, roughly 8 MB per
+  PDF, 10 pages per generation, 10-20 draft cards per run, and 1-2 generations
+  per user per day.
+- Prompting should prefer atomic cards about definitions, concept explanations,
+  formulas, compare/contrast points, and common confusions. It should avoid
+  broad prompts such as `Explain page 5` and should not invent missing facts.
+- Bring-your-own API keys are intentionally out of scope for now. Use an
+  app-owned model account with strict quotas.
+
+Current Flashcards handoff, 2026-08-02:
+
+- Uncommitted Flashcards work includes set renaming, Lookup-to-Flashcards save,
+  and the Flashcards `Generate` tab plus `POST
+  /api/projects/flashcards/generate`.
+- Local AI generation requires `GEMINI_API_KEY` in `frontend/.env.local`, then
+  a full dev-server restart. Do not use `NEXT_PUBLIC_` for this key.
+- Default model is `gemini-3.6-flash`. `GEMINI_MODEL` can override it. This was
+  changed after `gemini-2.5-flash` returned `no longer available to new users`.
+- The UI now has only two source modes: `Handwritten Notes` and `Typed Notes`.
+  The previous `Class Slides` option was removed.
+- The route no longer produces heuristic draft cards from embedded PDF text.
+  A screenshot showed those cards were unusable: broken spacing from raw PDF
+  extraction and generic `What is the key idea...` questions. Going forward,
+  show Gemini-generated cards or a clear error.
+- Expected test path: run the frontend dev server, sign in, create/select a card
+  set, open Flashcards `Generate`, choose `Typed Notes`, upload the 8-page PDF,
+  and confirm the review panel says cards were generated from the PDF rather
+  than from extracted text.
+- If generation fails, check that `frontend/.env.local` is loaded by the Next.js
+  server and that the dev server was restarted after editing env vars. If it
+  still fails, surface the Gemini error message rather than falling back to
+  low-quality extracted text.
 
 ## Anagram Solver
 

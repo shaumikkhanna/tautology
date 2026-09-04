@@ -22,6 +22,13 @@ type PlayCard = Flashcard & {
   setTitle: string;
 };
 
+type GeneratedFlashcardDraft = {
+  id: string;
+  question: string;
+  answer: string;
+  sourcePage: number | null;
+};
+
 type StudyCardState = {
   weight: number;
   cooldown: number;
@@ -35,7 +42,13 @@ type StudyState = Record<string, StudyCardState>;
 const tabs = [
   { value: "sets", label: "Sets" },
   { value: "cards", label: "Cards" },
+  { value: "generate", label: "Generate" },
   { value: "play", label: "Play" },
+];
+
+const generationModes = [
+  { value: "handwritten", label: "Handwritten Notes" },
+  { value: "typed", label: "Typed Notes" },
 ];
 
 const emptyStudyCardState: StudyCardState = {
@@ -65,9 +78,20 @@ export function FlashcardsApp() {
   const [answer, setAnswer] = useState("");
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
+  const [generationSetId, setGenerationSetId] = useState("");
+  const [generationMode, setGenerationMode] = useState("handwritten");
+  const [generationFile, setGenerationFile] = useState<File | null>(null);
+  const [generationFileInputKey, setGenerationFileInputKey] = useState(0);
+  const [generatedDrafts, setGeneratedDrafts] = useState<GeneratedFlashcardDraft[]>([]);
+  const [selectedDraftIds, setSelectedDraftIds] = useState<string[]>([]);
+  const [generationMessage, setGenerationMessage] = useState(
+    "Upload a PDF to draft flashcards from handwritten or typed notes.",
+  );
   const [message, setMessage] = useState("Sign in to load your flashcards.");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isImportingDrafts, setIsImportingDrafts] = useState(false);
   const [studyState, setStudyState] = useState<StudyState>({});
   const [currentCard, setCurrentCard] = useState<PlayCard | null>(null);
   const [isAnswerShown, setIsAnswerShown] = useState(false);
@@ -132,6 +156,13 @@ export function FlashcardsApp() {
           : nextSets[0]
             ? [nextSets[0].id]
             : [];
+      });
+      setGenerationSetId((currentSetId) => {
+        if (nextSets.some((set) => set.id === currentSetId)) {
+          return currentSetId;
+        }
+
+        return nextSets[0]?.id ?? "";
       });
       setMessage(
         nextSets.length > 0
@@ -373,6 +404,119 @@ export function FlashcardsApp() {
     setIsSaving(false);
   }
 
+  async function handleGenerateFromPdf(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!session) {
+      setGenerationMessage("Log in before generating flashcards from PDFs.");
+      return;
+    }
+
+    if (!generationSetId) {
+      setGenerationMessage("Create or choose a card set first.");
+      return;
+    }
+
+    if (!generationFile) {
+      setGenerationMessage("Choose a PDF first.");
+      return;
+    }
+
+    if (generationFile.type !== "application/pdf") {
+      setGenerationMessage("Please upload a PDF file.");
+      return;
+    }
+
+    setIsGenerating(true);
+    setGenerationMessage("Reading the PDF and drafting cards...");
+
+    const formData = new FormData();
+    formData.append("file", generationFile);
+    formData.append("mode", generationMode);
+    formData.append("setId", generationSetId);
+
+    try {
+      const response = await fetch("/api/projects/flashcards/generate", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
+      const data = (await response.json()) as
+        | { draftCards: GeneratedFlashcardDraft[]; message?: string }
+        | { error?: string };
+
+      if (!response.ok) {
+        throw new Error(
+          "error" in data && data.error
+            ? data.error
+            : "Could not generate flashcards.",
+        );
+      }
+
+      const draftCards = "draftCards" in data ? data.draftCards : [];
+
+      setGeneratedDrafts(draftCards);
+      setSelectedDraftIds(draftCards.map((card) => card.id));
+      setGenerationMessage(
+        "message" in data && data.message
+          ? data.message
+          : `${draftCards.length} draft card${draftCards.length === 1 ? "" : "s"} ready to review.`,
+      );
+    } catch (error) {
+      setGeneratedDrafts([]);
+      setSelectedDraftIds([]);
+      setGenerationMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not generate flashcards.",
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
+  async function handleImportGeneratedDrafts() {
+    if (!supabase || !session || !generationSetId) {
+      return;
+    }
+
+    const selectedDrafts = generatedDrafts.filter((draft) =>
+      selectedDraftIds.includes(draft.id),
+    );
+
+    if (selectedDrafts.length === 0) {
+      setGenerationMessage("Select at least one draft card to import.");
+      return;
+    }
+
+    setIsImportingDrafts(true);
+    const { error } = await supabase.from("flashcards").insert(
+      selectedDrafts.map((draft) => ({
+        set_id: generationSetId,
+        user_id: session.user.id,
+        question: capitalizeFirstLetter(draft.question.trim()),
+        answer: capitalizeFirstLetter(draft.answer.trim()),
+      })),
+    );
+
+    if (error) {
+      setGenerationMessage("Could not import those draft cards.");
+    } else {
+      setGeneratedDrafts([]);
+      setSelectedDraftIds([]);
+      setGenerationFile(null);
+      setGenerationFileInputKey((currentKey) => currentKey + 1);
+      setGenerationMessage(
+        `${selectedDrafts.length} draft card${selectedDrafts.length === 1 ? "" : "s"} imported.`,
+      );
+      await loadFlashcards(session);
+    }
+
+    setIsImportingDrafts(false);
+  }
+
   function startEditingCard(card: Flashcard) {
     setEditingCardId(card.id);
     setSelectedSetId(card.set_id);
@@ -456,6 +600,35 @@ export function FlashcardsApp() {
 
       return [...currentSetIds, setId];
     });
+  }
+
+  function toggleGeneratedDraft(draftId: string) {
+    setSelectedDraftIds((currentDraftIds) => {
+      if (currentDraftIds.includes(draftId)) {
+        return currentDraftIds.filter((currentDraftId) => currentDraftId !== draftId);
+      }
+
+      return [...currentDraftIds, draftId];
+    });
+  }
+
+  function updateGeneratedDraft(
+    draftId: string,
+    field: "question" | "answer",
+    value: string,
+  ) {
+    setGeneratedDrafts((currentDrafts) =>
+      currentDrafts.map((draft) =>
+        draft.id === draftId
+          ? {
+              ...draft,
+              [field]: field === "question"
+                ? capitalizeFirstLetter(value)
+                : value,
+            }
+          : draft,
+      ),
+    );
   }
 
   function startStudySession() {
@@ -835,6 +1008,159 @@ export function FlashcardsApp() {
                       <p className={styles.empty}>Create a set before adding cards.</p>
                     ) : null}
                   </div>
+                </section>
+              </section>
+            ) : null}
+
+            {activeTab === "generate" ? (
+              <section className={styles.wideGrid}>
+                <form
+                  onSubmit={handleGenerateFromPdf}
+                  className={styles.formPanel}
+                >
+                  <div className={styles.panelHeader}>
+                    <div>
+                      <p className={`${styles.eyebrow} font-mono text-xs uppercase`}>
+                        AI Drafts
+                      </p>
+                      <h2 className={`${styles.panelTitle} font-mono text-2xl font-bold uppercase tracking-normal`}>
+                        Generate From PDF
+                      </h2>
+                    </div>
+                  </div>
+                  <label className={`${styles.field} ${styles.label} font-mono text-xs font-bold uppercase`}>
+                    Card Set
+                    <select
+                      value={generationSetId}
+                      onChange={(event) => setGenerationSetId(event.target.value)}
+                      className={`${styles.select} text-base`}
+                    >
+                      {sets.map((set) => (
+                        <option key={set.id} value={set.id}>
+                          {set.title}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className={`${styles.field} ${styles.label} font-mono text-xs font-bold uppercase`}>
+                    Source Type
+                    <select
+                      value={generationMode}
+                      onChange={(event) => setGenerationMode(event.target.value)}
+                      className={`${styles.select} text-base`}
+                    >
+                      {generationModes.map((mode) => (
+                        <option key={mode.value} value={mode.value}>
+                          {mode.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className={`${styles.field} ${styles.label} font-mono text-xs font-bold uppercase`}>
+                    PDF
+                    <input
+                      key={generationFileInputKey}
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(event) =>
+                        setGenerationFile(event.target.files?.[0] ?? null)
+                      }
+                      className={`${styles.fileInput} text-sm`}
+                    />
+                  </label>
+                  <p className={styles.formNote}>
+                    First version is a safe mock path: it enforces the upload shape and returns editable draft cards. The next pass will replace the mock internals with PDF rendering, OCR/vision transcription, and LLM generation.
+                  </p>
+                  <div className={styles.actions}>
+                    <button
+                      type="submit"
+                      disabled={isGenerating || sets.length === 0}
+                      className={`${styles.button} font-mono text-sm font-bold uppercase`}
+                    >
+                      {isGenerating ? "Generating" : "Generate Drafts"}
+                    </button>
+                  </div>
+                </form>
+
+                <section className={styles.panel}>
+                  <div className={styles.panelHeader}>
+                    <div>
+                      <p className={`${styles.eyebrow} font-mono text-xs uppercase`}>
+                        Review
+                      </p>
+                      <h2 className={`${styles.panelTitle} font-mono text-2xl font-bold uppercase tracking-normal`}>
+                        Draft Cards
+                      </h2>
+                    </div>
+                  </div>
+                  <p className={`${styles.generationMessage} font-mono text-sm`}>
+                    {generationMessage}
+                  </p>
+                  <div className={styles.draftList}>
+                    {generatedDrafts.map((draft) => (
+                      <article key={draft.id} className={styles.draftCard}>
+                        <label className={`${styles.draftCheck} font-mono text-xs font-bold uppercase`}>
+                          <input
+                            type="checkbox"
+                            checked={selectedDraftIds.includes(draft.id)}
+                            onChange={() => toggleGeneratedDraft(draft.id)}
+                          />
+                          Import
+                        </label>
+                        <div className={styles.draftContent}>
+                          <label className={`${styles.label} font-mono text-xs font-bold uppercase`}>
+                            Question
+                            <input
+                              value={draft.question}
+                              onChange={(event) =>
+                                updateGeneratedDraft(
+                                  draft.id,
+                                  "question",
+                                  event.target.value,
+                                )
+                              }
+                              className={`${styles.input} text-base`}
+                            />
+                          </label>
+                          <label className={`${styles.label} font-mono text-xs font-bold uppercase`}>
+                            Answer
+                            <textarea
+                              value={draft.answer}
+                              onChange={(event) =>
+                                updateGeneratedDraft(
+                                  draft.id,
+                                  "answer",
+                                  event.target.value,
+                                )
+                              }
+                              className={`${styles.textarea} font-sans text-base`}
+                            />
+                          </label>
+                          {draft.sourcePage ? (
+                            <span className={`${styles.metaLabel} block font-mono text-xs uppercase`}>
+                              Page {draft.sourcePage}
+                            </span>
+                          ) : null}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                  {generatedDrafts.length > 0 ? (
+                    <div className={styles.actions}>
+                      <button
+                        type="button"
+                        onClick={handleImportGeneratedDrafts}
+                        disabled={isImportingDrafts}
+                        className={`${styles.button} font-mono text-sm font-bold uppercase`}
+                      >
+                        {isImportingDrafts ? "Importing" : "Import Selected"}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className={styles.empty}>
+                      Draft cards will appear here before anything is saved.
+                    </p>
+                  )}
                 </section>
               </section>
             ) : null}
