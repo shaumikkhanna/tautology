@@ -8,6 +8,7 @@ import {
   shouldDrawCard,
   winningPlayer,
 } from "./red7Engine.ts";
+import { getAdvancedTurnState } from "./red7Advanced.ts";
 
 const card = (color, value) => ({ color, value });
 const player = (id, palette) => ({
@@ -22,6 +23,27 @@ const player = (id, palette) => ({
   handCount: 7,
   lastSeenAt: "",
   joinedAt: "",
+});
+const advancedState = ({ hand, ownPalette = [], opponents = [], rules = {} }) => ({
+  room: {
+    id: "room",
+    code: "room-code",
+    hostUserId: "a",
+    status: "playing",
+    drawRule: true,
+    advancedSeven: false,
+    advancedFive: false,
+    advancedThree: false,
+    advancedOne: false,
+    canvasColor: "red",
+    revision: 1,
+    winnerPlayerId: null,
+    expiresAt: "",
+    ...rules,
+  },
+  players: [player("a", ownPalette), ...opponents],
+  privateState: { playerId: "a", cards: hand },
+  round: { currentPlayerId: "a", turnOrder: ["a"], roundNumber: 1, deckCount: 10 },
 });
 
 test("card hierarchy compares value before color", () => {
@@ -152,4 +174,67 @@ test("optional draw uses the Canvas value and final Palette size", () => {
     }),
     false,
   );
+});
+
+test("advanced 7 waits for a destination and previews the removed Palette card", () => {
+  const seven = card("red", 7);
+  const oldCard = card("blue", 2);
+  const state = advancedState({
+    hand: [seven],
+    ownPalette: [oldCard],
+    rules: { advancedSeven: true },
+  });
+
+  const pending = getAdvancedTurnState(state, "a", [{ card: seven }]);
+  assert.equal(pending.pending?.type, "seven");
+  assert.deepEqual(pending.palette, [oldCard, seven]);
+
+  const resolved = getAdvancedTurnState(state, "a", [{
+    card: seven,
+    effect: { type: "seven", card: oldCard, destination: "canvas" },
+  }]);
+  assert.equal(resolved.pending, null);
+  assert.deepEqual(resolved.palette, [seven]);
+});
+
+test("advanced 5 keeps chaining while another hand card remains", () => {
+  const firstFive = card("red", 5);
+  const secondFive = card("blue", 5);
+  const finalCard = card("green", 4);
+  const state = advancedState({
+    hand: [firstFive, secondFive, finalCard],
+    rules: { advancedFive: true },
+  });
+
+  const first = getAdvancedTurnState(state, "a", [{ card: firstFive }]);
+  assert.equal(first.pending?.type, "five");
+
+  const second = getAdvancedTurnState(state, "a", [
+    { card: firstFive },
+    { card: secondFive },
+  ]);
+  assert.equal(second.pending?.type, "five");
+
+  const complete = getAdvancedTurnState(state, "a", [
+    { card: firstFive },
+    { card: secondFive },
+    { card: finalCard },
+  ]);
+  assert.equal(complete.pending, null);
+});
+
+test("advanced 1 allows equal or larger opponent Palettes only", () => {
+  const one = card("violet", 1);
+  const equal = player("b", [card("red", 2), card("blue", 3)]);
+  const smaller = player("c", [card("orange", 4)]);
+  const state = advancedState({
+    hand: [one],
+    ownPalette: [card("yellow", 6)],
+    opponents: [equal, smaller],
+    rules: { advancedOne: true },
+  });
+
+  const result = getAdvancedTurnState(state, "a", [{ card: one }]);
+  assert.equal(result.pending?.type, "one");
+  assert.deepEqual(result.pending?.targets.map(({ player }) => player.id), ["b"]);
 });

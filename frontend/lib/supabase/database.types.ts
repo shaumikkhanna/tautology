@@ -85,6 +85,11 @@ export type Database = {
           host_user_id: string;
           status: Database["public"]["Enums"]["red7_room_status"];
           draw_rule: boolean;
+          advanced_seven: boolean;
+          advanced_five: boolean;
+          advanced_three: boolean;
+          advanced_one: boolean;
+          last_turn: Json | null;
           canvas_color: string;
           revision: number;
           winner_player_id: string | null;
@@ -99,6 +104,11 @@ export type Database = {
           host_user_id: string;
           status?: Database["public"]["Enums"]["red7_room_status"];
           draw_rule?: boolean;
+          advanced_seven?: boolean;
+          advanced_five?: boolean;
+          advanced_three?: boolean;
+          advanced_one?: boolean;
+          last_turn?: Json | null;
           canvas_color?: string;
           revision?: number;
           winner_player_id?: string | null;
@@ -113,6 +123,11 @@ export type Database = {
           host_user_id?: string;
           status?: Database["public"]["Enums"]["red7_room_status"];
           draw_rule?: boolean;
+          advanced_seven?: boolean;
+          advanced_five?: boolean;
+          advanced_three?: boolean;
+          advanced_one?: boolean;
+          last_turn?: Json | null;
           canvas_color?: string;
           revision?: number;
           winner_player_id?: string | null;
@@ -147,6 +162,30 @@ export type Database = {
           current_player_id?: string | null;
           round_number?: number;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      red7_turn_events: {
+        Row: {
+          id: string;
+          room_id: string;
+          round_number: number;
+          event: Json;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          room_id: string;
+          round_number: number;
+          event: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          room_id?: string;
+          round_number?: number;
+          event?: Json;
+          created_at?: string;
         };
         Relationships: [];
       };
@@ -515,13 +554,27 @@ export type Database = {
         Args: {
           room_code: string;
           expected_revision: number;
-          palette_card?: Json | null;
+          palette_plays?: Json;
           canvas_card?: Json | null;
         };
         Returns: Json;
       };
       red7_return_to_lobby: {
         Args: { room_code: string };
+        Returns: Json;
+      };
+      red7_set_draw_rule: {
+        Args: { room_code: string; enabled: boolean };
+        Returns: Json;
+      };
+      red7_set_advanced_rules: {
+        Args: {
+          room_code: string;
+          enable_seven: boolean;
+          enable_five: boolean;
+          enable_three: boolean;
+          enable_one: boolean;
+        };
         Returns: Json;
       };
       red7_start_round: {

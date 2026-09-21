@@ -240,22 +240,29 @@ Players use invisible Supabase anonymous auth unless they already have a session
 
 Rooms support two to five seated players. Late joins during a round are spectators. The host can remove players; a stale host can be replaced by the earliest active seated player. Refreshes and short disconnects retain identity through the persistent Supabase auth session and existing room membership. An offline active player pauses play until they reconnect or the host removes them.
 
-The start screen is intentionally focused on creating a room. It has no room-code or join form; invited players join from `/room/<room-code>`, where they enter a display name and take a seat. The Red7 screens use the website's monospace visual language with a more colorful card-game treatment.
+The start screen is intentionally focused on creating a room. It has no room-code, join form, or game-setting controls; invited players join from `/room/<room-code>`, where they enter a display name and take a seat. The host chooses game rules from the shared waiting lobby. The optional Canvas draw rule is enabled by default. Advanced Red is disabled by default; its parent checkbox enables or disables all four numbered rules, while the 7, 5, 3, and 1 rules can also be toggled independently. The Red7 screens use the website's monospace visual language with a more colorful card-game treatment.
 
 The finalized round behavior is:
 
 - Every player receives seven hand cards and starts with an empty Palette.
 - The Canvas starts on Red.
-- A turn is staged locally by selecting a hand card and then clicking the shared Canvas or the player's Palette. Palette-then-Canvas is supported in that order.
+- A turn is staged locally by dragging cards from the Hand to the shared Canvas or the player's Palette. A newly staged card can be dragged back into the Hand, and Palette-then-Canvas is supported in that order.
 - `Cancel` clears the staged move. `End turn` submits it for authoritative validation; an invalid/non-winning move is rejected without publishing its staged changes.
 - There is no pass action in the UI. `Give up` performs the elimination/pass RPC.
 - Cards display the rule associated with their color.
 - The optional draw rule triggers only when a Canvas card is played and its value is strictly greater than the player's final Palette size. It draws one card if the deck is nonempty.
+- Advanced Palette effects resolve in order: a 7 moves a chosen card from the acting player's Palette to the Canvas or the top of the Draw Deck; a 5 plays another hand card to the Palette and chains that card's effect; a 3 draws from the Draw Deck; and a 1 moves a chosen card from an opponent with an equal-or-larger Palette to the top of the Draw Deck.
+- The turn dock guides every required 7, 5, and 1 choice before enabling `End turn`. A 3 draw is automatic.
+- All advanced effects, ordinary Palette/Canvas plays, and draws are validated in one server transaction. The final winning check happens after the complete sequence, so a losing turn rolls back every change.
+- A turn may change the Canvas multiple times through advanced 7 effects. The ordinary Canvas play resolves after all Palette effects, and the optional draw rule runs last against the final card that changed the Canvas.
+- Each successful turn stores an ordered public replay. Every player except the actor sees the turn animate step by step, including Palette and Canvas plays, 5 chains, 7/1 movements, and face-down 3/optional draws. Refreshing or reconnecting does not replay stale turns.
+- The in-round game log persists those same atomic actions for the current round. Each action is a separate entry with its card and trigger, while player headers and dividers mark turn boundaries. Drawn card identities remain private.
 - Opponent spaces across the top merge player presence, public hand count, turn status, and Palette into one panel.
 - The shared Canvas sits below the opponent spaces with centered content. Its colored rule box carries the active rule, with the interaction hint beneath it.
-- The local player's actionable Palette sits below the Canvas, followed by a simplified private Hand and move controls.
+- The local player's actionable Palette sits below the Canvas, followed by a compact private Hand. Move guidance and the `Cancel`, `End turn`, and `Give up` controls sit in a separate action dock directly below the Hand panel.
 - Spectators are shown separately without recreating the old standalone player roster.
-- The current Canvas color spreads through the page background. A successful rule change animates outward from the center.
+- In-round room metadata and invite/leave controls are condensed into a small corner HUD instead of a full game header.
+- The current Canvas color spreads through the page background while a round is active. The lobby and finished-round states use the neutral black background, and a successful in-round rule change animates outward from the center.
 
 Red7 migrations must be applied in timestamp order:
 
@@ -266,9 +273,12 @@ supabase/migrations/20260607002000_red7_redeal_starting_palettes.sql
 supabase/migrations/20260607003000_red7_empty_starting_palettes.sql
 supabase/migrations/20260607004000_red7_canvas_draw_rule.sql
 supabase/migrations/20260607005000_red7_public_hand_counts.sql
+supabase/migrations/20260904000000_red7_lobby_draw_rule.sql
+supabase/migrations/20260904001000_red7_advanced_rules.sql
+supabase/migrations/20260921000000_red7_game_log.sql
 ```
 
-The `02000` starting-Palette migration is historical and is intentionally superseded by `03000`, which establishes the final empty-Palette rule. The UUID fix avoids PostgreSQL aggregate calls such as `min(uuid)`, which are not available by default. The initial migration also uses a compatible random invite-code implementation rather than assuming `gen_random_bytes(integer)` is installed.
+The `02000` starting-Palette migration is historical and is intentionally superseded by `03000`, which establishes the final empty-Palette rule. The UUID fix avoids PostgreSQL aggregate calls such as `min(uuid)`, which are not available by default. The initial migration also uses a compatible random invite-code implementation rather than assuming `gen_random_bytes(integer)` is installed. The first `20260904` migration adds the host-only lobby RPC used to change the optional draw rule before a round starts. The second adds the four Advanced Red settings, ordered turn-plan validation, chained Palette effects, atomic rollback for non-winning turns, and the public replay stored with each successful turn. The `20260921` migration records those replay events transactionally and returns the current round's persistent game log.
 
 Run Red7 checks from `frontend/`:
 
@@ -278,7 +288,7 @@ npx tsc --noEmit
 npm run build
 ```
 
-The latest UI verification on June 8, 2026 passed all eight Red7 engine tests and TypeScript checking. The redesigned create screen was visually checked at desktop and mobile widths. The production build was stopped after it stalled while an existing Next.js development server was running.
+The latest verification on September 4, 2026 passed all eleven Red7 engine/advanced-turn tests, TypeScript checking, and a webpack production build across all 41 routes. The create screen was visually checked against the existing local development server. The default Turbopack production build stalled during compilation in this environment, while the equivalent webpack build completed successfully.
 
 ## Cryptic Crossword Archive
 
