@@ -6,6 +6,8 @@ import {
   hasServerSupabaseConfig,
 } from "@/lib/supabase/server";
 import { cacheStageSelectCover } from "@/lib/stageselect/storage";
+import { getRecommendationDocumentFields } from "@/lib/stageselect/recommendations/semantic";
+import { recordRecommendationOutcomes } from "@/lib/stageselect/recommendations/outcomes";
 import {
   getAuthenticatedUser,
   isStageSelectStatus,
@@ -57,6 +59,12 @@ export async function POST(request: Request) {
     const rating = validateRating(payload.rating);
     const review =
       typeof payload.review === "string" ? payload.review.trim() : "";
+    const recommendationId =
+      typeof payload.recommendationId === "string"
+        ? payload.recommendationId
+        : undefined;
+    const recommendedFromDiscover = payload.recommendedFromDiscover === true;
+    const recommendationDocument = await getRecommendationDocumentFields(game);
     const [{ data: existingGame }, cachedCover] = await Promise.all([
       supabase
         .from("stageselect_games")
@@ -89,6 +97,15 @@ export async function POST(request: Request) {
           release_date: game.releaseYear ? `${game.releaseYear}-01-01` : null,
           platforms: game.platforms,
           genres: game.genres,
+          themes: game.themes,
+          keywords: game.keywords,
+          game_modes: game.gameModes,
+          player_perspectives: game.playerPerspectives,
+          similar_game_igdb_ids: game.similarGameIgdbIds,
+          total_rating: game.totalRating ?? null,
+          total_rating_count: game.totalRatingCount,
+          game_type: game.gameType ?? null,
+          ...recommendationDocument,
           igdb_raw: game,
           last_synced_at: new Date().toISOString(),
         },
@@ -148,6 +165,14 @@ export async function POST(request: Request) {
         .eq("user_id", user.id)
         .eq("game_id", gameRow.id);
     }
+
+    await recordRecommendationOutcomes(supabase, user.id, gameRow.id, {
+      recommendationId,
+      allowRecentImpression: recommendedFromDiscover,
+      saved: recommendedFromDiscover,
+      status,
+      rating,
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

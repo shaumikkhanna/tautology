@@ -2,15 +2,23 @@
   "name": "tautology-frontend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
+    "typecheck": "tsc --noEmit --pretty false",
+    "test": "npm run test:home-graph && npm run test:red7 && npm run test:stageselect-recommendations",
     "test:home-graph": "node --experimental-strip-types --test app/homeGraph.test.mjs",
     "test:red7": "node --experimental-strip-types --test app/play/games/red7/red7Engine.test.mjs",
+    "test:stageselect-recommendations": "node --experimental-strip-types --test lib/stageselect/recommendations/recommendations.test.mjs lib/stageselect/recommendations/evaluation.test.mjs lib/stageselect/recommendations/semantic.test.mjs lib/stageselect/recommendations/blindEvaluation.test.mjs lib/stageselect/recommendations/outcomes.test.mjs lib/stageselect/recommendations/outcomeAnalysis.test.mjs",
+    "evaluate:stageselect-recommendations": "node --experimental-strip-types scripts/evaluate-stageselect-recommendations.mjs",
+    "analyze:stageselect-outcomes": "node --experimental-strip-types scripts/analyze-stageselect-outcomes.mjs",
+    "backfill:stageselect-recommendation-documents": "node --experimental-strip-types scripts/backfill-stageselect-recommendation-documents.mjs",
+    "process:stageselect-embeddings": "node scripts/process-stageselect-embeddings.mjs",
+    "configure:stageselect-embedding-schedule": "node scripts/configure-stageselect-embedding-schedule.mjs",
     "import:crosswords": "node scripts/import-crosswords.mjs",
     "validate:crosswords": "node scripts/validate-crosswords.mjs",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "next start"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",

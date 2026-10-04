@@ -22,3 +22,9 @@ venv/
 
 # Logs
 *.log
+
+# Generated TypeScript build state
+*.tsbuildinfo
+
+# Supabase CLI local project state
+supabase/.temp/

@@ -82,10 +82,30 @@ export function validateGamePayload(
     genres: Array.isArray(game.genres)
       ? game.genres.filter((item): item is string => typeof item === "string")
       : [],
+    themes: stringArray(game.themes),
+    keywords: stringArray(game.keywords),
+    gameModes: stringArray(game.gameModes),
+    playerPerspectives: stringArray(game.playerPerspectives),
+    similarGameIgdbIds: Array.isArray(game.similarGameIgdbIds)
+      ? game.similarGameIgdbIds.filter(
+          (item): item is number => Number.isInteger(item) && item > 0,
+        )
+      : [],
     category: typeof game.category === "number" ? game.category : undefined,
+    gameType: typeof game.gameType === "number" ? game.gameType : undefined,
+    totalRating:
+      typeof game.totalRating === "number" ? game.totalRating : undefined,
+    totalRatingCount:
+      typeof game.totalRatingCount === "number" ? game.totalRatingCount : 0,
     popularityScore:
       typeof game.popularityScore === "number" ? game.popularityScore : 0,
   };
+}
+
+function stringArray(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
 }
 
 export async function getAuthenticatedUser(

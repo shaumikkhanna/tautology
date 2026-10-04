@@ -1,13 +1,36 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+	useCallback,
+	useDeferredValue,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
-import type { StageSelectGameSearchResult } from "@/lib/igdb/types";
+import type {
+	StageSelectDiscoverCandidate,
+	StageSelectGameSearchResult,
+} from "@/lib/igdb/types";
 import { getLoginPath } from "@/lib/auth/redirects";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { Json, Tables } from "@/lib/supabase/database.types";
 import { stageselectReviewStatuses } from "@/lib/stageselect/api";
+import {
+	buildBlindRankingComparison,
+	getLatestFeedbackByIgdbId,
+	getDiscoverCandidateSource,
+	recommendDiscover,
+	recommendPlayNext,
+	type RecommendationFeedback,
+	type RecommendationFeedbackAction,
+	type RecommendationGame,
+	type RecommendationStatus,
+	type BlindRankingComparison,
+} from "@/lib/stageselect/recommendations";
+import { RecommendationsPanel } from "./RecommendationsPanel";
 
 const statuses = [
 	{ value: "finished", label: "Finished" },
@@ -23,6 +46,7 @@ const ratingOptions = Array.from({ length: 10 }, (_item, index) =>
 
 const tabs = [
 	{ value: "search", label: "Search" },
+	{ value: "recommendations", label: "Recommendations" },
 	{ value: "library", label: "Library" },
 	{ value: "stats", label: "Stats" },
 ];
@@ -37,7 +61,17 @@ type Profile = Pick<Tables<"profiles">, "display_name">;
 
 type GameRecord = Pick<
 	Tables<"stageselect_games">,
-	"id" | "igdb_id" | "title" | "release_date" | "cover_url" | "platforms"
+	| "id"
+	| "igdb_id"
+	| "title"
+	| "release_date"
+	| "cover_url"
+	| "platforms"
+	| "genres"
+	| "themes"
+	| "keywords"
+	| "game_modes"
+	| "player_perspectives"
 >;
 
 type UserGameRecord = Pick<
@@ -52,6 +86,24 @@ type ReviewRecord = Pick<
 	"game_id" | "rating" | "body"
 >;
 
+type FeedbackRecord = Pick<
+	Tables<"stageselect_recommendation_feedback">,
+	"game_id" | "recommendation_id" | "action" | "created_at"
+> & {
+	stageselect_games: Pick<
+		Tables<"stageselect_games">,
+		| "igdb_id"
+		| "title"
+		| "release_date"
+		| "platforms"
+		| "genres"
+		| "themes"
+		| "keywords"
+		| "game_modes"
+		| "player_perspectives"
+	> | null;
+};
+
 type LibraryItem = {
 	id: string;
 	gameId: string;
@@ -61,14 +113,24 @@ type LibraryItem = {
 	platformOptions: string[];
 	rating: string;
 	review: string;
-	status: string;
+	status: RecommendationStatus;
+	genres: string[];
+	themes: string[];
+	keywords: string[];
+	gameModes: string[];
+	playerPerspectives: string[];
 	releaseYear: string;
 	coverUrl: string | null;
+	semanticPositiveSimilarity?: number | null;
+	semanticNegativeSimilarity?: number | null;
+	semanticSignalCount?: number;
 };
 
 type ReviewModalState = {
 	game: StageSelectGameSearchResult;
 	status: string;
+	recommendationId?: string;
+	recommendedFromDiscover?: boolean;
 };
 
 type LibraryModalState = {
@@ -82,6 +144,7 @@ type ChartRow = {
 };
 
 type StageSelectThemeMode = "dark" | "light";
+type RankingEvaluationChoice = "left" | "right" | "tie";
 type StageSelectThemeVars = CSSProperties &
 	Record<`--stage-${string}`, string>;
 
@@ -203,6 +266,17 @@ export function StageSelectApp() {
 	const [session, setSession] = useState<Session | null>(null);
 	const [profile, setProfile] = useState<Profile | null>(null);
 	const [library, setLibrary] = useState<LibraryItem[]>([]);
+	const [recommendationFeedback, setRecommendationFeedback] = useState<
+		RecommendationFeedback[]
+	>([]);
+	const [recommendationFeedbackGames, setRecommendationFeedbackGames] =
+		useState<RecommendationGame[]>([]);
+	const [discoverCandidates, setDiscoverCandidates] = useState<
+		StageSelectDiscoverCandidate[]
+	>([]);
+	const [discoverImpressionIds, setDiscoverImpressionIds] = useState<
+		Record<number, string>
+	>({});
 	const [searchQuery, setSearchQuery] = useState("");
 	const [searchResults, setSearchResults] = useState<
 		StageSelectGameSearchResult[]
@@ -223,6 +297,11 @@ export function StageSelectApp() {
 	const [isEditReviewOpen, setIsEditReviewOpen] = useState(false);
 	const [reviewMessage, setReviewMessage] = useState("");
 	const [libraryActionMessage, setLibraryActionMessage] = useState("");
+	const [recommendationFeedbackMessage, setRecommendationFeedbackMessage] =
+		useState("");
+	const [discoverMessage, setDiscoverMessage] = useState(
+		"Open Recommendations to load related games.",
+	);
 	const [authMessage, setAuthMessage] = useState("Checking account...");
 	const [searchMessage, setSearchMessage] = useState(
 		"Search IGDB to find games.",
@@ -235,7 +314,21 @@ export function StageSelectApp() {
 	const [isSavingGame, setIsSavingGame] = useState(false);
 	const [isLibraryLoading, setIsLibraryLoading] = useState(false);
 	const [isExportingData, setIsExportingData] = useState(false);
+	const [feedbackPendingGameId, setFeedbackPendingGameId] = useState("");
+	const [rankingEvaluationPendingKey, setRankingEvaluationPendingKey] =
+		useState("");
+	const [rankingEvaluationMessage, setRankingEvaluationMessage] = useState("");
+	const [rankingEvaluationChoices, setRankingEvaluationChoices] = useState<
+		Record<string, RankingEvaluationChoice>
+	>({});
+	const [isDiscoverLoading, setIsDiscoverLoading] = useState(false);
+	const [discoverRefreshKey, setDiscoverRefreshKey] = useState(0);
+	const [loadedDiscoverRequestKey, setLoadedDiscoverRequestKey] = useState("");
 	const [activeTab, setActiveTab] = useState("search");
+	const [recommendationSection, setRecommendationSection] = useState<
+		"play-next" | "discover"
+	>("play-next");
+	const loggedRecommendationKeys = useRef(new Set<string>());
 	const [librarySearchQuery, setLibrarySearchQuery] = useState("");
 	const [statusFilter, setStatusFilter] = useState("all");
 	const [platformFilter, setPlatformFilter] = useState("all");
@@ -247,6 +340,8 @@ export function StageSelectApp() {
 		useState(defaultReleaseMax);
 	const [reviewFilter, setReviewFilter] = useState("all");
 	const [sortMode, setSortMode] = useState("title");
+	const [recommendationAdventure, setRecommendationAdventure] = useState(50);
+	const [recommendationPlatform, setRecommendationPlatform] = useState("all");
 	const [libraryVisibleCount, setLibraryVisibleCount] =
 		useState(libraryPageSize);
 	const loginPath = getLoginPath("/projects/stageselect");
@@ -268,6 +363,16 @@ export function StageSelectApp() {
 			if (!supabase || !nextSession) {
 				setProfile(null);
 				setLibrary([]);
+				setRecommendationFeedback([]);
+				setRecommendationFeedbackGames([]);
+				setDiscoverCandidates([]);
+				setDiscoverImpressionIds({});
+				setRankingEvaluationChoices({});
+				setRankingEvaluationMessage("");
+				setRankingEvaluationPendingKey("");
+				setLoadedDiscoverRequestKey("");
+				loggedRecommendationKeys.current.clear();
+				setRecommendationFeedbackMessage("");
 				setLibraryMessage("Log in to load your library.");
 				return;
 			}
@@ -278,19 +383,27 @@ export function StageSelectApp() {
 			const [
 				{ data: profileData, error: profileError },
 				libraryResponse,
+				feedbackResponse,
 			] = await Promise.all([
 				supabase
 					.from("profiles")
 					.select("display_name")
 					.eq("id", nextSession.user.id)
 					.maybeSingle(),
-				supabase
+					supabase
 					.from("stageselect_user_games")
 					.select(
-						"id, game_id, status, platform, stageselect_games(id, igdb_id, title, release_date, cover_url, platforms)",
+						"id, game_id, status, platform, stageselect_games(id, igdb_id, title, release_date, cover_url, platforms, genres, themes, keywords, game_modes, player_perspectives)",
 					)
 					.eq("user_id", nextSession.user.id)
 					.order("updated_at", { ascending: false }),
+					supabase
+						.from("stageselect_recommendation_feedback")
+						.select(
+							"game_id, recommendation_id, action, created_at, stageselect_games(igdb_id, title, release_date, platforms, genres, themes, keywords, game_modes, player_perspectives)",
+						)
+					.eq("user_id", nextSession.user.id)
+					.order("created_at", { ascending: false }),
 			]);
 
 			if (profileError) {
@@ -301,6 +414,8 @@ export function StageSelectApp() {
 
 			if (libraryResponse.error) {
 				setLibrary([]);
+				setRecommendationFeedback([]);
+				setRecommendationFeedbackGames([]);
 				setLibraryMessage(
 					"Run the StageSelect Supabase migration to enable library data.",
 				);
@@ -308,28 +423,101 @@ export function StageSelectApp() {
 				return;
 			}
 
+			if (feedbackResponse.error) {
+				setRecommendationFeedback([]);
+				setRecommendationFeedbackMessage(
+					"Run the recommendation feedback migration to save recommendation system feedback.",
+				);
+			} else {
+				const feedbackRows = (feedbackResponse.data ?? []) as unknown as FeedbackRecord[];
+
+				setRecommendationFeedback(
+					feedbackRows.map((item) => ({
+						gameId: item.game_id,
+						igdbId: item.stageselect_games?.igdb_id,
+						recommendationId: item.recommendation_id ?? undefined,
+						action: item.action,
+						createdAt: item.created_at,
+					})),
+				);
+				setRecommendationFeedbackGames(
+					Array.from(
+						new Map(
+							feedbackRows.flatMap((item) => {
+								const game = item.stageselect_games;
+
+								if (!game) {
+									return [];
+								}
+
+								return [[
+									item.game_id,
+									{
+										id: item.game_id,
+										title: game.title,
+										status: "wishlisted" as const,
+										platform:
+											jsonToStringArray(game.platforms)[0] ?? "-",
+										genres: jsonToStringArray(game.genres),
+										themes: jsonToStringArray(game.themes),
+										keywords: jsonToStringArray(game.keywords),
+										gameModes: jsonToStringArray(game.game_modes),
+										playerPerspectives: jsonToStringArray(
+											game.player_perspectives,
+										),
+										rating: null,
+										releaseYear: game.release_date
+											? Number(game.release_date.slice(0, 4))
+											: null,
+									},
+								] as const];
+							}),
+						).values(),
+					),
+				);
+				setRecommendationFeedbackMessage("");
+			}
+
 			const userGames = (libraryResponse.data ?? []) as UserGameRecord[];
 			const gameIds = userGames.map((item) => item.game_id);
 			let reviews: ReviewRecord[] = [];
+			let semanticRows: Array<{
+				game_id: string;
+				positive_similarity: number | null;
+				negative_similarity: number | null;
+				positive_signal_count: number;
+				negative_signal_count: number;
+			}> = [];
 
 			if (gameIds.length > 0) {
-				const { data: reviewData } = await supabase
-					.from("stageselect_reviews")
-					.select("game_id, rating, body")
-					.eq("user_id", nextSession.user.id)
-					.in("game_id", gameIds);
+				const [reviewResponse, semanticResponse] = await Promise.all([
+					supabase
+						.from("stageselect_reviews")
+						.select("game_id, rating, body")
+						.eq("user_id", nextSession.user.id)
+						.in("game_id", gameIds),
+					supabase.rpc("get_stageselect_semantic_scores", {
+						candidate_game_ids: gameIds,
+						candidate_igdb_ids: [],
+					}),
+				]);
 
-				reviews = (reviewData ?? []) as ReviewRecord[];
+				reviews = (reviewResponse.data ?? []) as ReviewRecord[];
+				semanticRows = semanticResponse.data ?? [];
 			}
 
 			const reviewsByGame = new Map(
 				reviews.map((review) => [review.game_id, review]),
+			);
+			const semanticByGame = new Map(
+				semanticRows.map((semantic) => [semantic.game_id, semantic]),
 			);
 
 			const nextLibrary = userGames
 				.filter((item) => item.stageselect_games)
 				.map((item) => {
 					const game = item.stageselect_games as GameRecord;
+					const semantic = semanticByGame.get(item.game_id);
 
 					return {
 						id: item.id,
@@ -351,8 +539,23 @@ export function StageSelectApp() {
 									),
 						review: reviewsByGame.get(item.game_id)?.body ?? "",
 						status: item.status,
+						genres: jsonToStringArray(game.genres),
+						themes: jsonToStringArray(game.themes),
+						keywords: jsonToStringArray(game.keywords),
+						gameModes: jsonToStringArray(game.game_modes),
+						playerPerspectives: jsonToStringArray(
+							game.player_perspectives,
+						),
 						releaseYear: getReleaseYear(game.release_date),
 						coverUrl: game.cover_url,
+						semanticPositiveSimilarity:
+							semantic?.positive_similarity ?? null,
+						semanticNegativeSimilarity:
+							semantic?.negative_similarity ?? null,
+						semanticSignalCount: semantic
+							? semantic.positive_signal_count +
+								semantic.negative_signal_count
+							: 0,
 					};
 				});
 
@@ -401,9 +604,378 @@ export function StageSelectApp() {
 		};
 	}, [loadUserData, supabase]);
 
+	useEffect(() => {
+		if (
+			activeTab !== "recommendations" ||
+			recommendationSection !== "discover" ||
+			!session
+		) {
+			return;
+		}
+
+		const requestKey = `${session.user.id}:${discoverRefreshKey}`;
+
+		if (loadedDiscoverRequestKey === requestKey) {
+			return;
+		}
+
+		const controller = new AbortController();
+
+		setIsDiscoverLoading(true);
+		setDiscoverMessage("Building a candidate pool from IGDB...");
+
+		fetchWithSession(
+			session,
+			"/api/projects/stageselect/recommendations/discover",
+			{ method: "GET", signal: controller.signal },
+		)
+			.then(async (response) => {
+				const payload = (await response.json()) as {
+					candidates?: StageSelectDiscoverCandidate[];
+					error?: string;
+					reason?: string;
+				};
+
+				if (!response.ok) {
+					throw new Error(payload.error ?? "Could not load related games.");
+				}
+
+				const candidates = payload.candidates ?? [];
+
+				setDiscoverCandidates(candidates);
+				setLoadedDiscoverRequestKey(requestKey);
+				setDiscoverMessage(
+					payload.reason === "empty_library"
+						? "Add and rate a few games before loading discovery suggestions."
+						: payload.reason === "no_positive_signals"
+							? "Rate or finish a game you enjoyed before loading discovery suggestions."
+						: candidates.length > 0
+							? `${candidates.length} outside-library games available for ranking.`
+							: "IGDB did not return candidates for the current preference history.",
+				);
+			})
+			.catch((error) => {
+				if (controller.signal.aborted) {
+					return;
+				}
+
+				setDiscoverCandidates([]);
+				setDiscoverMessage(
+					error instanceof Error
+						? error.message
+						: "Could not load related games.",
+				);
+			})
+			.finally(() => {
+				if (!controller.signal.aborted) {
+					setIsDiscoverLoading(false);
+				}
+			});
+
+		return () => controller.abort();
+	}, [
+		activeTab,
+		discoverRefreshKey,
+		loadedDiscoverRequestKey,
+		recommendationSection,
+		session,
+	]);
+
+	const deferredRecommendationAdventure = useDeferredValue(
+		recommendationAdventure,
+	);
+	const deferredRecommendationPlatform = useDeferredValue(
+		recommendationPlatform,
+	);
+
 	const platformOptions = useMemo(() => {
 		return Array.from(new Set(library.map((item) => item.platform))).sort();
 	}, [library]);
+
+	const recommendationLibrary = useMemo<RecommendationGame[]>(
+		() =>
+			library.map(
+			(item) => ({
+				id: item.gameId,
+				title: item.title,
+				status: item.status,
+				platform: item.platform,
+				genres: item.genres,
+				themes: item.themes,
+				keywords: item.keywords,
+				gameModes: item.gameModes,
+				playerPerspectives: item.playerPerspectives,
+				rating: getSortableRating(item.rating) > 0
+					? getSortableRating(item.rating)
+					: null,
+				releaseYear:
+					getSortableYear(item.releaseYear) > 0
+						? getSortableYear(item.releaseYear)
+						: null,
+				semanticPositiveSimilarity: item.semanticPositiveSimilarity,
+				semanticNegativeSimilarity: item.semanticNegativeSimilarity,
+				semanticSignalCount: item.semanticSignalCount,
+			}),
+			),
+		[library],
+	);
+
+	const playNext = useMemo(() => {
+		const result = recommendPlayNext(recommendationLibrary, {
+			adventure: deferredRecommendationAdventure,
+			feedback: recommendationFeedback,
+			feedbackGames: recommendationFeedbackGames,
+			platform: deferredRecommendationPlatform,
+		});
+		const coversById = new Map(
+			library.map((item) => [item.gameId, item.coverUrl]),
+		);
+
+		return {
+			profile: result.profile,
+			recommendations: result.recommendations.map((recommendation) => ({
+				...recommendation,
+				coverUrl: coversById.get(recommendation.game.id) ?? null,
+			})),
+		};
+	}, [
+		library,
+		recommendationLibrary,
+		deferredRecommendationAdventure,
+		deferredRecommendationPlatform,
+		recommendationFeedback,
+		recommendationFeedbackGames,
+	]);
+
+	const discoverRecommendations = useMemo(() => {
+		if (recommendationSection !== "discover") {
+			return [];
+		}
+
+		const libraryIgdbIds = new Set(library.map((item) => item.igdbId));
+		const candidates = discoverCandidates
+			.filter((game) => !libraryIgdbIds.has(game.igdbId))
+			.map((game) => ({
+				...game,
+				id: String(game.igdbId),
+			}));
+
+		return recommendDiscover(recommendationLibrary, candidates, {
+			adventure: deferredRecommendationAdventure,
+			feedback: recommendationFeedback,
+			feedbackGames: recommendationFeedbackGames,
+			limit: 12,
+			platform: deferredRecommendationPlatform,
+		});
+	}, [
+		discoverCandidates,
+		library,
+		deferredRecommendationAdventure,
+		deferredRecommendationPlatform,
+		recommendationFeedback,
+		recommendationFeedbackGames,
+		recommendationLibrary,
+		recommendationSection,
+	]);
+
+	const blindRankingComparison = useMemo<BlindRankingComparison | null>(() => {
+		if (
+			recommendationSection !== "discover" ||
+			playNext.profile.tasteClusters.length === 0
+		) {
+			return null;
+		}
+
+		const libraryIgdbIds = new Set(library.map((item) => item.igdbId));
+		const candidates = discoverCandidates
+			.filter((game) => !libraryIgdbIds.has(game.igdbId))
+			.map((game) => ({ ...game, id: String(game.igdbId) }));
+		const globalProfileRecommendations = recommendDiscover(
+			recommendationLibrary,
+			candidates,
+			{
+				adventure: deferredRecommendationAdventure,
+				feedback: recommendationFeedback,
+				feedbackGames: recommendationFeedbackGames,
+				limit: 12,
+				platform: deferredRecommendationPlatform,
+				useTasteClusters: false,
+			},
+		);
+
+		return buildBlindRankingComparison(
+			globalProfileRecommendations.map((item) => item.game),
+			discoverRecommendations.map((item) => item.game),
+			{
+				adventure: deferredRecommendationAdventure,
+				platform: deferredRecommendationPlatform,
+			},
+		);
+	}, [
+		deferredRecommendationAdventure,
+		deferredRecommendationPlatform,
+		discoverCandidates,
+		discoverRecommendations,
+		library,
+		playNext.profile.tasteClusters.length,
+		recommendationFeedback,
+		recommendationFeedbackGames,
+		recommendationLibrary,
+		recommendationSection,
+	]);
+
+	const latestRecommendationFeedbackByIgdbId = useMemo(
+		() => getLatestFeedbackByIgdbId(recommendationFeedback),
+		[recommendationFeedback],
+	);
+
+	useEffect(() => {
+		setRankingEvaluationMessage("");
+	}, [blindRankingComparison?.comparisonKey]);
+
+	useEffect(() => {
+		if (activeTab !== "recommendations" || !session) {
+			return;
+		}
+
+		const isDiscover = recommendationSection === "discover";
+		const activeRecommendations = isDiscover
+			? discoverRecommendations
+			: playNext.recommendations;
+
+		if (activeRecommendations.length === 0) {
+			return;
+		}
+
+		const recommendationIdentity = activeRecommendations
+			.map(
+				(item) =>
+					`${item.game.id}:${item.score.relevance.toFixed(5)}`,
+			)
+			.join("|");
+		const runKey = [
+			session.user.id,
+			isDiscover ? "discover" : "play_next",
+			deferredRecommendationAdventure,
+			deferredRecommendationPlatform,
+			isDiscover ? discoverRefreshKey : 0,
+			recommendationIdentity,
+		].join(":");
+
+		if (loggedRecommendationKeys.current.has(runKey)) {
+			return;
+		}
+
+		loggedRecommendationKeys.current.add(runKey);
+		const items = isDiscover
+			? discoverRecommendations.map((recommendation, index) => ({
+					clientKey: `discover:${recommendation.game.igdbId}`,
+					game: recommendation.game,
+					rank: index + 1,
+					candidateSource: getDiscoverCandidateSource(
+						recommendation.game,
+					),
+					finalScore: recommendation.score.relevance,
+					scoreComponents: recommendation.score,
+					evidence: {
+						explanations: recommendation.explanations,
+						matchedPreferenceFacets:
+							recommendation.game.matchedPreferenceFacets,
+						relatedSeedTitles: recommendation.game.relatedSeedTitles,
+						tasteCluster: recommendation.tasteClusterMatch
+							? {
+									id: recommendation.tasteClusterMatch.id,
+									label: recommendation.tasteClusterMatch.label,
+									supportingGames:
+										recommendation.tasteClusterMatch.supportingGames,
+								}
+							: null,
+					},
+				}))
+			: playNext.recommendations.map((recommendation, index) => ({
+					clientKey: `play:${recommendation.game.id}`,
+					gameId: recommendation.game.id,
+					rank: index + 1,
+					candidateSource: "library_queue",
+					finalScore: recommendation.score.relevance,
+					scoreComponents: recommendation.score,
+					evidence: {
+						explanations: recommendation.explanations,
+						matchedPreferenceFacets: [],
+						relatedSeedTitles: [],
+						tasteCluster: recommendation.tasteClusterMatch
+							? {
+									id: recommendation.tasteClusterMatch.id,
+									label: recommendation.tasteClusterMatch.label,
+									supportingGames:
+										recommendation.tasteClusterMatch.supportingGames,
+								}
+							: null,
+					},
+				}));
+
+		void fetchWithSession(
+			session,
+			"/api/projects/stageselect/recommendations/runs",
+			{
+				method: "POST",
+				body: JSON.stringify({
+					surface: isDiscover ? "discover" : "play_next",
+					controls: {
+						adventure: deferredRecommendationAdventure,
+						platform: deferredRecommendationPlatform,
+					},
+					candidateCount: isDiscover
+						? discoverCandidates.length
+						: recommendationLibrary.filter((game) =>
+								["playing", "backlogged", "wishlisted"].includes(
+									game.status,
+								),
+							).length,
+					items,
+				}),
+			},
+		)
+			.then(async (response) => {
+				if (!response.ok || !isDiscover) {
+					return;
+				}
+
+				const payload = (await response.json()) as {
+					impressions?: Array<{ clientKey: string; id: string }>;
+				};
+				const impressionIds = Object.fromEntries(
+					(payload.impressions ?? []).flatMap((impression) => {
+						const igdbId = Number(
+							impression.clientKey.replace("discover:", ""),
+						);
+
+						return Number.isInteger(igdbId)
+							? [[igdbId, impression.id]]
+							: [];
+					}),
+				);
+
+				setDiscoverImpressionIds((current) => ({
+					...current,
+					...impressionIds,
+				}));
+			})
+			.catch(() => {
+				// Recommendation logging must never block the product surface.
+			});
+	}, [
+		activeTab,
+		deferredRecommendationAdventure,
+		deferredRecommendationPlatform,
+		discoverCandidates.length,
+		discoverRecommendations,
+		discoverRefreshKey,
+		playNext.recommendations,
+		recommendationLibrary,
+		recommendationSection,
+		session,
+	]);
 
 	const releaseYearBounds = useMemo(() => {
 		const years = library
@@ -660,6 +1232,243 @@ export function StageSelectApp() {
 		statusFilter,
 	]);
 
+	async function refreshSemanticScores() {
+		if (!supabase || !session) {
+			return;
+		}
+
+		const { data } = await supabase.rpc("get_stageselect_semantic_scores", {
+			candidate_game_ids: library.map((item) => item.gameId),
+			candidate_igdb_ids: discoverCandidates.map((item) => item.igdbId),
+		});
+
+		if (!data) {
+			return;
+		}
+
+		const semanticByGameId = new Map(data.map((item) => [item.game_id, item]));
+		const semanticByIgdbId = new Map(data.map((item) => [item.igdb_id, item]));
+		const withSemanticScores = (semantic: (typeof data)[number]) => ({
+			semanticPositiveSimilarity: semantic.positive_similarity,
+			semanticNegativeSimilarity: semantic.negative_similarity,
+			semanticSignalCount:
+				semantic.positive_signal_count + semantic.negative_signal_count,
+		});
+
+		setLibrary((items) =>
+			items.map((item) => {
+				const semantic = semanticByGameId.get(item.gameId);
+
+				return semantic
+					? { ...item, ...withSemanticScores(semantic) }
+					: {
+							...item,
+							semanticPositiveSimilarity: null,
+							semanticNegativeSimilarity: null,
+							semanticSignalCount: 0,
+						};
+			}),
+		);
+		setDiscoverCandidates((items) =>
+			items.map((item) => {
+				const semantic = semanticByIgdbId.get(item.igdbId);
+
+				return semantic
+					? { ...item, ...withSemanticScores(semantic) }
+					: {
+							...item,
+							semanticPositiveSimilarity: null,
+							semanticNegativeSimilarity: null,
+							semanticSignalCount: 0,
+						};
+			}),
+		);
+	}
+
+	async function updateDiscoverFeedback(
+		game: StageSelectDiscoverCandidate,
+		action: RecommendationFeedbackAction,
+	) {
+		if (!session) {
+			setRecommendationFeedbackMessage("Log in to save recommendation feedback.");
+			return;
+		}
+
+		const current = latestRecommendationFeedbackByIgdbId.get(game.igdbId);
+		const isClearing = current?.action === action;
+		const pendingId = String(game.igdbId);
+
+		setFeedbackPendingGameId(pendingId);
+		setRecommendationFeedbackMessage(
+			isClearing
+				? "Clearing this choice..."
+				: action === "dismissed"
+					? "Hiding this recommendation..."
+					: "Updating your preference profile...",
+		);
+
+		try {
+			const response = await fetchWithSession(
+				session,
+				"/api/projects/stageselect/recommendations/feedback",
+				{
+					method: isClearing ? "DELETE" : "POST",
+					body: JSON.stringify(
+						isClearing
+							? { gameId: current?.gameId }
+								: current
+								? {
+										gameId: current.gameId,
+										recommendationId:
+											discoverImpressionIds[game.igdbId],
+										action,
+									}
+								: {
+										game,
+										recommendationId:
+											discoverImpressionIds[game.igdbId],
+										action,
+									},
+					),
+				},
+			);
+
+			if (!response.ok) {
+				const payload = (await response.json()) as { error?: string };
+
+				throw new Error(
+					payload.error ?? "Could not update recommendation feedback.",
+				);
+			}
+
+			if (isClearing && current) {
+				setRecommendationFeedback((items) =>
+					items.filter((item) => item.gameId !== current.gameId),
+				);
+				setRecommendationFeedbackGames((items) =>
+					items.filter((item) => item.id !== current.gameId),
+				);
+				setRecommendationFeedbackMessage("Choice cleared.");
+			} else {
+				const payload = (await response.json()) as {
+					feedback: Pick<
+						FeedbackRecord,
+						| "game_id"
+						| "recommendation_id"
+						| "action"
+						| "created_at"
+					>;
+					igdbId: number;
+				};
+
+				setRecommendationFeedback((items) => [
+					...items,
+					{
+						gameId: payload.feedback.game_id,
+						igdbId: payload.igdbId,
+						recommendationId:
+							payload.feedback.recommendation_id ?? undefined,
+						action: payload.feedback.action,
+						createdAt: payload.feedback.created_at,
+					},
+				]);
+				setRecommendationFeedbackGames((items) => [
+					...items.filter(
+						(item) => item.id !== payload.feedback.game_id,
+					),
+					{
+						id: payload.feedback.game_id,
+						title: game.title,
+						status: "wishlisted",
+						platform: game.platforms[0] ?? "-",
+						genres: game.genres,
+						themes: game.themes,
+						keywords: game.keywords,
+						gameModes: game.gameModes,
+						playerPerspectives: game.playerPerspectives,
+						rating: null,
+						releaseYear: game.releaseYear ?? null,
+					},
+				]);
+				setRecommendationFeedbackMessage(
+					action === "dismissed"
+						? "Hidden from Discover without changing your preferences."
+						: action === "not_for_me"
+							? "Hidden and used as a negative preference signal."
+							: "Similar traits will receive more weight.",
+				);
+			}
+
+			await refreshSemanticScores();
+		} catch (error) {
+			setRecommendationFeedbackMessage(
+				error instanceof Error
+					? error.message
+					: "Could not update recommendation feedback.",
+			);
+		} finally {
+			setFeedbackPendingGameId("");
+		}
+	}
+
+	async function saveRankingEvaluation(choice: RankingEvaluationChoice) {
+		if (!session || !blindRankingComparison) {
+			return;
+		}
+
+		const comparison = blindRankingComparison;
+		setRankingEvaluationPendingKey(comparison.comparisonKey);
+		setRankingEvaluationMessage("Saving this comparison...");
+
+		try {
+			const response = await fetchWithSession(
+				session,
+				"/api/projects/stageselect/recommendations/evaluations",
+				{
+					method: "POST",
+					body: JSON.stringify({
+						comparisonKey: comparison.comparisonKey,
+						leftVariant: comparison.leftVariant,
+						rightVariant: comparison.rightVariant,
+						leftGameIgdbIds: comparison.leftGames.map(
+							(game) => game.igdbId,
+						),
+						rightGameIgdbIds: comparison.rightGames.map(
+							(game) => game.igdbId,
+						),
+						choice,
+						candidateCount: discoverCandidates.length,
+						controls: {
+							adventure: deferredRecommendationAdventure,
+							platform: deferredRecommendationPlatform,
+						},
+					}),
+				},
+			);
+			const payload = (await response.json()) as { error?: string };
+
+			if (!response.ok) {
+				throw new Error(payload.error ?? "Could not save this comparison.");
+			}
+
+			setRankingEvaluationChoices((current) => ({
+				...current,
+				[comparison.comparisonKey]: choice,
+			}));
+			setRankingEvaluationMessage(
+				"Saved. You can revise the choice while this candidate set is active.",
+			);
+		} catch (error) {
+			setRankingEvaluationMessage(
+				error instanceof Error
+					? error.message
+					: "Could not save this comparison.",
+			);
+		} finally {
+			setRankingEvaluationPendingKey("");
+		}
+	}
+
 	async function logOut() {
 		if (!supabase) {
 			setAuthMessage("Supabase is not configured yet.");
@@ -756,6 +1565,10 @@ export function StageSelectApp() {
 	function beginStatusAction(
 		game: StageSelectGameSearchResult,
 		status: string,
+		recommendation?: {
+			id?: string;
+			source: "discover";
+		},
 	) {
 		if (!session) {
 			setSearchMessage("Log in before adding games to your library.");
@@ -770,7 +1583,12 @@ export function StageSelectApp() {
 			return;
 		}
 
-		setReviewModal({ game, status });
+		setReviewModal({
+			game,
+			status,
+			recommendationId: recommendation?.id,
+			recommendedFromDiscover: recommendation?.source === "discover",
+		});
 		setReviewRating("");
 		setReviewBody("");
 		setSelectedPlatform(game.platforms[0] ?? "");
@@ -783,12 +1601,16 @@ export function StageSelectApp() {
 		rating,
 		review,
 		platform,
+		recommendationId,
+		recommendedFromDiscover,
 	}: {
 		game: StageSelectGameSearchResult;
 		status: string;
 		platform: string;
 		rating?: string;
 		review?: string;
+		recommendationId?: string;
+		recommendedFromDiscover?: boolean;
 	}) {
 		if (!supabase || !session) {
 			setSearchMessage("Log in before adding games to your library.");
@@ -815,6 +1637,8 @@ export function StageSelectApp() {
 					platform,
 					rating,
 					review,
+					recommendationId,
+					recommendedFromDiscover,
 				}),
 			},
 		);
@@ -1252,6 +2076,76 @@ export function StageSelectApp() {
 									)}
 								</div>
 							</div>
+						) : activeTab === "recommendations" ? (
+							<RecommendationsPanel
+								activeSection={recommendationSection}
+								adventure={recommendationAdventure}
+								blindComparison={blindRankingComparison}
+								discoverMessage={discoverMessage}
+								discoverRecommendations={discoverRecommendations}
+								feedbackByIgdbId={Object.fromEntries(
+									Array.from(
+										latestRecommendationFeedbackByIgdbId,
+										([igdbId, item]) => [igdbId, item.action],
+									),
+								)}
+								feedbackMessage={recommendationFeedbackMessage}
+								feedbackPendingGameId={feedbackPendingGameId}
+								hiddenDiscoveries={discoverCandidates.flatMap((game) => {
+									const action = latestRecommendationFeedbackByIgdbId.get(
+										game.igdbId,
+									)?.action;
+
+									return action === "dismissed" || action === "not_for_me"
+										? [{ action, game }]
+										: [];
+								})}
+								isLoading={isLibraryLoading}
+								isDiscoverLoading={isDiscoverLoading}
+								isSignedIn={Boolean(session)}
+								onAdventureChange={setRecommendationAdventure}
+								onFeedback={updateDiscoverFeedback}
+								onOpenGame={(gameId) => {
+									const game = library.find(
+										(item) => item.gameId === gameId,
+									);
+
+									if (game) {
+										openLibraryModal(game);
+									}
+								}}
+								onRefreshDiscover={() =>
+									setDiscoverRefreshKey((value) => value + 1)
+								}
+								onSaveRankingEvaluation={saveRankingEvaluation}
+								onSaveDiscover={(game) =>
+									beginStatusAction(game, "wishlisted", {
+										id: discoverImpressionIds[game.igdbId],
+										source: "discover",
+									})
+								}
+								onSectionChange={setRecommendationSection}
+								onPlatformChange={setRecommendationPlatform}
+								platform={recommendationPlatform}
+								platformOptions={platformOptions.filter(
+									(option) => option !== "-",
+								)}
+								profile={playNext.profile}
+								rankingEvaluationChoice={
+									blindRankingComparison
+										? rankingEvaluationChoices[
+												blindRankingComparison.comparisonKey
+											]
+										: undefined
+								}
+								rankingEvaluationMessage={rankingEvaluationMessage}
+								rankingEvaluationPending={
+									Boolean(blindRankingComparison) &&
+									rankingEvaluationPendingKey ===
+										blindRankingComparison?.comparisonKey
+								}
+								recommendations={playNext.recommendations}
+							/>
 						) : activeTab === "library" ? (
 							<div className="rounded-lg border border-[var(--stage-border)] bg-[var(--stage-panel)] p-5 shadow-sm">
 								<div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -1898,6 +2792,10 @@ export function StageSelectApp() {
 										platform: selectedPlatform,
 										rating: reviewRating,
 										review: reviewBody,
+										recommendationId:
+											reviewModal.recommendationId,
+										recommendedFromDiscover:
+											reviewModal.recommendedFromDiscover,
 									})
 								}
 								type="button"

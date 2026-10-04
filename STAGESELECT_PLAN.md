@@ -4,7 +4,20 @@
 
 StageSelect is now a working early-stage game library project inside the existing Next.js frontend. Users can sign up or log in with Supabase Auth, search IGDB through a server-side route, save games to their account, rate/review selected statuses, manage their library, and export their user-owned library data.
 
-Status: parked for now. The current chapter is complete unless bugs appear or there is a concrete product expansion plan.
+Status: the original library chapter is complete. The StageSelect Recommendations
+expansion specified in `STAGESELECT_RECOMMENDATIONS_PLAN.md` is now in implementation;
+its structured Play Next and outside-library Discover phases are active.
+
+## Next Expansion: StageSelect Recommendations
+
+`STAGESELECT_RECOMMENDATIONS_PLAN.md` specifies a private, explainable game recommender
+with Play Next and Discover surfaces, Preference profile, structured and semantic game
+representations, negative feedback, hybrid ranking, MMR diversity, offline
+evaluation, model versioning, privacy controls, and a phased delivery plan.
+
+Treat that document as the source of truth for recommendation work. The phases
+intentionally begin with a measurable structured baseline before adding
+semantic embeddings.
 
 The app lives at:
 
@@ -64,6 +77,37 @@ frontend/content/projects/stageselect/meta.json
   - selected platforms
   - dates
   - ratings/reviews
+  - recommendation feedback history
+- Started StageSelect Recommendations with a structured Play Next recommender, Preference profile,
+  evidence-backed explanations, adjustable diversity, and persistent reversible
+  `More like this` / `Not for me` feedback.
+- Added Discover for games outside the library by merging IGDB related-game
+  candidates with batched genre, theme, mode, perspective, and keyword
+  retrieval; candidates are deduplicated before structured ranking, platform
+  filtering, diversity reranking, and wishlist handoff.
+- Split Recommendations into Play Next and Discover sub-tabs, moved preference
+  feedback to Discover, and added persistent neutral dismissal with undo.
+- Added private, versioned recommendation-run and impression logging for Play
+  Next and Discover, including controls, retrieval source, rank, score
+  components, explanation evidence, and feedback attribution. The data is
+  protected by RLS and included in the account export without review text.
+- Added private downstream outcome measurement for recommended games: direct
+  Discover saves plus later starts, finishes, abandons, and ratings attributed
+  within a bounded 90-day window. Outcomes are included in account exports and
+  do not block library operations if measurement fails.
+- Added a versioned export-based outcome evaluator with maturity-aware
+  denominators, per-model and per-surface funnels, Wilson intervals, sample-size
+  guardrails, and orphan/duplicate data-quality checks.
+- Added a deterministic recommendation evaluation command with six synthetic
+  taste profiles, popularity/genre/structured/diversified comparisons, ranking
+  and catalogue metrics, guardrail checks, JSON output, and a documented
+  baseline for future model changes.
+- Added the semantic representation foundation: canonical metadata documents,
+  content hashes, a versioned 384-dimensional pgvector table, pending-job
+  triggers, atomic retryable job claiming, a server-only `gte-small` Edge
+  Function worker, a workload-aware five-minute schedule, and a dry-run-first
+  backfill command. Semantic similarity is not part of production ranking until
+  it clears the evaluation gate.
 - Added a signed-in account action to download that JSON export.
 - Collapsed the library modal review editor behind an edit/add review toggle.
 
@@ -74,16 +118,27 @@ Important frontend files:
 ```txt
 frontend/app/projects/stageselect/page.tsx
 frontend/app/projects/stageselect/StageSelectApp.tsx
+frontend/app/projects/stageselect/RecommendationsPanel.tsx
 frontend/app/api/projects/stageselect/search/route.ts
 frontend/app/api/projects/stageselect/export/route.ts
 frontend/app/api/projects/stageselect/library/route.ts
 frontend/app/api/projects/stageselect/library/[userGameId]/route.ts
+frontend/app/api/projects/stageselect/recommendations/feedback/route.ts
+frontend/app/api/projects/stageselect/recommendations/discover/route.ts
+frontend/app/api/projects/stageselect/recommendations/runs/route.ts
 frontend/lib/igdb/client.ts
 frontend/lib/igdb/types.ts
 frontend/lib/supabase/client.ts
 frontend/lib/supabase/database.types.ts
 frontend/lib/supabase/server.ts
 frontend/lib/stageselect/api.ts
+frontend/lib/stageselect/recommendations/
+frontend/lib/stageselect/recommendations/EVALUATION.md
+frontend/lib/stageselect/recommendations/SEMANTIC_EMBEDDINGS.md
+frontend/scripts/evaluate-stageselect-recommendations.mjs
+frontend/scripts/backfill-stageselect-recommendation-documents.mjs
+frontend/scripts/process-stageselect-embeddings.mjs
+frontend/scripts/configure-stageselect-embedding-schedule.mjs
 frontend/lib/stageselect/storage.ts
 frontend/content/projects/stageselect/meta.json
 ```
@@ -96,6 +151,12 @@ supabase/migrations/20260511001000_stageselect_game_cache_policies.sql
 supabase/migrations/20260511002000_stageselect_user_game_platform.sql
 supabase/migrations/20260511003000_stageselect_storage_bucket.sql
 supabase/migrations/20260511004000_stageselect_cover_storage_path.sql
+supabase/migrations/20260921001000_stageselect_recommendation_feedback.sql
+supabase/migrations/20260921002000_stageselect_recommendation_metadata.sql
+supabase/migrations/20260922000000_stageselect_recommendation_runs.sql
+supabase/migrations/20260922001000_stageselect_game_embeddings.sql
+supabase/migrations/20260922002000_stageselect_embedding_schedule.sql
+supabase/functions/stageselect-embed-games/index.ts
 ```
 
 Local env shape:
@@ -121,7 +182,9 @@ IGDB_CLIENT_SECRET=
 `stageselect_games`
 
 - Local cache of selected IGDB game metadata.
-- Stores IGDB id, title, slug, summary, cover URL, cover storage path, release date, platforms, genres, raw normalized payload, and sync time.
+- Stores IGDB id, title, slug, summary, cover URL, cover storage path, release
+  date, platforms, genres, themes, keywords, modes, perspectives, similar-game
+  ids, aggregate rating data, game type, raw normalized payload, and sync time.
 
 `stageselect_user_games`
 
@@ -135,6 +198,32 @@ IGDB_CLIENT_SECRET=
 - Stores rating, body, visibility, and timestamps.
 - Unique per user/game.
 - Current UI stores private reviews only.
+
+`stageselect_recommendation_feedback`
+
+- Private recommendation feedback events owned by the user.
+- Discover records `more_like_this`, `not_for_me`, and the neutral `dismissed`
+  action. Feedback can reference the exact impression that prompted it.
+- Repeating an active action clears that game's feedback, and hidden Play Next
+  picks remain available in an Undo list.
+
+`stageselect_recommendation_runs` and `stageselect_recommendation_impressions`
+
+- Private, user-owned measurement records for the recommendation version,
+  surface, controls, candidate count, shown order, source, scores, and
+  structured explanation evidence.
+- Impressions may record the action and timestamp that followed a shown item;
+  current preference state is derived from the latest remaining feedback event.
+
+`stageselect_game_embeddings`
+
+- Server-managed, versioned vectors for shared cached game metadata.
+- Tracks the document/model versions, content hash, dimensions, processing
+  status, retry count, errors, and completion timestamps.
+- Metadata changes queue a fresh vector and make stale worker results harmless.
+- `20260923000000_stageselect_semantic_ranking.sql` exposes only authenticated,
+  user-specific similarity summaries for hybrid ranking; stored vectors remain
+  server-only.
 
 ## Parked Future Work
 
@@ -154,6 +243,12 @@ None of this is pressing for the current private/early StageSelect app. Revisit 
 ## Test Plan
 
 - `npm run build` should pass from `frontend/`.
+- `npm run test:stageselect-recommendations` should keep the versioned ranking
+  baseline and recommendation unit tests green.
+- `npm run evaluate:stageselect-recommendations` should reproduce the documented
+  metric table with full platform eligibility and zero guardrail violations.
+- `npm run backfill:stageselect-recommendation-documents` should report the
+  existing-cache change count without writing unless `--write` is supplied.
 - `/projects` should show the StageSelect card.
 - `/projects/stageselect` should load the app.
 - Signup/login/logout should work with Supabase.

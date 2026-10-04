@@ -10,6 +10,7 @@ import {
   stageselectReviewStatuses,
   validateRating,
 } from "@/lib/stageselect/api";
+import { recordRecommendationOutcomes } from "@/lib/stageselect/recommendations/outcomes";
 
 type RouteContext = {
   params: Promise<{
@@ -102,6 +103,17 @@ export async function PATCH(request: Request, context: RouteContext) {
         .eq("user_id", user.id)
         .eq("game_id", userGame.game_id);
     }
+
+    await recordRecommendationOutcomes(
+      supabase,
+      user.id,
+      userGame.game_id,
+      {
+        allowRecentImpression: true,
+        status,
+        rating,
+      },
+    );
 
     return NextResponse.json({ ok: true });
   } catch (error) {

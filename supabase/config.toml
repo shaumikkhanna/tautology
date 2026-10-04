@@ -1,0 +1,4 @@
+project_id = "tautology_new"
+
+[functions.stageselect-embed-games]
+verify_jwt = false
